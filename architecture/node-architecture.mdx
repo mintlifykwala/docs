@@ -1,0 +1,157 @@
+---
+title: 'Node architecture'
+description: 'Understanding KWALA node architecture and security model'
+---
+
+KWALA nodes are the backbone of the automation execution engine. Each node runs independently, but under permissioned access control, with security and auditability enforced at multiple layers.
+
+## Overview
+
+KWALA nodes form a distributed network responsible for monitoring triggers, executing workflows, and generating verifiable proofs. While nodes operate independently, they follow strict governance policies enforced through the Kalp Network.
+
+<Frame>
+  <img src="/images/architecture/kwala-node-architecture.png" alt="KWALA Node Architecture Diagram" />
+</Frame>
+
+## Node security
+
+KWALA implements multiple security layers to ensure trustless execution and protect user assets.
+
+### Permissioned participation
+
+Every node operator is vetted and must register via the Kalp Governance Layer. This ensures:
+
+- Known and accountable node operators
+- Compliance with network policies
+- Geographic distribution requirements
+- Uptime and performance standards
+
+### Secure key access
+
+Nodes are issued public-private key pairs, but private keys are stored within Key Management Systems (KMS). This separation ensures that:
+
+- Node operators cannot access raw private keys
+- Key material remains protected even if a node is compromised
+- Audit trails exist for all key usage
+
+### Non-extractable signing
+
+Signing operations are performed inside the KMS. The private key never leaves the hardware enclave.
+
+```
+┌─────────────────────────────────────────────────┐
+│                   KWALA Node                    │
+│  ┌───────────────┐      ┌───────────────────┐   │
+│  │   Workflow    │      │   Sign Request    │   │
+│  │   Executor    │─────▶│   (hash only)     │   │
+│  └───────────────┘      └─────────┬─────────┘   │
+└───────────────────────────────────┼─────────────┘
+                                    │
+                                    ▼
+                    ┌───────────────────────────┐
+                    │      KMS Hardware         │
+                    │  ┌─────────────────────┐  │
+                    │  │   Private Key       │  │
+                    │  │   (never exported)  │  │
+                    │  └─────────────────────┘  │
+                    │            │              │
+                    │            ▼              │
+                    │  ┌─────────────────────┐  │
+                    │  │   Signed Result     │  │
+                    │  └─────────────────────┘  │
+                    └───────────────────────────┘
+```
+
+### TLS and mutual authentication
+
+All inter-node communication is encrypted and authenticated via mTLS using node certificates. This prevents:
+
+- Man-in-the-middle attacks
+- Unauthorized nodes from joining the network
+- Data interception during transmission
+
+| Security layer | Implementation |
+|----------------|----------------|
+| **Encryption** | TLS 1.3 for all network traffic |
+| **Authentication** | Mutual TLS with node certificates |
+| **Authorization** | Governance-issued permissions |
+| **Key storage** | Hardware-backed KMS enclaves |
+
+## Workflow execution
+
+Nodes follow a structured process to claim and execute workflows securely.
+
+<Steps>
+  <Step title="Workflow claiming">
+    Nodes claim workflows from the Kalp Chain based on scheduling triggers. The claiming process ensures fair distribution and prevents duplicate execution.
+  </Step>
+  
+  <Step title="Intent verification">
+    The YAML intent associated with a workflow is signed by the end user and posted to the chain. The node verifies this signature before proceeding.
+  </Step>
+  
+  <Step title="Condition evaluation">
+    The node evaluates the workflow conditions in a sandboxed environment. This isolation prevents malicious workflows from affecting node operations.
+  </Step>
+  
+  <Step title="Action execution">
+    If conditions are met, the node signs the result and executes actions under cryptographic verification. All actions are logged and traceable.
+  </Step>
+</Steps>
+
+## Node components
+
+Each KWALA node consists of several internal components:
+
+### Trigger monitor
+
+Continuously watches blockchain networks and external sources for events that activate workflows:
+
+- Subscribes to smart contract events via WebSocket connections
+- Polls time-based triggers according to cron schedules
+- Receives webhook inputs from external systems
+
+### Workflow engine
+
+Runs the KWALA Virtual Machine (KVM) to process workflow logic:
+
+- Parses YAML workflow definitions
+- Extracts event parameters using `re.event(n)` syntax
+- Orchestrates multi-step action sequences
+
+### Action executor
+
+Handles the execution of workflow actions:
+
+- Submits transactions to blockchain networks
+- Calls external APIs and webhooks
+- Manages retry logic for failed operations
+
+### Proof generator
+
+Creates cryptographic proofs of execution:
+
+- Records all inputs, outputs, and state transitions
+- Generates verifiable execution traces
+- Submits proofs to Kalp Chain for verification
+
+## Node requirements
+
+| Requirement | Specification |
+|-------------|---------------|
+| **Registration** | Governance approval via Kalp Network |
+| **Infrastructure** | Cloud or dedicated hardware with KMS access |
+| **Connectivity** | Reliable network with low latency to supported chains |
+| **Uptime** | 99.9% availability SLA |
+| **Security** | mTLS certificates and KMS integration |
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Verifier nodes" icon="shield-check" href="/architecture/verifier-nodes">
+    Learn how verifier nodes audit executions
+  </Card>
+  <Card title="System overview" icon="sitemap" href="/architecture/system-overview">
+    Review the complete system architecture
+  </Card>
+</CardGroup>

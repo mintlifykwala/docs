@@ -1,0 +1,241 @@
+---
+title: 'Configure workflow'
+description: 'Configure triggers, actions, and settings for your workflow'
+---
+
+After creating a workflow, you need to configure its triggers, actions, and execution settings. This guide walks you through each configuration step in the Workflow Builder.
+
+## Prerequisites
+
+- Completion of the steps in  [Create workflow](/workflow-builder/create-workflow).
+
+## Configuration steps
+
+Configuring a workflow involves three steps:
+
+1. **Configure triggers**: Define when and how your workflow activates
+2. **Configure actions**: Specify what your workflow does when triggered
+3. **Configure execution mode**: Choose how actions are processed
+
+## Step 1: Configure triggers
+
+Triggers determine when your workflow activates. In the Workflow Builder, you'll configure execution settings that control trigger behavior.
+
+<Frame>
+  <img src="/images/workflow-builder/configure-workflow/configure-triggers.PNG" alt="Trigger configuration settings" />
+</Frame>
+
+### Required trigger fields
+
+The required fields for trigger configuration are **Execute after**, **Repeat after**, and **Expires in**.
+
+### Execute after
+
+Defines when the workflow should start executing. Choose from the following options:
+
+- **Immediate**: Workflow executes as soon as conditions are met
+- **Timestamp**: Workflow executes at a specific date and time
+- **Event**: Workflow executes when a specified on-chain event occurs
+- **Oracle price**: Workflow executes when a token reaches a target price
+- **Block number**: Workflow executes at a specific block height
+
+When you add trigger options, the **Workflow Builder** automatically adds additional configuration steps. 
+
+For example, if you select **Oracle price** as a trigger, the workflow builder displays a **Trigger Source Configuration** where you specify the target price and select a token from the dropdown, as shown:
+
+<Frame>
+  <img src="/images/workflow-builder/configure-workflow/oracle-price-trigger.png" alt="Oracle price trigger source configuration" />
+</Frame>
+
+### Repeat after
+
+Determines if and when the workflow should repeat. Choose from the following options:
+
+- **Time interval**: Workflow repeats at regular intervals (for example, every hour, daily)
+- **Oracle price**: Workflow repeats when price conditions are met again
+- **Event**: Workflow repeats each time the specified event occurs
+- **N/A**: Workflow executes only once and does not repeat
+
+Similar to the **Execute after** trigger, selecting a **Repeat after** trigger displays additional configuration fields. 
+
+For example, if you select **Event** as the **Repeat after** trigger, the builder displays a **Recurring Source Configuration** as shown:
+
+<Frame>
+  <img src="/images/workflow-builder/configure-workflow/trigger-config-repeat-after-event.PNG" alt="Recurring source configuration for event-based repeat" />
+</Frame>
+
+- **Recurring Source Contract**: The smart contract address to monitor for recurring events (for example, `0x49e833337ece7afe375e44f4e3e8481029218e5c`)
+- **Recurring Chain ID**: The blockchain network where the contract is deployed (for example, `1` for Ethereum mainnet)
+- **Smart Contract (Optional)**: Paste Solidity contract code or upload a `.sol` file to automatically extract the ABI
+- **Recurring Source Contract ABI**: The contract's ABI for parsing events. This is auto-populated if you upload a contract file
+- **Recurring Event Name**: Select the event to listen for from the dropdown (for example, `Transfer(address,address,uint256)`)
+- **Recurring Event Filter**: Filter criteria for the event. Use `NA` if no filter is needed
+
+### Expires in
+
+Sets when the trigger expires. Use the calendar icon to select the expiry date and time. The Workflow Builder automatically converts this into a Unix timestamp.
+
+<Frame>
+  <img src="/images/workflow-builder/configure-workflow/date-picker.PNG" alt="Expires in calendar picker" />
+</Frame>
+
+### Optional trigger fields
+
+#### Meta
+
+The **Meta** field wis where you include additional metadata for your trigger. Use this field to store custom information that may be useful for tracking or debugging your workflow.
+
+#### Notification settings
+
+You can configure notifications to receive updates about your workflow's execution status by providing:
+
+- **Action Status Notification POST URL**: The webhook endpoint where KWALA sends execution status updates
+- **Action Status Notification API Key**: API key for authenticating with your notification endpoint
+
+Once you've configured your workflow triggers, Select **Next** to continue to action configuration.
+
+## Step 2: Configure actions
+
+Actions define what your workflow does when the trigger activates. You can add up to 10 actions per workflow.
+
+### Required fields for all actions
+
+Every action requires the following fields:
+
+- **Action Name**: A descriptive identifier for the action (for example, `transfer_funds` or `send_notification`)
+- **Action Type**: The type of operation to perform. KWALA supports three action types:
+  - **POST**: Make an API call to an external endpoint
+  - **CALL**: Call a function on an existing smart contract
+  - **Deploy**: Deploy a new smart contract
+
+The workflow builder prompts you to fill out additional required fields depending on the action type you select.
+
+### POST API call
+
+Use the **POST** action type to send HTTP requests to external APIs, webhooks, or notification services.
+
+<Frame>
+  <img src="/images/workflow-builder/configure-workflow/configure-actions.PNG" alt="Action configuration settings" />
+</Frame>
+
+Required fields for POST actions:
+
+- **API Endpoint**: The URL to send the request to (for example, `https://dev-api.kalp.network/webhook`)
+- **API Payload (JSON)**: The JSON data to include in the request body.
+- **Retries Until Success**: Number of retry attempts if the request fails
+
+#### Example POST configuration
+
+```yaml
+- Name: notification_action
+  Type: post
+  APIEndpoint: https://dev-api.kalp.network/webhook
+  APIPayload: 
+  {
+    "message": "Transfer detected",
+    "token": "ETH",
+    "threshold": 5
+  }
+  RetriesUntilSuccess: 5
+```
+
+### Call smart contract function
+
+Use the **CALL** action type to interact with an existing smart contract by calling one of its functions.
+
+<Frame>
+  <img src="/images/workflow-builder/configure-workflow/configure-call-actions.PNG" alt="CALL action configuration" />
+</Frame>
+
+Required fields for CALL actions:
+
+- **Target Contract**: The address of the smart contract to interact with (for example, `0x65b2b850fee0e0c13d956ab5...`)
+- **Target Function**: The function signature to call (for example, `function updateNFT(string memory userId, uint256 points)`)
+- **Chain ID**: The blockchain network where the contract is deployed. Select from the dropdown
+- **Target Parameters (one per line)**: The parameters to pass to the function. Enter each parameter on a separate line. You can use `re.event(0)`, `re.event(1)`, etc. to reference values from the triggering event
+- **Retries Until Success**: Number of retry attempts if the call fails
+
+#### Example CALL configuration
+
+```yaml
+- Name: transfer_funds
+  Type: call
+  TargetContract: 0x0f51bb10119727a7e5ea3538074fb341f56b09ad
+  TargetFunction: function transfer(address recipient,uint256 amount)
+  TargetParameters:
+    - 0x49e833337ece7afe375e44f4e3e8481029218e5c
+    - 100
+  ChainID: 1
+  RetriesUntilSuccess: 5
+```
+
+When adding target parameters for your action, you can use the event parameters from your trigger. Use `re.event(0)`, `re.event(1)`, `re.event(2)`, or any other index to reference values from the triggering event.
+
+### Deploy smart contract
+
+Use the **Deploy** action type to deploy a new smart contract to a blockchain network.
+
+<Frame>
+  <img src="/images/workflow-builder/configure-workflow/configure-deploy-action.PNG" alt="Deploy action configuration" />
+</Frame>
+
+Required fields for Deploy actions:
+
+- **Chain ID**: The blockchain network where the contract will be deployed. Select from the dropdown
+- **Smart Contract**: Upload a `.sol` file or paste your Solidity contract code directly. This is used to extract the bytecode and ABI
+- **Bytecode**: The compiled contract bytecode in hexadecimal format (for example, `0x608060405234801561001057600080fd5b50...`). This is auto-populated if you upload a contract file
+- **ABI Encoded**: The contract's ABI encoded in base64 format (for example, `W3siaW5wdXRzIjpbXSwibmFtZSI6ImV4YW1wbGUiLCJvdXRwdX...`). This is auto-populated if you upload a contract file
+- **Retries Until Success**: Number of retry attempts if deployment fails.
+
+### Adding multiple actions
+
+Select **Add Action** to include additional actions in your workflow. You can add up to 10 actions per workflow. Each action can be a different type, allowing you to combine contract calls, API requests, and deployments in a single workflow.
+
+Select **Next** when you've finished configuring all actions.
+
+<Info>
+  For more detailed information about action types and advanced parameters, see [Working with actions](/concepts/work-with-actions).
+</Info>
+
+## Step 3: Configure execution mode
+
+Choose how your actions should be processed using the **Execution Mode** dropdown:
+
+- **Sequential**: Actions execute one after another in order. Use this when later actions depend on the results of earlier actions.
+- **Parallel**: All actions execute simultaneously. Use this when actions are independent of each other and speed matters.
+
+<Frame>
+  <img src="/images/workflow-builder/configure-workflow/configure-execution-mode.PNG" alt="Execution mode selection" />
+</Frame>
+
+After selecting your execution mode, the builder displays a **Workflow Summary** that shows an overview of the configuration. The summary includes:
+
+- **Workflow Name**: The name you assigned to your workflow
+- **Trigger Contract**: The smart contract address being monitored
+- **Actions Count**: The total number of actions configured
+- **Execution Mode**: Whether actions run in parallel or sequential order
+
+## Review and create workflow
+
+Review the summary to verify your configuration is correct. Once you're satisfied, select **Create Workflow** to generate your workflow.
+
+After selecting **Create Workflow**, you should see a success message: **"Workflow created - Your workflow has been generated and loaded to the editor"**.
+
+The Workflow Builder generates a complete YAML automation script and opens it in the Workflow Editor for review. From there, you can make any additional edits before deploying.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Deploy workflow" icon="rocket" href="/workflow-builder/deploy-workflow">
+    Deploy your workflow to the network
+  </Card>
+  <Card title="Working with triggers" icon="bolt" href="/concepts/work-with-triggers">
+    Learn more about trigger types
+  </Card>
+  <Card title="Working with actions" icon="wand-magic-sparkles" href="/concepts/work-with-actions">
+    Explore action configuration options
+  </Card>
+  <Card title="Workflow templates" icon="copy" href="/concepts/using-workflow-templates">
+    Use pre-built workflow templates
+  </Card>
+</CardGroup>

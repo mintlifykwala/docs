@@ -1,0 +1,93 @@
+---
+title: 'Deploy workflow'
+description: 'Deploy your workflow to the KWALA network'
+---
+
+After creating and configuring your workflow, you need to compile, validate, and deploy it to the KWALA network. This guide walks you through ensuring your workflow runs correctly and deploying it onchain for execution.
+
+## Prerequisites
+
+- Completion of the steps in [Configure workflow](/workflow-builder/configure-workflow)
+- Your workflow loaded in the Workflow Editor
+
+## Review your workflow
+
+The Workflow Builder generates a complete YAML automation script and opens it in the Workflow Editor for review. Here, you can make any additional edits before compiling and deploying.
+
+<Frame>
+  <img src="/images/workflow-builder/deploy-workflow/workflow-created-successfully.PNG" alt="Workflow created successfully in the editor" />
+</Frame>
+
+## Compile your workflow
+
+Use the **Compile** button to validate your workflow schema. This performs a syntax check that ensures your workflow structure is correct. Schema validation must pass for the workflow to run.
+
+A successful compile displays the message: **"Workflow verified - Workflow has been successfully verified and compiled."**
+
+## Review logs and validation
+
+You can use the **Console Logs** tab under workflow information to view all logs and debug any issues.
+
+<Frame>
+  <img src="/images/workflow-builder/deploy-workflow/workflow-console-logs.PNG" alt="Console logs tab" />
+</Frame>
+
+You can also check the **Validation** pane for real-time workflow validation. This helps you catch errors as you make changes.
+
+<Frame>
+  <img src="/images/workflow-builder/deploy-workflow/workflow-editor-validation.PNG" alt="Validation pane" />
+</Frame>
+
+## Save your workflow
+
+Once everything is working correctly, select **Save Workflow**. When you select **Save Workflow**, your wallet window pops up. Here, you approve the save transaction. This is part of signing your intent to create the workflow, which creates an immutable record on-chain.
+
+<Frame>
+  <img src="/images/workflow-builder/deploy-workflow/save-workflow-wallet-approval.PNG" alt="Wallet approval for saving workflow" />
+</Frame>
+
+After approving the transaction, your workflow is saved and ready for deployment.
+
+## Deploy your workflow
+
+Once your workflow is saved, select **Deploy** to submit it to the KWALA network.
+
+<Frame>
+  <img src="/images/workflow-builder/deploy-workflow/deploy-button.PNG" alt="Deploy workflow button" />
+</Frame>
+
+After deployment, your workflow is live on the network and will begin monitoring for trigger conditions.
+
+<Warning>
+  Once your workflow is deployed and the transaction is confirmed, you can no longer edit or compile it. You may see messages like **"Editing is disabled"** or **"Cannot compile, workflow is pending, deployed, or claimed state"**. To make changes, you'll need to create a new workflow.
+</Warning>
+
+## Activate your workflow
+
+Once you've deployed your workflow, you need to activate it to start execution and enable trigger monitoring. When you select **Activate**, your wallet window pops up. Approve the transaction to confirm activation. Once the transaction is confirmed, your workflow begins monitoring for trigger conditions and will execute when those conditions are met.
+
+After activating your workflow, you can check the **Console Logs** for status updates. You'll see messages such as:
+
+- Starting automatic status polling
+- Trigger updates
+- Initializing actions
+- Actions deployed
+
+<Frame>
+  <img src="/images/workflow-builder/deploy-workflow/workflow-console-logs-active.PNG" alt="Console logs showing active workflow status" />
+</Frame>
+
+<Info>
+  You may notice some deduction in KWALA credits associated with deploying and activating your workflow onchain. These credits cover the cost of registering your workflow and enabling trigger monitoring on the network.
+</Info>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Monitor workflow" icon="chart-line" href="/workflow-builder/monitor-workflow">
+    Track your workflow execution status
+  </Card>
+  <Card title="KWALA Explorer" icon="magnifying-glass" href="/explorer/overview">
+    Explore workflows and executions on the network
+  </Card>
+</CardGroup>

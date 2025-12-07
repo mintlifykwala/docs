@@ -1,0 +1,110 @@
+---
+title: 'Best practices'
+description: 'Best practices for building workflows on KWALA'
+---
+
+Getting your workflows right the first time saves you credits and time spent debugging and fixing issues. This guide covers practical tips for building workflows that work well in production.
+
+## Validate YAML formatting
+
+Always validate your YAML for proper indentation and formatting before deploying. YAML is whitespace-sensitive, and incorrect indentation can cause parsing errors or unexpected behavior. Some common YAML issues to look for include: 
+
+- Use consistent indentation (two spaces recommended)
+- Check for inconsistent list formatting
+- Validate your workflow using the **Compile** button before saving
+- Check the **Validation** pane for real-time syntax and schema validation
+- Review **Console Logs** for detailed error messages
+
+## Test before deployment
+
+Always test your workflows using the KWALA Workflow Builder and compile feature before deploying to the network. Once deployed, workflows cannot be edited. Some testing recommendations for your workflow include:
+
+- Use the **Compile** button to validate schema and syntax
+- Review the generated YAML in the Workflow Editor
+- Verify trigger conditions are correctly configured
+- Confirm action parameters are accurate
+- Test with smaller values or test networks when possible
+
+<Warning>
+  Deployed workflows cannot be modified. Always verify your configuration before deployment to avoid creating unnecessary workflows.
+</Warning>
+
+## Choose the right execution mode
+
+Select the appropriate execution mode based on your workflow requirements:
+
+**Use parallel execution when:**
+
+- Actions are independent of each other
+- Speed is a priority
+- Actions don't rely on outputs from previous actions
+- You're sending notifications to multiple channels simultaneously
+
+**Use sequential execution when:**
+
+- Later actions depend on results from earlier actions
+- You need to maintain a specific order of operations
+- One action must complete before the next begins
+- You're building multi-step transaction flows
+
+
+## Combine Web2 and Web3 actions
+
+KWALA supports both on-chain and off-chain operations in a single workflow. Use this capability to build comprehensive automation that bridges blockchain and traditional enterprise systems.
+
+**Example use cases:**
+
+- Monitor on-chain events and send notifications via webhook
+- Trigger smart contract calls based on external API data
+- Log blockchain transactions to external databases
+- Integrate with messaging services like Discord or Telegram
+
+## Secure sensitive data
+
+Never hardcode API secrets, private keys, or sensitive credentials in your workflow definitions. Workflows are signed and stored on-chain, so your secrets may be readable. When dealing with sensitive data: 
+
+- Use secure webhook endpoints that handle authentication server-side
+- Avoid including API keys directly in workflow payloads
+- Use the **Action Status Notification API Key** field for authenticated callbacks
+- Keep notification endpoints behind authentication layers
+
+<Warning>
+  Workflow definitions are stored on-chain and are publicly visible. Never include private keys, API secrets, or sensitive credentials in your YAML.
+</Warning>
+
+## Set appropriate expiry dates
+
+Configure expiry dates for your workflows to prevent unnecessary credit consumption and ensure workflows don't run indefinitely. Setting appropriate expiration dates prevents runaway costs: 
+
+- Set realistic expiry dates based on your use case
+- Update expiry dates for workflows no longer in use
+- Monitor active workflows regularly
+- Deactivate workflows that are no longer needed
+
+## Use descriptive naming
+
+Use clear, descriptive names for your workflows and actions to make monitoring and debugging easier.
+
+- Use meaningful workflow names that describe their purpose
+- Name actions based on what they do (for example, `transfer_funds`, `send_alert`)
+- Include context in names when helpful (for example, `eth_price_monitor`)
+
+## Configure retry logic
+
+Set appropriate retry values for actions that may fail due to network issues or temporary conditions. Some tips when setting the retry logic are: 
+
+- Use the **Retries Until Success** field for critical actions
+- Consider the nature of the action when setting retry counts
+- Higher retries for network-dependent operations
+- Lower retries for actions that are unlikely to succeed on retry
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Create workflow" icon="plus" href="/workflow-builder/create-workflow">
+    Start building your first workflow
+  </Card>
+  <Card title="Deploy workflow" icon="rocket" href="/workflow-builder/deploy-workflow">
+    Deploy your workflow to the network
+  </Card>
+</CardGroup>

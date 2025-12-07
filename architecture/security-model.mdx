@@ -1,0 +1,138 @@
+---
+title: 'Security model'
+description: 'Understanding KWALA security model and best practices'
+---
+
+KWALA follows a zero-trust, verifiable execution approach that builds security guarantees across its infrastructure. Every layer of the system implements specific security measures to protect user assets and ensure trustless execution.
+
+## Security by layer
+
+KWALA implements security measures at every architectural layer:
+
+| Security layer | Measures |
+|----------------|----------|
+| **User layer** | Self-custody of keys, signed intents, non-repudiation |
+| **Node layer** | Permissioned entry, KMS-backed keys, sandboxed execution, mTLS |
+| **Workflow layer** | Immutable YAML intents, conditionally executable logic, execution logs |
+| **Verifier layer** | Watchdog verification, proof-based dispute, slashing mechanism |
+| **Infrastructure layer** | Distributed infra, autoscaling, rate-limiting, failover and redundancy |
+
+## Core security measures
+
+### Sandboxed execution
+
+Workflows run in isolated environments that prevent unauthorized access to system resources or external entities.
+
+- Each workflow executes in its own container
+- No access to host filesystem or network outside defined actions
+- Resource limits prevent denial-of-service attacks
+- Execution environments are destroyed after completion
+
+### Deterministic workflows
+
+Workflows execute identically across all nodes, producing consistent, verifiable results regardless of the node processing them.
+
+- Same inputs always produce same outputs
+- No reliance on node-specific state or randomness
+- Enables independent verification by any party
+- Ensures fair and predictable execution
+
+### Cryptographically signed actions
+
+Every action is signed and logged, creating an immutable audit trail traceable to the original user intent.
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   User Intent   │────▶│   Node Action   │────▶│   On-Chain Log  │
+│   (signed)      │     │   (signed)      │     │   (immutable)   │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+        │                       │                       │
+        └───────────────────────┴───────────────────────┘
+                    Cryptographic chain of custody
+```
+
+### Immutable workflow history
+
+All executions are permanently recorded on the Kalp Chain to enable audits and verification. You can use intent hashes, execution logs, and reports to verify historical workflow executions.
+
+| Record type | Purpose |
+|-------------|---------|
+| **Intent hashes** | Prove user authorization for specific workflows |
+| **Execution logs** | Detail every action taken during execution |
+| **Verifier reports** | Attest to correctness of execution |
+
+### Independent verifier nodes
+
+Lightweight validators recompute workflow logic and verify the correctness of executor actions and outputs.
+
+- Operate independently from execution nodes
+- Randomly assigned to prevent collusion
+- File disputes when deviations detected
+- Participate in slashing decisions
+
+### Permissioned nodes with KMS-backed keys
+
+All nodes are vetted through Kalp Governance, with private keys stored in non-extractable Key Management Systems that perform signing operations in hardware enclaves.
+
+- Node operators cannot access raw private keys
+- Signing happens inside hardware security modules
+- Keys are bound to specific node identities
+- Audit trails for all signing operations
+
+### Encrypted inter-node communication
+
+All node-to-node communication uses mutual TLS (mTLS) with node-specific certificates for authentication and encryption.
+
+- TLS 1.3 encryption for all traffic
+- Mutual authentication prevents impersonation
+- Certificate-based node identity verification
+- Protection against man-in-the-middle attacks
+
+## User layer security
+
+Users maintain complete control over their security:
+
+<CardGroup cols={2}>
+  <Card title="Self-custody" icon="key">
+    Users hold their own private keys—KWALA never has access
+  </Card>
+  <Card title="Signed intents" icon="signature">
+    Every workflow requires explicit user signature
+  </Card>
+  <Card title="Non-repudiation" icon="shield">
+    Cryptographic proof of user authorization
+  </Card>
+  <Card title="Revocation" icon="ban">
+    Users can deactivate workflows at any time
+  </Card>
+</CardGroup>
+
+## Infrastructure security
+
+The KWALA infrastructure implements enterprise-grade security controls:
+
+| Control | Implementation |
+|---------|----------------|
+| **Distributed infrastructure** | Nodes spread across multiple regions and providers |
+| **Autoscaling** | Dynamic capacity to handle load spikes |
+| **Rate limiting** | Protection against abuse and DoS attacks |
+| **Failover and redundancy** | Automatic recovery from node failures |
+| **Network isolation** | Segmented networks for different functions |
+| **Monitoring and alerting** | Real-time detection of anomalies |
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Public verifiability" icon="eye" href="/architecture/public-verifiability">
+    Learn about audit and verification
+  </Card>
+  <Card title="Verifier nodes" icon="shield-check" href="/architecture/verifier-nodes">
+    Understand the verification process
+  </Card>
+  <Card title="Node architecture" icon="server" href="/architecture/node-architecture">
+    Deep dive into node security
+  </Card>
+  <Card title="System overview" icon="sitemap" href="/architecture/system-overview">
+    Review the complete architecture
+  </Card>
+</CardGroup>

@@ -1,0 +1,122 @@
+---
+title: 'Glossary'
+description: 'Key terms and concepts around the KWALA protocol'
+---
+
+This glossary provides definitions for key terms and concepts used throughout the KWALA platform and documentation.
+
+## Core terms
+
+### Workflow
+A sequence of tasks automated via YAML scripts. Workflows define the actions to be executed and the conditions that trigger them, enabling automated blockchain interactions and off-chain operations.
+
+### KWALA Virtual Machine (KVM)
+The KWALA Virtual Machine (KVM) is the execution engine that interprets and processes workflow definitions. It functions as a deterministic runtime environment where YAML-based workflows are parsed, validated, and prepared for execution across the decentralized network.
+
+### Trigger
+Event, time, or price condition that activates a workflow. Triggers can be blockchain events (like token transfers), time-based schedules (cron jobs), or custom conditions that determine when your workflow should execute.
+
+### Orchestrator
+Component managing workflow lifecycle and retries. The orchestrator coordinates workflow execution, handles failures, manages retry logic, and ensures reliable execution across the KWALA network.
+
+### Credit system
+Usage-based payment mechanism for executions. KWALA uses credits as the payment unit for workflow executions, with costs determined by computational resources, gas fees, and complexity.
+
+## Blockchain terms
+
+### Smart contract
+Self-executing code deployed on a blockchain that automatically enforces predefined rules and conditions without intermediaries.
+
+### ABI (Application Binary Interface)
+Standard interface for interacting with smart contracts, defining function signatures, parameters, and return types.
+
+### Gas
+Transaction fee paid for executing operations on blockchain networks, measured in the native cryptocurrency of each chain.
+
+### Chain ID
+Unique identifier for blockchain networks, used to distinguish between mainnet, testnet, and different blockchain ecosystems.
+
+### EVM (Ethereum Virtual Machine)
+Runtime environment for executing smart contracts on Ethereum and EVM-compatible blockchains.
+
+## KWALA-specific terms
+
+### KWALA address
+Unique identifier derived from your KALP Wallet address, following the format: `KWL-{YourKalpAddress}-CC`. This address is used for credit management and workflow execution.
+
+### KALP Wallet
+Primary wallet integration for KWALA, used for authentication, credit purchases, and managing your KWALA address.
+
+### Action
+Individual step within a workflow that performs a specific task, such as deploying a contract, calling a function, or making an API request.
+
+### Execution mode
+Determines how actions in a workflow are processed: either `parallel` (all actions run simultaneously) or `sequential` (actions run one after another).
+
+### Block triggers
+Execution credits allocated for blockchain event monitoring, included with your KWALA credit purchases.
+
+### Verifier nodes
+Network nodes that validate and verify workflow executions, ensuring transparency and correctness of automated tasks.
+
+## Workflow components
+
+### Event filter
+Criteria used to filter blockchain events, often using regex patterns to match specific transaction parameters or addresses.
+
+### Bytecode
+Compiled smart contract code in hexadecimal format, required when deploying new contracts through workflows.
+
+### Encoded ABI
+ABI-encoded function call data used to interact with smart contracts, specifying the function and its parameters.
+
+### Target contract
+Address of an existing smart contract that a workflow action will interact with.
+
+### API endpoint
+URL of an external service that a workflow can call to fetch data or trigger external operations.
+
+## Payment and billing
+
+### USDT
+Stablecoin (Tether) used for purchasing KWALA credits on BNB Smart Chain.
+
+### Wallet swap
+Direct method of exchanging USDT for KWALA credits from your connected wallet.
+
+### Easy transfer
+Payment method allowing you to purchase KWALA credits for a specified recipient address.
+
+### Exchange rate
+Current conversion rate between USDT and KWALA credits (For example, 49 USDT = 20 KWALA credits).
+
+## Network and infrastructure
+
+### BNB Smart Chain (BSC)
+Blockchain network where KWALA credit transactions are processed.
+
+### Public verifiability
+Feature allowing anyone to verify workflow execution results and ensuring transparency in the KWALA network.
+
+### Workflow execution flow
+The complete lifecycle of a workflow from trigger activation through action execution to completion and verification.
+
+## Development terms
+
+### YAML
+Human-readable data serialization language used to define KWALA workflows.
+
+### Regex (Regular expressions)
+Pattern-matching syntax used in workflows to filter events and validate data.
+
+### Template
+Pre-built workflow configuration that can be customized for specific use cases.
+
+### Reusable component
+Modular workflow element that can be shared and reused across multiple workflows (coming soon).
+
+## Need more information?
+
+<Card title="Community and contact" icon="comments" href="/support/community-and-contact">
+  Have a term you'd like defined? Reach out to our community or support team.
+</Card>

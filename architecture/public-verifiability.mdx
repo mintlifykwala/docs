@@ -1,0 +1,181 @@
+---
+title: 'Public verifiability'
+description: 'Understanding public verifiability in KWALA'
+---
+
+Public verifiability is a core principle of the KWALA network. All core activity logs and proofs are stored immutably on the Kalp Chain, enabling complete transparency and auditability of workflow executions.
+
+KWALA ensures that every workflow execution can be independently verified by anyone. This transparency creates trust without requiring users to rely on any single party, including KWALA itself.
+
+<Frame>
+  <img src="/images/architecture/kwala-public-verifiability.png" alt="KWALA Public Verifiability Architecture" />
+</Frame>
+
+## Verifiability features
+
+| Feature | Explanation |
+|---------|-------------|
+| **Intent hashing** | Each user's workflow intent is hashed and logged with their signature |
+| **Execution logs** | Actions, inputs, results, and metadata are logged in Merkle-tree-based structures |
+| **Verifier reports** | Verifier nodes post zero-knowledge proofs or full logs to validate action correctness |
+| **Auditability** | Any third party or regulator can replay and verify historical workflow executions |
+
+## Intent hashing
+
+When a user submits a workflow, the complete YAML definition is cryptographically hashed and stored on Kalp Chain alongside the user's signature.
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    User Workflow                        │
+│  ┌─────────────────┐    ┌─────────────────────────────┐ │
+│  │   YAML Intent   │───▶│   Keccak-256 Hash           │ │
+│  └─────────────────┘    └─────────────────────────────┘ │
+│           │                          │                  │
+│           ▼                          ▼                  │
+│  ┌─────────────────┐    ┌─────────────────────────────┐ │
+│  │  User Signature │    │   On-Chain Record           │ │
+│  └─────────────────┘    │   - Intent Hash             │ │
+│                         │   - Signature               │ │
+│                         │   - Timestamp               │ │
+│                         └─────────────────────────────┘ │
+└─────────────────────────────────────────────────────────┘
+```
+
+This creates a non-repudiable record that:
+
+- Proves the user authorized the specific workflow
+- Cannot be altered after submission
+- Serves as the reference for all verification
+
+## Execution logs
+
+All workflow executions generate detailed logs stored in Merkle-tree-based structures on Kalp Chain.
+
+### Logged data
+
+| Data type | Description |
+|-----------|-------------|
+| **Trigger data** | The event or condition that activated the workflow |
+| **Input parameters** | All values passed to workflow actions |
+| **Action results** | Outputs and return values from each action |
+| **State transitions** | Changes to on-chain state caused by the workflow |
+| **Timestamps** | Precise timing of each execution step |
+| **Node identity** | Which execution node processed the workflow |
+
+### Merkle tree structure
+
+Execution logs are organized in Merkle trees, enabling:
+
+- **Efficient verification**: Verify specific log entries without downloading entire history
+- **Tamper detection**: Any modification invalidates the Merkle root
+- **Compact proofs**: Generate small proofs for specific execution claims
+
+## Verifier reports
+
+Verifier nodes submit reports to Kalp Chain that attest to execution correctness.
+
+### Report types
+
+<CardGroup cols={2}>
+  <Card title="Zero-knowledge proofs" icon="lock">
+    Cryptographic proofs that verify execution without revealing sensitive data
+  </Card>
+  <Card title="Full execution logs" icon="list">
+    Complete step-by-step records of workflow re-computation
+  </Card>
+</CardGroup>
+
+### Report contents
+
+Each verifier report includes:
+
+- Reference to the original intent hash
+- Execution proof from the executor node
+- Verifier's independent computation result
+- Attestation or dispute status
+- Verifier node signature
+
+## Auditability
+
+Any third party or regulator can replay and verify historical workflow executions using the public records on Kalp Chain.
+
+### Audit process
+
+<Steps>
+  <Step title="Retrieve intent">
+    Fetch the original workflow definition and user signature from Kalp Chain using the intent hash.
+  </Step>
+  
+  <Step title="Retrieve execution logs">
+    Download the Merkle-proofed execution logs for the specific workflow execution.
+  </Step>
+  
+  <Step title="Replay execution">
+    Using the logged trigger data and inputs, independently re-execute the workflow logic.
+  </Step>
+  
+  <Step title="Compare results">
+    Verify that the replayed execution matches the logged results and verifier attestations.
+  </Step>
+</Steps>
+
+### Audit use cases
+
+| Use case | Description |
+|----------|-------------|
+| **Regulatory compliance** | Demonstrate automated actions followed approved policies |
+| **Dispute resolution** | Provide evidence in case of contested transactions |
+| **Security audits** | Verify no unauthorized actions were executed |
+| **Operational review** | Analyze workflow performance and behavior |
+
+## Benefits of public verifiability
+
+### For users
+
+- **Transparency**: See exactly what actions were taken on your behalf
+- **Accountability**: Hold execution nodes responsible for their actions
+- **Trust**: Verify without relying on any single party
+
+### For enterprises
+
+- **Compliance**: Meet regulatory requirements for audit trails
+- **Risk management**: Independently verify automated operations
+- **Due diligence**: Audit third-party workflow providers
+
+### For the network
+
+- **Integrity**: Ensure all participants follow the rules
+- **Decentralization**: Remove reliance on trusted intermediaries
+- **Security**: Detect and penalize malicious behavior
+
+## Accessing verification data
+
+### KWALA Explorer
+
+The [KWALA Explorer](/explorer/overview) provides a user-friendly interface to:
+
+- View workflow execution history
+- Inspect execution logs and proofs
+- Verify specific transactions
+- Download audit reports
+
+### Kalp Chain direct access
+
+Developers can query Kalp Chain directly to:
+
+- Retrieve raw execution proofs
+- Verify Merkle proofs programmatically
+- Build custom audit tools
+- Integrate verification into applications
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Verifier nodes" icon="shield-check" href="/architecture/verifier-nodes">
+    Learn how verifiers validate executions
+  </Card>
+  <Card title="KWALA Explorer" icon="magnifying-glass" href="/explorer/overview">
+    Explore workflow executions
+  </Card>
+</CardGroup>
+

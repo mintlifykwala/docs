@@ -1,0 +1,78 @@
+---
+title: 'Create workflow'
+description: 'Learn how to create a new workflow in KWALA'
+---
+
+This guide walks you through creating a new workflow using the KWALA Workflow Builder. The visual builder provides a form-based interface that generates YAML automatically, making it easy to configure triggers, actions, and execution settings without writing code.
+
+## Prerequisites
+
+Before creating a workflow, ensure you have:
+
+- A connected Web3 wallet (MetaMask, Rainbow, Coinbase Wallet, or WalletConnect)
+- KWALA credits in your account
+
+## Create a new workflow
+
+<Steps>
+  <Step title="Open the KWALA dashboard">
+    Navigate to the [KWALA dashboard](https://app.kwala.network/dashboard) and sign in with your connected wallet.
+  </Step>
+
+  <Step title="Start a new workflow">
+    Select **New Workflow** or **Create Your First Workflow** button on the dashboard.
+
+    <Frame>
+      <img src="/images/workflow-builder/create-workflow/create-first-workflow.png" alt="New workflow button on the dashboard" />
+    </Frame> 
+  </Step>
+
+  <Step title="Open the Workflow builder">
+    You'll be redirected to the Workflow Editor. Select **Workflow Builder** in the top right of the navigation menu to open the visual builder.
+
+    <Frame>
+      <img src="/images/workflow-builder/create-workflow/select-workflow-builder.png" alt="Workflow Builder button in navigation" />
+    </Frame>
+
+    A new window opens where you can visually build your workflow step by step using the form-based UI.
+  </Step>
+
+  <Step title="Enter workflow information">
+    Start by providing basic information about your workflow:
+
+    - **Workflow name**: Enter a descriptive name that identifies your workflow's purpose
+
+    Select **Next** to continue.
+
+    <Frame>
+      <img src="/images/workflow-builder/create-workflow/workflow-name.png" alt="Workflow name input" />
+    </Frame>
+  </Step>
+
+  <Step title="Configure triggers and actions">
+    Next, configure your workflow's triggers and actions:
+
+    - **Triggers**: Define when your workflow should activate.
+    - **Actions**: Specify what your workflow should do when triggered (up to 10 actions)
+    - **Execution mode**: Choose sequential or parallel execution
+
+    <Frame>
+      <img src="/images/workflow-builder/create-workflow/configure-triggers.png" alt="Trigger and action configuration" />
+    </Frame>
+    For detailed configuration options, see [Configure workflow](/workflow-builder/configure-workflow).
+  </Step>
+</Steps>
+
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Configure workflow" icon="sliders" href="/workflow-builder/configure-workflow">
+    Set up triggers, actions, and execution mode
+  </Card>
+  <Card title="Workflow templates" icon="copy" href="/concepts/using-workflow-templates">
+    Start with pre-built templates
+  </Card>
+</CardGroup>
+
+

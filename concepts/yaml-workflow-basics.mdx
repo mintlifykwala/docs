@@ -1,0 +1,103 @@
+---
+title: 'KWALAng language'
+description: 'Learn the fundamentals of creating workflows with YAML'
+---
+
+KWALA Scripts are YAML-based declarative workflows that define automated backend logic for blockchain applications. These scripts enable developers to create off-chain automation that reacts to on-chain events, time-based triggers, or Web2 inputs without requiring traditional servers, polling mechanisms, or custom infrastructure.
+
+## What makes KWALAng different
+
+KWALAng eliminates the complexity of blockchain automation by providing a declarative language where you simply define what should happen and when. In KWALAng, you write workflows in YAML that specify:
+
+- **When** your workflow should activate (triggers)
+- **What** conditions must be met (optional conditional logic)
+- **How** actions should execute (sequential or parallel)
+- **Where** actions should run (which blockchain networks or APIs)
+
+## KWALA's YAML structure
+
+KWALA workflows use a simple key-value pair format to organize information. Think of it like a form where each field has a label (the key) and an answer (the value). This makes workflows easy to read and understand.
+
+A key-value pair is written as: `Key: value`
+
+The **key** is the label that describes what information you are providing. The **value** is the actual information. For example:
+
+```yaml
+Name: my_token_monitor
+ChainID: 1
+```
+
+Here, `Name` and `ChainID` are keys, and `my_token_monitor` and `1` are their corresponding values.
+
+### Organize information with sections
+
+KWALA workflows organize related information into sections. Each section groups together related key-value pairs. The main sections are:
+
+- **Name**: The identifier for your workflow
+- **Trigger**: When and how your workflow activates
+- **Actions**: What happens when the workflow runs
+- **Execution**: How the actions should be processed
+
+### Example YAML workflow
+
+Let's break down a real KWALA workflow:
+
+```yaml
+Name: token_transfer_monitor
+```
+
+This gives your workflow a name so you can identify it later.
+
+```yaml
+Trigger:
+  TriggerSourceContract: 0x49e833337ece7afe375e44f4e3e8481029218e5c
+  TriggerChainID: 1
+  TriggerEventName: Transfer(address,address,uint256)
+```
+
+Here, we tell KWALA what to watch for. In plain English: "Monitor contract 0x49e8...18e5c on Ethereum (chain 1) for Transfer events."
+
+```yaml
+Actions:
+  - Name: transfer_funds
+    Type: call
+    TargetContract: 0x0f51bb10119727a7e5ea3538074fb341f56b09ad
+    TargetFunction: function transfer(address recipient,uint256 amount)
+    TargetParams:
+      - 0x49e833337ece7afe375e44f4e3e8481029218e5c
+      - 100
+    ChainID: 1
+```
+
+Here, we tell KWALA what to do when triggered. In plain English: "Call the transfer function on contract 0x0f51...09ad and send 100 tokens to address 0x49e8...18e5c."
+
+```yaml
+  - Name: notification_action
+    Type: post
+    APIEndpoint: https://workflow-notification-test.kalp.network/push_notification
+    APIPayload:
+      success: true
+```
+
+This sends a notification to an external service. In plain English: "Send a message to this URL confirming the action was successful."
+
+```yaml
+Execution:
+  Mode: sequential
+```
+
+Here, we specify the execution mode, telling KWALA to run each action one after another, waiting for each to complete before starting the next.
+
+### Key patterns to remember
+
+- **Indentation matters**: Items that belong together are indented (moved to the right). This shows their relationship. For example, all trigger-related information is indented under `Trigger:`.
+
+- **Lists use dashes**: When you have multiple items of the same type (like multiple actions), each one starts with a dash `-`.
+
+- **Values can be text, numbers, or addresses**: KWALA accepts different types of information depending on what the key needs.
+
+- **NA means not applicable**: If a field does not apply to your workflow, you can use `NA` to indicate it is intentionally left empty.
+
+<Card title="Next Steps" icon="arrow-right" href="/workflow-builder/create-workflow">
+  Learn how to create your first workflow
+</Card>
