@@ -1,0 +1,94 @@
+---
+title: 'Workflow execution'
+description: 'Understand how workflows are executed on the Kwala network'
+---
+
+Workflow execution on KWALA is the automated process of monitoring for specific triggers, validating workflow conditions, and executing defined actions across blockchain networks. Each execution is cryptographically verified and recorded on-chain for transparency and auditability.
+
+## Workflow components
+
+Every KWALA workflow consists of several components that define its behavior and execution:
+
+- **Triggers**: A trigger defines when and how workflows are activated. Triggers listen to specific events, conditions, or time intervals to initiate workflow execution. Learn more about [KWALA workflow triggerss](/concepts/work-with-triggers).
+
+- **Condition**: Determines whether the workflow should proceed based on specific criteria. Conditions evaluate trigger data and decide if actions should execute. For example, only proceeding if a transaction amount exceeds a threshold or a specific wallet address is involved.
+
+- **Action**: Defines what happens when the trigger fires and conditions are met. Actions can include calling smart contracts on any supported chain, sending webhooks to external APIs, transferring tokens between addresses, or coordinating multiple operations across different networks. Learn more about [KWALA workflow actions](/concepts/work-with-actions).
+
+- **Execution policy**: Specifies how the workflow runs, including execution mode, retry logic, and priority settings. This determines whether actions run sequentially or in parallel, and how the system handles failures.
+
+- **Expiry/TTL**: Ensures workflows don't execute indefinitely or after they're no longer relevant. You can set time-to-live parameters that automatically deactivate workflows after a specified period.
+
+- **Cross-chain dependencies**: Allows workflows to coordinate actions across multiple blockchain networks. KWALA handles complex multi-chain orchestration such that you can define cross-chain logic in a single workflow definition.
+
+## Execution modes
+
+KWALA supports two execution modes that determine how your workflow actions are processed:
+
+<CardGroup cols={2}>
+  <Card title="Sequential" icon="list-ol">
+    Actions execute one after another in order
+  </Card>
+  <Card title="Parallel" icon="diagram-project">
+    All actions execute simultaneously
+  </Card>
+</CardGroup>
+
+### Sequential execution
+
+In sequential mode, actions execute one after another in the order they're defined. Each action waits for the previous action to complete before starting. This mode is useful when:
+
+- Later actions depend on the results of earlier actions
+- You need to maintain a specific order of operations
+- Actions must complete in a deterministic sequence
+
+**Example use case:** Monitor a DeFi position, calculate if rebalancing is needed, then execute the rebalance transaction only if conditions are met.
+
+### Parallel execution
+
+In parallel mode, all actions execute simultaneously. This mode is useful when:
+
+- Actions are independent of each other
+- You want to maximize execution speed
+- Multiple operations can happen at the same time
+
+**Example use case:** Send notifications to multiple channels (email, Discord, Telegram) when a governance proposal is created.
+
+## Workflow execution lifecycle
+
+Understanding the workflow lifecycle helps you monitor and debug executions. Every KWALA workflow follows a four-step execution process:
+
+<Steps>
+  <Step title="User-signed intent">
+    The user defines a workflow in YAML and signs it using their self-custody wallet. This signature creates a cryptographic commitment that the user cannot later deny (non-repudiation). The signed workflow is submitted to the KWALA network and stored on-chain as an immutable record of the user's intent.
+  </Step>
+  
+  <Step title="Trigger detection">
+    KWALA nodes continuously monitor on-chain events, price feeds, and time intervals to detect when workflow triggers activate. When a trigger condition is met, eligible nodes compete to claim the right to execute the workflow. The first node to successfully claim the workflow begins the execution process.
+  </Step>
+  
+  <Step title="Execution and proof generation">
+    The executing node validates the signed intent against the on-chain record to ensure the workflow has not been tampered with. The node then processes the workflow logic, executes all defined actions, and generates a cryptographic proof of execution. This proof is stored on the Kalp Chain and includes all inputs, outputs, and state transitions that occurred during execution.
+  </Step>
+  
+  <Step title="Verifier node audit">
+    Independent verifier nodes re-compute the workflow logic and compare their results against the execution proof submitted by the executing node.  If a node deviates from intent, it is slashed or blacklisted via on-chain governance.
+  </Step>
+</Steps>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Working with Actions" icon="bolt" href="/concepts/working-with-actions">
+    Learn about action types and parameters
+  </Card>
+  <Card title="Working with Triggers" icon="clock" href="/concepts/working-with-triggers">
+    Master workflow trigger configuration
+  </Card>
+  <Card title="Best Practices" icon="sparkles" href="/concepts/best-practices">
+    Follow production workflow guidelines
+  </Card>
+  <Card title="KWALA Explorer" icon="magnifying-glass" href="/explorer/viewing-execution-details">
+    Monitor your workflow executions
+  </Card>
+</CardGroup>

@@ -1,0 +1,143 @@
+---
+title: 'Quickstart'
+description: 'Get started with KWALA - Set up wallet and get ready to build your first workflow'
+---
+
+Before you can create and run KWALA workflows, you need to set up your wallet and get KWALA credits. This guide walks you through the complete setup process in three steps.
+
+## Step 1: Connect your Web3 wallet
+
+KWALA supports multiple Web3 wallets such as MetaMask, Rainbow, Base Account, WalletConnect, and more.
+
+<Info>
+  This quickstart uses MetaMask as an example, but you can use any supported wallet.
+</Info>
+
+<Steps>
+  <Step title="Install a Web3 wallet">
+    If you don't already have a wallet, download and install one. For MetaMask, visit [metamask.io](https://metamask.io). You'll need to:
+    - Create a new wallet or import an existing one
+    - Save your recovery phrase securely
+    - Configure it for BNB Smart Chain network (required for purchasing credits)
+  </Step>
+  
+  <Step title="Navigate to the KWALA dashboard"> 
+    Open the [KWALA dashboard](https://kwala.network/dashboard), and select **My Workflows** to access the workflow builder.
+    <Frame>
+      <img src="/images/getting-started/quickstart/kwala-dashboard.PNG" alt="KWALA dashboard interface" />
+    </Frame>
+  </Step>
+  
+  <Step title="Connect your wallet">
+    On the dashboard, select the **Connect Wallet** button. Choose your preferred wallet from the available options.
+  </Step>
+  
+  <Step title="Authorize connection">
+    Approve the connection request in your MetaMask wallet to link it with the KWALA network.
+  </Step>
+  
+  <Step title="Verify connection">
+    Once connected, you'll see your wallet address displayed in the dashboard. You can disconnect your wallet at any time by selecting your address. 
+  </Step>
+</Steps>
+
+## Step 2: Purchase KWALA credits
+
+KWALA uses a credit-based system to execute workflows. Follow these steps to add KWALA credits to your account:
+
+<Steps>
+  <Step title="Open the KWALA payments page">
+    Navigate to [payments.kwala.network](https://payments.kwala.network/) to access the payment portal.
+  </Step>
+  
+  <Step title="Purchase credits">
+    Choose your preferred payment method:
+    - **Wallet Swap**: Directly swap USDT for KWALA credits from your connected wallet (instant)
+    - **Easy Transfer**: Send USDT to a provided address to purchase credits
+  </Step>
+</Steps>
+
+For a detailed step-by-step guide on purchasing KWALA credits, including wallet connection and payment methods, see our [Get KWALA Credits](/getting-started/get-kwala-tokens) guide.
+
+## Step 3: Build your first workflow
+
+Once your wallet is set up and you've purchased credits, you're ready to create your first KWALA workflow.
+
+<Steps>
+  <Step title="Create new workflow">
+    Select the **Create Your First Workflow** or **New Workflow** button on your dashboard.
+    <Frame>
+      <img src="/images/getting-started/quickstart/create-new-workflow.PNG" alt="Create new workflow button on dashboard" />
+    </Frame>
+  </Step>
+  
+  <Step title="Choose a starting point">
+    You can either:
+    - Start from a blank workflow
+    - Use a pre-built template
+    - Import an existing YAML file
+  </Step>
+  
+  <Step title="Configure your workflow">
+    Use the **Workflow Builder** to visually configure your workflow. This form-based UI lets you set up triggers, actions, and execution settings without writing YAML.
+
+    <Frame>
+      <img src="/images/getting-started/quickstart/kwala-workflow-builder.PNG" alt="KWALA workflow builder interface" />
+    </Frame>
+
+    In the workflow builder:
+    - Provide a name for your workflow
+    - Add trigger configuration
+    - Add up to 10 actions to execute when trigger conditions are met
+    - Configure the execution mode
+
+    Once done, KWALA generates the complete YAML automation script based on your configurations. Save the workflow.
+  </Step>
+
+  <Step title="Review and edit your workflow">
+    After saving, your workflow opens in the **Workflow Editor** where you can view and modify the generated YAML directly.
+
+    <Frame>
+      <img src="/images/getting-started/quickstart/kwala-workflow-editor.PNG" alt="KWALA workflow editor interface" />
+    </Frame>
+
+    In the workflow editor, you can fine-tune:
+    - **Name**: Update your workflow's name
+    - **Execution mode**: Switch between parallel or sequential execution
+    - **Triggers**: Adjust when your workflow should run
+    - **Actions**: Modify contract calls, API endpoints, or notification settings
+
+    <Tip>
+      You can switch back to the visual Workflow Builder at any time by selecting the **Workflow Builder** button in the top navigation pane.
+    </Tip>
+  </Step>
+  
+  <Step title="Test your workflow">
+    Before you deploy the workflow, use the **Compile** feature to validate your configuration. This validates your workflow for syntax and schema correctness. You can use the **Console Logs** tab for more details about your workflow, including any validation errors. 
+  </Step>
+  
+  <Step title="Deploy and execute">
+    Once you're satisfied with your workflow, **Deploy** it to the KWALA network and **Activate** it.
+  </Step>
+
+</Steps>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Create Your First Workflow" icon="file-code" href="/workflow-builder/overview">
+    Learn how to write KWALA scripts
+  </Card>
+  
+  <Card title="YAML Basics" icon="book" href="/concepts/yaml-workflow-basics">
+    Understanding KWALA's YAML structure
+  </Card>
+  
+  <Card title="Workflow Templates" icon="template" href="/concepts/using-workflow-templates">
+    Start with pre-built templates
+  </Card>
+  
+  <Card title="API Reference" icon="code" href="/api-reference/overview">
+    Explore the KWALA API
+  </Card>
+</CardGroup>

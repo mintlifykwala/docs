@@ -1,0 +1,112 @@
+---
+title: 'Monitor workflow'
+description: 'Monitor the execution of your workflow'
+---
+
+After deploying and activating a workflow, you can monitor its execution status, track successful and failed actions, and review detailed execution logs from the KWALA dashboard.
+
+## Prerequisites
+
+- A deployed and activated workflow. See [Deploy workflow](/workflow-builder/deploy-workflow).
+
+## View your workflows
+
+Navigate to the [KWALA dashboard](https://app.kwala.network/dashboard) to view all workflows associated with your account.
+
+<Frame>
+  <img src="/images/workflow-builder/monitor-workflow/my-workflows-dashboard.PNG" alt="My workflows dashboard" />
+</Frame>
+
+The **My Workflows** dashboard displays a cumulative overview of:
+
+- **Successful actions**: Total number of actions that completed successfully
+- **Failed actions**: Total number of actions that failed
+- **Average execution time**: The average time taken to execute actions
+- **Chains used**: The blockchain networks your workflows interact with
+
+### Successful actions
+
+Select the **Successful Actions** tab to see a detailed view of all workflow executions and their results.
+
+<Frame>
+  <img src="/images/workflow-builder/monitor-workflow/successful-actions-metadata.PNG" alt="Successful actions tab" />
+</Frame>
+
+Each record includes the following metadata:
+
+- **Workflow**: The name of the workflow
+- **Action**: The specific action that was executed
+- **Timestamp**: When the action was executed
+- **Execution time**: How long the action took to complete
+- **Gas fees**: The gas consumed for the action
+- **Chain ID**: The blockchain network where the action executed
+- **Action completed**: Confirmation that the action finished successfully
+
+### Failed actions
+
+Expand the **Failed Actions** pane to review actions that did not complete successfully. Use this information to identify and resolve workflow issues.
+
+### Chains used
+
+The **Chains Used** section displays all blockchain networks your workflows have interacted with. Select this pane to view detailed on-chain activity.
+
+## View workflow details
+
+Select the workflow you want to monitor. The workflow information pane displays the current status of your workflow.
+
+<Frame>
+  <img src="/images/workflow-builder/monitor-workflow/workflow-information-pane.PNG" alt="Workflow details pane" />
+</Frame>
+
+<Tip>
+  To prevent unnecessary credit consumption by deployed workflows, update the expiry date for workflows that are no longer in use.
+</Tip>
+
+You can also use the **Console Logs** tab to monitor action execution in real-time and troubleshoot issues.
+
+## Monitor workflows using KWALA Explorer
+
+You can also monitor your workflows using the [KWALA Explorer](https://kwala-explorer.lovable.app/). The Explorer provides an alternative view of your workflow activity and execution history.
+
+To view your workflows in the Explorer:
+
+1. Navigate to [KWALA Explorer](https://kwala-explorer.lovable.app/)
+2. Search the workflow using the workflow name or wallet address
+3. View the overview of all workflows associated with your account
+
+<Frame>
+  <img src="/images/workflow-builder/monitor-workflow/explorer-wallet-address-overview.PNG" alt="Explorer wallet address overview" />
+</Frame>
+
+The overview displays:
+
+- Total workflows deployed with your wallet address
+- Total actions executed
+
+### Recent actions
+
+Use the **Recent Actions** pane to view detailed execution records, including:
+
+- **Workflow ID**: Unique identifier for the workflow
+- **Actions**: Specific actions that were executed
+- **Chains**: Blockchain networks used
+- **Gas fees**: Gas consumed during execution
+- **Timestamp**: When the action was executed
+- **Status**: Execution status (success, failed, pending)
+
+Selecting a **Workflow ID** opens detailed workflow information, including trigger configuration, action history, and execution logs.
+
+<Info>
+  For more information on using the KWALA Explorer, see [KWALA Explorer overview](/explorer/overview).
+</Info>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="KWALA Explorer" icon="magnifying-glass" href="/explorer/overview">
+    Explore workflows and executions on the network
+  </Card>
+  <Card title="Create workflow" icon="plus" href="/workflow-builder/create-workflow">
+    Create a new workflow
+  </Card>
+</CardGroup>

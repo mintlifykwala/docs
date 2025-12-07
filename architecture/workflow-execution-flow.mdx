@@ -1,0 +1,46 @@
+---
+title: 'Workflow execution lifecycle'
+description: 'How workflows are executed in KWALA'
+---
+
+Every KWALA workflow follows a structured execution lifecycle that ensures security, verifiability, and transparency. From the moment a user signs their workflow intent to the final verification by independent nodes, each step is designed to maintain trustless execution while providing a complete audit trail on the Kalp Chain.
+
+<Frame>
+  <img src="/images/architecture/workflow-execution-lifecycle.png" alt="KWALA Workflow Execution Lifecycle" />
+</Frame>
+
+## Execution steps
+
+<Steps>
+  <Step title="User-signed intent">
+    The user defines a workflow in YAML and signs it using their self-custody wallet (such as MetaMask or Kalp Wallet). This signature proves ownership and creates a non-repudiable authorization. The signed workflow is submitted to the KWALA network and stored on Kalp Chain as an immutable record.
+  </Step>
+  
+  <Step title="Trigger detection">
+    KWALA nodes monitor on-chain events, price feeds, and time intervals across multiple blockchain networks. When a trigger condition is met, eligible nodes compete to claim the workflow execution. The first node to successfully claim the workflow begins the execution process.
+  </Step>
+  
+  <Step title="KVM processing">
+    The claiming node's KVM parses and validates the workflow against the on-chain signed intent. It extracts event parameters using the `re.event(n)` syntax and prepares the action sequence for execution in a sandboxed environment.
+  </Step>
+  
+  <Step title="Execution and proof generation">
+    The node validates the signed intent, executes each action, and signs the outcome. The cross-chain action engine handles on-chain operations while the Web2 integration layer processes external API calls. All actions and results are logged in a verifiable proof format and committed to Kalp Chain.
+  </Step>
+  
+  <Step title="Verifier node audit">
+    Independent verifier nodes check the execution log, YAML workflow, and original intent. They re-compute the workflow logic and compare results against the submitted proof. If a node deviates from the user's intent, it is slashed or blacklisted via on-chain governance, providing a permanent, auditable record.
+  </Step>
+</Steps>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="System overview" icon="sitemap" href="/architecture/system-overview">
+    Review the complete architecture
+  </Card>
+  <Card title="Verifier nodes" icon="shield-check" href="/architecture/verifier-nodes">
+    Learn about the verification process
+  </Card>
+</CardGroup>
+

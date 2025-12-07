@@ -1,0 +1,312 @@
+---
+title: 'Triggers'
+description: 'Learn about workflow triggers in Kwala'
+---
+
+Triggers define when and how your KWALA workflows are activated. They are the "listening" mechanism that watches for specific events, conditions, or time intervals to automatically execute your workflows. Triggers eliminate the need for manual intervention or constant polling.
+
+## Type of triggers in Kwala workflows
+
+KWALA supports multiple trigger types that can be used individually or combined:
+
+- **Event-based** - React to on-chain events in real-time
+- **Time-based** - Execute workflows on a schedule
+- **Recurring** - Continuously monitor and respond to events
+
+## Event-based triggers
+
+Event-based triggers listen for specific blockchain events and execute workflows when those events occur.
+
+### Basic event trigger
+
+The following example demonstrates a basic event-based trigger that monitors a smart contract on Ethereum mainnet for `Transfer` events. Whenever tokens are transferred from the specified contract, this trigger will activate the workflow.
+
+```yaml
+trigger:
+  triggerChainID: 1
+  triggerSourceContract: "0x742d35Cc6e9A5f1e7A0e6FD4C8b2Bc3F5d9E1234"
+  triggerSourceContractABI: '[{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Transfer","type":"event"}]'
+  triggerEventName: "Transfer"
+```
+
+This trigger will activate whenever a `Transfer` event is emitted from the specified contract.
+
+### Filtered event trigger
+
+The following example shows how to add filters to narrow down which events trigger your workflow. This configuration only activates when transfers come from a specific address and exceed 1 token in value, reducing unnecessary executions.
+
+```yaml
+trigger:
+  triggerChainID: 1
+  triggerSourceContract: "0x742d35Cc6e9A5f1e7A0e6FD4C8b2Bc3F5d9E1234"
+  triggerSourceContractABI: '[...]'
+  triggerEventName: "Transfer"
+  triggerEventFilter:
+    from: "0xSpecificAddress..."
+    value: ">1000000000000000000"  # Greater than 1 token
+```
+
+**Common Filter Operators:**
+- Exact match: `"0xAddress..."`
+- Greater than: `">value"`
+- Less than: `"<value"`
+- Range: `">=value,<=value"`
+- Multiple values: `["value1", "value2"]`
+
+## Time-based triggers
+
+Execute workflows at specific times or intervals without requiring on-chain events.
+
+### Interval-based execution
+
+The following example configures a time-based trigger that executes the workflow every hour (3600 seconds). This is useful for periodic tasks like checking balances, updating oracle prices, or performing maintenance operations.
+
+```yaml
+trigger:
+  repeatEvery: "3600"  # Every hour (in seconds)
+  triggerChainID: 1
+```
+
+**Common Intervals:**
+- Every minute: `"60"`
+- Every hour: `"3600"`
+- Every day: `"86400"`
+- Every week: `"604800"`
+
+### Cron-style scheduling
+
+The following example uses cron notation to schedule workflow execution at midnight every day. Cron patterns provide more flexibility for complex scheduling needs compared to simple intervals.
+
+```yaml
+trigger:
+  repeatEvery: "0 0 * * *"  # Every day at midnight
+  triggerChainID: 1
+```
+
+**Common Cron Patterns:**
+- Every day at 9 AM: `"0 9 * * *"`
+- Every Monday: `"0 0 * * 1"`
+- Every 6 hours: `"0 */6 * * *"`
+- First day of month: `"0 0 1 * *"`
+
+### Delayed execution
+
+The following example delays workflow execution until a specific Unix timestamp is reached. This is useful for scheduled launches, time-locked operations, or coordinated events.
+
+```yaml
+trigger:
+  executeAfter: 1735689600  # Unix timestamp
+  triggerChainID: 1
+```
+
+The following example delays execution until a specific block number is reached on the blockchain. This ensures precise timing based on block production rather than real-world time.
+
+```yaml
+trigger:
+  executeAfter: "block:18000000"  # After specific block
+  triggerChainID: 1
+```
+
+## Recurring triggers
+
+Recurring triggers continuously monitor for events and re-execute the workflow each time the event occurs.
+
+The following example creates a recurring trigger that monitors a Polygon contract for deposit events where the amount exceeds 100 million (in the token's smallest unit). It checks every 60 seconds and executes the workflow each time a matching deposit is found.
+
+```yaml
+trigger:
+  recurringChainID: 137
+  recurringSourceContract: "0xPolygonContract..."
+  recurringSourceContractABI: '[...]'
+  recurringEventName: "Deposit"
+  recurringEventFilter:
+    amount: ">100000000"
+  repeatEvery: "60"  # Check every minute
+```
+
+This creates a persistent listener that:
+1. Checks for new events every 60 seconds
+2. Executes the workflow when matching events are found
+3. Continues monitoring indefinitely
+
+## Trigger expiration
+
+Set an expiration to automatically stop trigger monitoring.
+
+The following example configures a trigger that runs every hour but automatically stops monitoring at the specified Unix timestamp. This prevents indefinite execution and helps control costs.
+
+```yaml
+trigger:
+  triggerChainID: 1
+  repeatEvery: "3600"
+  expiresIn: 1735689600  # Unix timestamp when trigger stops
+```
+
+The following example shows how to set expiration as a duration in seconds (30 days = 2,592,000 seconds) rather than a specific timestamp. The trigger will automatically stop 30 days after deployment.
+
+```yaml
+trigger:
+  triggerChainID: 1
+  repeatEvery: "3600"
+  expiresIn: "2592000"  # Expires after 30 days
+```
+
+<Note>
+  Expired triggers will not execute workflows, even if conditions are met. You'll need to redeploy or update the workflow to reactivate it.
+</Note>
+
+## Combining triggers
+
+You can combine different trigger types for more sophisticated workflows:
+
+### Combine event and time-based triggers
+
+You can use triggers to monitor events on multiple blockchains. The following example combines event-based and time-based triggers in a monitoring workflow. It watches for large transfer events but only between specific dates, checking every 5 minutes during the active period.
+
+```yaml
+trigger:
+  # Event-based trigger
+  triggerChainID: 1
+  triggerSourceContract: "0xContract..."
+  triggerEventName: "LargeTransfer"
+  
+  # Time-based component
+  executeAfter: 1735689600  # Only start monitoring after this date
+  expiresIn: 1767225600     # Stop monitoring after this date
+  
+  # Recurring check
+  repeatEvery: "300"  # Check every 5 minutes
+```
+
+### Multi-chain monitoring
+
+The following example demonstrates cross-chain monitoring by tracking related events on both Ethereum and Polygon. This is useful for bridge monitoring, cross-chain messaging, or coordinating actions across multiple networks.
+
+```yaml
+trigger:
+  # Primary trigger on Ethereum
+  triggerChainID: 1
+  triggerSourceContract: "0xEthContract..."
+  triggerEventName: "Bridged"
+  
+  # Also monitor on Polygon
+  recurringChainID: 137
+  recurringSourceContract: "0xPolygonContract..."
+  recurringEventName: "Received"
+  repeatEvery: "120"
+```
+
+## Trigger field reference
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| **TriggerChainID** | Required | The chain where the triggering event will occur |
+| **TriggerSourceContract** | Optional | Contract address emitting the event |
+| **TriggerSourceContractABI** | Optional | ABI of the trigger contract (if event-based) |
+| **TriggerEventName** | Optional | Name of the event to listen for, for example, Transfer |
+| **TriggerEventFilter** | Optional | Filters for the event (indexed values, sender, etc.) |
+| **RecurringChainID** | Optional | If this is a repeating event, specify the chain |
+| **RecurringSourceContract** | Optional | Contract emitting the recurring event |
+| **RecurringSourceContractABI** | Optional | ABI for the recurring event contract |
+| **RecurringEventName** | Optional | Name of the recurring event |
+| **RecurringEventFilter** | Optional | Filter for recurring events |
+| **RepeatEvery** | Optional | Cron notation or number of seconds for interval-based execution |
+| **ExecuteAfter** | Optional | A specific block height or timestamp after which to run |
+| **ExpiresIn** | Optional | Unix timestamp or seconds until the trigger becomes invalid |
+| **ActionStatusNotificationPOSTURL** | Optional | Endpoint to notify about action status |
+| **ActionStatusNotificationAPIKey** | Optional | API key for secure notifications |
+| **Meta** | Optional | Optional metadata |
+
+## Webhook notifications
+
+Get notified about workflow execution status via webhooks.
+
+The following example configures webhook notifications to receive real-time updates about workflow execution status. The workflow sends POST requests to your endpoint with execution details, status, and metadata.
+
+```yaml
+trigger:
+  triggerChainID: 1
+  triggerSourceContract: "0x..."
+  triggerEventName: "Transfer"
+  
+  # Webhook configuration
+  actionStatusNotificationPOSTURL: "https://api.example.com/webhook"
+  actionStatusNotificationAPIKey: "sk_live_abc123"
+  meta: "Production webhook for transfers"
+```
+
+When your workflow executes, KWALA will send a POST request to your configured webhook endpoint with detailed information about the execution. The following example shows the structure of the webhook payload you'll receive, including workflow details, execution status, action results, and metadata.
+
+```json
+{
+  "workflowName": "Token Transfer Monitor",
+  "executionId": "exec_abc123",
+  "status": "success",
+  "timestamp": 1735689600,
+  "actions": [
+    {
+      "name": "Send Alert",
+      "status": "completed",
+      "gasUsed": "21000"
+    }
+  ],
+  "metadata": {
+    "chainId": 1,
+    "triggerEvent": "Transfer"
+  }
+}
+```
+
+## Best practices
+
+- **Choose the right trigger type**
+  - Use **event-based** triggers for real-time reactions to on-chain events
+  - Use **time-based** triggers for scheduled maintenance or batch processing
+  - Use **recurring** triggers for continuous monitoring
+- **Optimize check intervals** - Balance responsiveness with cost:
+  - Critical monitoring: 30-60 seconds
+  - Regular monitoring: 5-15 minutes
+  - Batch processing: hourly or daily
+  - More frequent checks consume more credits
+- **Use filters effectively** - Add filters to reduce unnecessary workflow executions:
+  - Filter by specific addresses
+  - Filter by value thresholds
+  - Filter by indexed event parameters
+- **Set appropriate expirations** - Always set expiration dates to:
+  - Prevent runaway costs
+  - Ensure workflows don't run indefinitely
+  - Allow for workflow updates and maintenance
+- **Test triggers thoroughly**
+  - Test in playground with simulated events
+  - Start with shorter intervals during testing
+  - Verify filters match expected events
+  - Confirm webhook notifications work correctly
+- **Monitor webhook endpoints** - Ensure webhook endpoints are:
+  - Always available (99.9%+ uptime)
+  - Protected with API keys
+  - Able to handle high request volumes
+  - Responding quickly (< 5 seconds)
+- **Secure your webhooks** - Always use the `actionStatusNotificationAPIKey` field to secure webhook notifications. Never expose webhook URLs publicly without authentication:
+  - Use API keys for all webhook endpoints
+  - Validate webhook signatures in your backend
+  - Use HTTPS for all webhook URLs
+  - Implement rate limiting on webhook endpoints
+  - Log all webhook calls for audit purposes
+  - Set appropriate expiration dates
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Working with Actions" icon="bolt" href="/concepts/working-with-actions">
+    Learn how to define workflow actions
+  </Card>
+  <Card title="Workflow Execution" icon="play" href="/concepts/workflow-execution">
+    Understand workflow execution flow
+  </Card>
+  <Card title="Use Cases" icon="lightbulb" href="/use-cases/liquidation-protection">
+    See triggers in real-world scenarios
+  </Card>
+  <Card title="Supported Chains" icon="link" href="/concepts/supported-chains">
+    View supported blockchain networks
+  </Card>
+</CardGroup>

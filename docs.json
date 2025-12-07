@@ -1,68 +1,151 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "Kwala Documentation",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#6300ff",
+    "light": "#8a4dff",
+    "dark": "#4700b7"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "/logo/kwala-logo-white.png",
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Documentation",
         "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "index"
+            ]
+          },
           {
             "group": "Getting started",
             "pages": [
-              "index",
-              "quickstart",
-              "development"
+              "getting-started/quickstart",
+              "getting-started/get-kwala-tokens"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Use the Workflow Builder",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "workflow-builder/explore-the-playground",
+              "workflow-builder/create-workflow",
+              "workflow-builder/configure-workflow",
+              "workflow-builder/deploy-workflow",
+              "workflow-builder/monitor-workflow",
+              "concepts/use-workflow-templates",
+              "concepts/best-practices"
             ]
           },
           {
-            "group": "Writing content",
+            "group": "Use cases",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
+              "use-cases/token-transfer-alert",
+              "use-cases/nft-price-tracker",
+              "use-cases/defi-yield-optimizer",
+              "use-cases/dao-proposal-notifier",
+              "use-cases/multi-chain-transaction-monitor",
+              "use-cases/liquidation-protection"
             ]
           },
           {
-            "group": "AI tools",
+            "group": "Core concepts",
             "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "concepts/supported-chains",
+              "concepts/yaml-workflow-basics",
+              "concepts/workflow-execution",
+              "concepts/work-with-triggers",
+              "concepts/work-with-actions",
+              "concepts/regex-usage",
+              "concepts/limits-and-quotas"
+            ]
+          },
+          {
+            "group": "Enterprise",
+            "pages": [
+              "enterprise/kwala-for-enterprise"
+            ]
+          },
+          {
+            "group": "Resources",
+            "pages": [
+              "support/faq",
+              "support/troubleshooting",
+              "roadmap",
+              "support/glossary",
+              "support/community-and-contact"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "Architecture",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Architecture",
             "pages": [
-              "api-reference/introduction"
+              "architecture/system-overview",
+              "architecture/node-architecture",
+              "architecture/workflow-execution-flow",
+              "architecture/public-verifiability",
+              "architecture/verifier-nodes",
+              "architecture/security-model"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Kwala Explorer",
+        "groups": [
+          {
+            "group": "Getting started",
+            "pages": [
+              "explorer/overview"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Use the Kwala Explorer",
+            "pages": [
+              "explorer/search-workflows",
+              "explorer/view-execution-details",
+              "explorer/network-statistics"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Getting started",
+            "pages": [
+              "api-reference/overview"
+            ]
+          },
+          {
+            "group": "API documentation",
+            "pages": [
+              "api-reference/authentication"
+            ]
+          },
+          {
+            "group": "Endpoints",
             "pages": [
               "api-reference/endpoint/get",
               "api-reference/endpoint/create",
               "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api-reference/endpoint/webhook",
+              "api-reference/endpoint/update"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "reference/yaml-schema",
+              "reference/actions-reference",
+              "reference/triggers-reference",
+              "reference/error-codes"
             ]
           }
         ]
@@ -71,33 +154,38 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
+          "anchor": "Kwala Website",
+          "href": "https://kwala.network",
+          "icon": "globe"
         },
         {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
+          "anchor": "Playground",
+          "href": "https://kwala.network/dashboard",
+          "icon": "code"
+        },
+        {
+          "anchor": "Community",
+          "href": "https://discord.com/invite/ZmQgZe45cy",
+          "icon": "discord"
         }
       ]
     }
   },
   "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "light": "/logo/kwala-logo-dark.svg",
+    "dark": "/logo/kwala-logo-white.png"
   },
   "navbar": {
     "links": [
       {
         "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "href": "mailto:connect@kwala.network"
       }
     ],
     "primary": {
       "type": "button",
       "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "href": "https://kwala.network/dashboard"
     }
   },
   "contextual": {
@@ -114,9 +202,9 @@
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "x": "https://x.com/The_MAILabs",
+      "github": "https://github.com/kwala",
+      "linkedin": "https://www.linkedin.com/company/mai-labs/"
     }
   }
 }

@@ -1,0 +1,243 @@
+---
+title: 'Actions'
+description: 'Learn about workflow actions in Kwala'
+---
+
+Actions are the core building blocks of KWALA workflows. They define what your workflow actually does. This could be deploying smart contracts, calling contract functions, sending tokens, or invoking external APIs. Each workflow can contain multiple actions that are executed either sequentially or in parallel.
+
+## Action types
+
+KWALA supports three primary action types:
+
+- **Deploy**: Deploy new smart contracts to blockchain networks
+- **Call**: Interact with existing smart contracts
+- **API**: Invoke external Web2 APIs
+
+### Deploy actions
+
+Deploy actions are used to deploy new smart contracts to a blockchain network.
+
+In the following example, we deploy  an NFT contract to Ethereum mainnet. The initialization parameters are contract name ("MyNFT"), symbol ("NFT"), and initial supply (1000 tokens).
+
+```yaml
+actions:
+  - name: "Deploy NFT Contract"
+    type: "deploy"
+    bytecode: "0x60806040523480156200001157600080fd5b50..."
+    encodedABI: "0x..."
+    initializationArgs:
+      - "MyNFT"
+      - "NFT"
+      - "1000"
+    chainID: 1
+    metadata: "NFT deployment on Ethereum mainnet"
+    retriesUntilSuccess: 3
+```
+
+**Required fields for deploy:**
+
+| Field | Description |
+|-------|-------------|
+| **name** | Unique identifier for this action |
+| **type** | Must be `"deploy"` |
+| **bytecode** | The compiled contract bytecode (hex string) |
+| **encodedABI** | ABI-encoded constructor parameters |
+| **initializationArgs** | Array of constructor arguments |
+| **chainID** | Target blockchain network ID |
+
+**Optional fields:**
+
+| Field | Description | Default |
+|-------|-------------|---------|
+| **metadata** | Additional information about the deployment | - |
+| **retriesUntilSuccess** | Number of retry attempts on failure | 0 |
+
+### Call actions
+
+Call actions interact with already deployed smart contracts by calling their functions.
+
+The following example calls the `transfer` function on an ERC-20 token contract to send 1 token to a recipient address:
+
+```yaml
+actions:
+  - name: "Transfer Tokens"
+    type: "call"
+    targetContract: "0x742d35Cc6e9A5f1e7A0e6FD4C8b2Bc3F5d9E1234"
+    targetFunction: "transfer"
+    targetParams:
+      - "0xRecipientAddress..."
+      - "1000000000000000000"  # 1 token with 18 decimals
+    chainID: 1
+    encodedABI: "0xa9059cbb..."
+    metadata: "Token transfer to user"
+    retriesUntilSuccess: 2
+```
+
+**Required fields for call:**
+
+| Field | Description |
+|-------|-------------|
+| **name** | Unique identifier for this action |
+| **type** | Must be `"call"` |
+| **targetContract** | Address of the smart contract to interact with |
+| **targetFunction** | Name of the function to call (For example, `transfer`, `mint`) |
+| **targetParams** | Array of parameters for the function call |
+| **chainID** | Target blockchain network ID |
+| **encodedABI** | ABI-encoded function call |
+
+**Optional fields:**
+
+| Field | Description | Default |
+|-------|-------------|---------|
+| **metadata** | Additional information about the call | - |
+| **retriesUntilSuccess** | Number of retry attempts on failure | 0 |
+
+### API actions
+
+API actions allow you to integrate Web2 services into your Web3 workflows.
+
+The following example action sends a Discord notification using a webhook to announce that a new NFT has been minted, including an embedded message with the token ID.
+
+```yaml
+actions:
+  - name: "Send Discord Notification"
+    type: "api"
+    APIEndpoint: "https://discord.com/api/webhooks/your-webhook"
+    APIPayload:
+      content: "New NFT minted!"
+      embeds:
+        - title: "NFT Minted"
+          description: "Token ID #1234"
+          color: 3447003
+    metadata: "Discord webhook notification"
+    retriesUntilSuccess: 1
+```
+
+**Required fields for API:**
+
+| Field | Description |
+|-------|-------------|
+| **name** | Unique identifier for this action |
+| **type** | Must be `"api"` |
+| **APIEndpoint** | Full URL of the API endpoint |
+| **APIPayload** | Request body/parameters for the API call |
+
+**Optional fields:**
+
+| Field | Description | Default |
+|-------|-------------|---------|
+| **metadata** | Additional information about the API call | - |
+| **retriesUntilSuccess** | Number of retry attempts on failure | 0 |
+
+## Complete field reference
+
+Here's a comprehensive reference of all action fields:
+
+| Field | Required | Used In | Description |
+|-------|----------|---------|-------------|
+| **Name** | Required | All | Unique name for this action |
+| **Type** | Required | All | Type of action: `deploy`, `call`, or `api` |
+| **APIEndpoint** | Required for api | API | URL if making an API call |
+| **APIPayload** | Required for api | API | Request body for the API call |
+| **Bytecode** | Required for deploy | Deploy | Contract bytecode (hex string) when deploying |
+| **EncodedABI** | Required | Deploy, Call | ABI-encoded constructor or function call |
+| **InitializationArgs** | Required for deploy | Deploy | Arguments to pass into the constructor |
+| **TargetContract** | Required for call | Call | Address of the smart contract to interact with |
+| **TargetFunction** | Required for call | Call | Function name such as transfer, mint, or others. |
+| **TargetParams** | Required for call | Call | Parameters for the function call |
+| **ChainID** | Required | Deploy, Call | EVM Chain ID where the action will be executed |
+| **Metadata** | Optional | All | Optional metadata or tags |
+| **RetriesUntilSuccess** | Optional | All | Number of retries until success (default is 0) |
+
+## Retry logic
+
+The `retriesUntilSuccess` field allows actions to automatically retry on failure.
+
+The following example configures a critical contract call to automatically retry up to 5 times if it fails, ensuring higher reliability for important operations.
+
+```yaml
+actions:
+  - name: "Critical Contract Call"
+    type: "call"
+    retriesUntilSuccess: 5  # Will retry up to 5 times
+    # ... other config
+```
+
+Each retry attempt consumes credits. Use retries carefully and consider setting appropriate limits.
+
+**Retry behavior:**
+- Retries happen automatically on failure
+- A delay is applied between retries
+- Total attempts = 1 (initial) + retriesUntilSuccess
+- Failed retries still consume credits
+
+## Best practices for workflow actions
+
+- **Use descriptive action names** - Choose clear, descriptive names that explain what each action does. It's easier to understand and debug a workflow called `Deploy NFT Marketplace Contract` as opposed to `Action1`.
+- **Validate parameters** - Double-check all parameters, especially addresses and amounts, before deploying workflows
+- **Set appropriate retries** - Use retries for critical operations, but avoid excessive retries that waste credits
+  - Network calls: 2-3 retries
+  - Contract deployments: 1-2 retries
+  - Simple reads: 0-1 retries
+- **Add metadata** - Use the metadata field to document why an action exists and any important context
+- **Test in the Playground** - Always test your actions in the KWALA Playground before deploying to production
+
+## Combining Web2 and Web3 actions
+
+One of KWALA's key features is the ability to combine Web2 and Web3 actions in a single workflow.
+
+The following example demonstrates a complete workflow that mints an NFT on-chain, sends an email notification to the user via SendGrid API, and logs the transaction to a database via a custom API endpoint.
+
+```yaml
+name: "NFT Mint with Notification"
+execution: sequential
+
+actions:
+  # Web3 Action
+  - name: "Mint NFT"
+    type: "call"
+    targetContract: "0x..."
+    targetFunction: "mint"
+    targetParams:
+      - "0xUserAddress..."
+    chainID: 1
+
+  # Web2 Action
+  - name: "Send Email Notification"
+    type: "api"
+    APIEndpoint: "https://api.sendgrid.com/v3/mail/send"
+    APIPayload:
+      personalizations:
+        - to:
+            - email: "user@example.com"
+      subject: "Your NFT has been minted!"
+      content:
+        - type: "text/plain"
+          value: "Congratulations! Your NFT is ready."
+
+  # Another Web2 Action
+  - name: "Log to Database"
+    type: "api"
+    APIEndpoint: "https://api.example.com/logs"
+    APIPayload:
+      action: "nft_minted"
+      user: "0xUserAddress..."
+      timestamp: "{{now}}"
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Working with Triggers" icon="clock" href="/concepts/working-with-triggers">
+    Learn how to trigger your workflows
+  </Card>
+  <Card title="Workflow Execution" icon="play" href="/concepts/workflow-execution">
+    Understand workflow execution modes
+  </Card>
+  <Card title="YAML Basics" icon="code" href="/concepts/yaml-workflow-basics">
+    Master KWALA's YAML syntax
+  </Card>
+  <Card title="Use Cases" icon="lightbulb" href="/use-cases/token-transfer-alert">
+    Explore real-world examples
+  </Card>
+</CardGroup>
