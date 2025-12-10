@@ -3,11 +3,11 @@ title: 'Actions'
 description: 'Learn about workflow actions in Kwala'
 ---
 
-Actions are the core building blocks of KWALA workflows. They define what your workflow actually does. This could be deploying smart contracts, calling contract functions, sending tokens, or invoking external APIs. Each workflow can contain multiple actions that are executed either sequentially or in parallel.
+Actions are the core building blocks of Kwala workflows. They define what your workflow actually does. This could be deploying smart contracts, calling contract functions, sending tokens, or invoking external APIs. Each workflow can contain multiple actions that are executed either sequentially or in parallel.
 
 ## Action types
 
-KWALA supports three primary action types:
+Kwala supports three primary action types:
 
 - **Deploy**: Deploy new smart contracts to blockchain networks
 - **Call**: Interact with existing smart contracts
@@ -180,11 +180,11 @@ Each retry attempt consumes credits. Use retries carefully and consider setting 
   - Contract deployments: 1-2 retries
   - Simple reads: 0-1 retries
 - **Add metadata** - Use the metadata field to document why an action exists and any important context
-- **Test in the Playground** - Always test your actions in the KWALA Playground before deploying to production
+- **Test in the Playground** - Always test your actions in the Kwala Playground before deploying to production
 
 ## Combining Web2 and Web3 actions
 
-One of KWALA's key features is the ability to combine Web2 and Web3 actions in a single workflow.
+One of Kwala's key features is the ability to combine Web2 and Web3 actions in a single workflow.
 
 The following example demonstrates a complete workflow that mints an NFT on-chain, sends an email notification to the user via SendGrid API, and logs the transaction to a database via a custom API endpoint.
 
@@ -235,7 +235,7 @@ actions:
     Understand workflow execution modes
   </Card>
   <Card title="YAML Basics" icon="code" href="/concepts/yaml-workflow-basics">
-    Master KWALA's YAML syntax
+    Master Kwala's YAML syntax
   </Card>
   <Card title="Use Cases" icon="lightbulb" href="/use-cases/token-transfer-alert">
     Explore real-world examples

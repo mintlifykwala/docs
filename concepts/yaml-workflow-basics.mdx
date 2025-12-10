@@ -1,22 +1,22 @@
 ---
-title: 'KWALAng language'
+title: 'Kwalang language'
 description: 'Learn the fundamentals of creating workflows with YAML'
 ---
 
-KWALA Scripts are YAML-based declarative workflows that define automated backend logic for blockchain applications. These scripts enable developers to create off-chain automation that reacts to on-chain events, time-based triggers, or Web2 inputs without requiring traditional servers, polling mechanisms, or custom infrastructure.
+Kwala Scripts are YAML-based declarative workflows that define automated backend logic for blockchain applications. These scripts enable developers to create off-chain automation that reacts to on-chain events, time-based triggers, or Web2 inputs without requiring traditional servers, polling mechanisms, or custom infrastructure.
 
-## What makes KWALAng different
+## What makes Kwalang different
 
-KWALAng eliminates the complexity of blockchain automation by providing a declarative language where you simply define what should happen and when. In KWALAng, you write workflows in YAML that specify:
+Kwalang eliminates the complexity of blockchain automation by providing a declarative language where you simply define what should happen and when. In Kwalang, you write workflows in YAML that specify:
 
 - **When** your workflow should activate (triggers)
 - **What** conditions must be met (optional conditional logic)
 - **How** actions should execute (sequential or parallel)
 - **Where** actions should run (which blockchain networks or APIs)
 
-## KWALA's YAML structure
+## Kwala's YAML structure
 
-KWALA workflows use a simple key-value pair format to organize information. Think of it like a form where each field has a label (the key) and an answer (the value). This makes workflows easy to read and understand.
+Kwala workflows use a simple key-value pair format to organize information. Think of it like a form where each field has a label (the key) and an answer (the value). This makes workflows easy to read and understand.
 
 A key-value pair is written as: `Key: value`
 
@@ -31,7 +31,7 @@ Here, `Name` and `ChainID` are keys, and `my_token_monitor` and `1` are their co
 
 ### Organize information with sections
 
-KWALA workflows organize related information into sections. Each section groups together related key-value pairs. The main sections are:
+Kwala workflows organize related information into sections. Each section groups together related key-value pairs. The main sections are:
 
 - **Name**: The identifier for your workflow
 - **Trigger**: When and how your workflow activates
@@ -40,7 +40,7 @@ KWALA workflows organize related information into sections. Each section groups 
 
 ### Example YAML workflow
 
-Let's break down a real KWALA workflow:
+Let's break down a real Kwala workflow:
 
 ```yaml
 Name: token_transfer_monitor
@@ -55,7 +55,7 @@ Trigger:
   TriggerEventName: Transfer(address,address,uint256)
 ```
 
-Here, we tell KWALA what to watch for. In plain English: "Monitor contract 0x49e8...18e5c on Ethereum (chain 1) for Transfer events."
+Here, we tell Kwala what to watch for. In plain English: "Monitor contract 0x49e8...18e5c on Ethereum (chain 1) for Transfer events."
 
 ```yaml
 Actions:
@@ -69,7 +69,7 @@ Actions:
     ChainID: 1
 ```
 
-Here, we tell KWALA what to do when triggered. In plain English: "Call the transfer function on contract 0x0f51...09ad and send 100 tokens to address 0x49e8...18e5c."
+Here, we tell Kwala what to do when triggered. In plain English: "Call the transfer function on contract 0x0f51...09ad and send 100 tokens to address 0x49e8...18e5c."
 
 ```yaml
   - Name: notification_action
@@ -86,7 +86,7 @@ Execution:
   Mode: sequential
 ```
 
-Here, we specify the execution mode, telling KWALA to run each action one after another, waiting for each to complete before starting the next.
+Here, we specify the execution mode, telling Kwala to run each action one after another, waiting for each to complete before starting the next.
 
 ### Key patterns to remember
 
@@ -94,7 +94,7 @@ Here, we specify the execution mode, telling KWALA to run each action one after 
 
 - **Lists use dashes**: When you have multiple items of the same type (like multiple actions), each one starts with a dash `-`.
 
-- **Values can be text, numbers, or addresses**: KWALA accepts different types of information depending on what the key needs.
+- **Values can be text, numbers, or addresses**: Kwala accepts different types of information depending on what the key needs.
 
 - **NA means not applicable**: If a field does not apply to your workflow, you can use `NA` to indicate it is intentionally left empty.
 
