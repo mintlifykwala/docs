@@ -3,11 +3,11 @@ title: 'Triggers'
 description: 'Learn about workflow triggers in Kwala'
 ---
 
-Triggers define when and how your KWALA workflows are activated. They are the "listening" mechanism that watches for specific events, conditions, or time intervals to automatically execute your workflows. Triggers eliminate the need for manual intervention or constant polling.
+Triggers define when and how your Kwala workflows are activated. They are the "listening" mechanism that watches for specific events, conditions, or time intervals to automatically execute your workflows. Triggers eliminate the need for manual intervention or constant polling.
 
 ## Type of triggers in Kwala workflows
 
-KWALA supports multiple trigger types that can be used individually or combined:
+Kwala supports multiple trigger types that can be used individually or combined:
 
 - **Event-based** - React to on-chain events in real-time
 - **Time-based** - Execute workflows on a schedule
@@ -235,7 +235,7 @@ trigger:
   meta: "Production webhook for transfers"
 ```
 
-When your workflow executes, KWALA will send a POST request to your configured webhook endpoint with detailed information about the execution. The following example shows the structure of the webhook payload you'll receive, including workflow details, execution status, action results, and metadata.
+When your workflow executes, Kwala will send a POST request to your configured webhook endpoint with detailed information about the execution. The following example shows the structure of the webhook payload you'll receive, including workflow details, execution status, action results, and metadata.
 
 ```json
 {
