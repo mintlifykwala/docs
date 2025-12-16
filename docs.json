@@ -73,8 +73,8 @@
     }
   },
   "logo": {
-    "light": "/logo/Kwala-logo-dark.svg",
-    "dark": "/logo/Kwala-logo-white.png"
+    "light": "/logo/kwala-logo-dark.svg",
+    "dark": "/logo/kwala-logo-white.png"
   },
   "navbar": {
     "links": [
