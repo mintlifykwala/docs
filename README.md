@@ -1,6 +1,6 @@
-# KWALA Documentation
+# Kwala Documentation
 
-Documentation for the **[KWALA Network](https://docs.kwala.network)** - a decentralized workflow automation platform.
+Documentation for the **[Kwala Network](https://docs.Kwala.network)** - a decentralized workflow automation platform.
 
 ## Development
 

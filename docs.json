@@ -7,7 +7,7 @@
     "light": "#8a4dff",
     "dark": "#4700b7"
   },
-  "favicon": "/logo/kwala-logo-white.png",
+  "favicon": "/logo/Kwala-logo-white.png",
   "navigation": {
     "tabs": [
       {
@@ -48,105 +48,6 @@
               "use-cases/multi-chain-transaction-monitor",
               "use-cases/liquidation-protection"
             ]
-          },
-          {
-            "group": "Core concepts",
-            "pages": [
-              "concepts/supported-chains",
-              "concepts/yaml-workflow-basics",
-              "concepts/workflow-execution",
-              "concepts/work-with-triggers",
-              "concepts/work-with-actions",
-              "concepts/regex-usage",
-              "concepts/limits-and-quotas"
-            ]
-          },
-          {
-            "group": "Enterprise",
-            "pages": [
-              "enterprise/kwala-for-enterprise"
-            ]
-          },
-          {
-            "group": "Resources",
-            "pages": [
-              "support/faq",
-              "support/troubleshooting",
-              "roadmap",
-              "support/glossary",
-              "support/community-and-contact"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Architecture",
-        "groups": [
-          {
-            "group": "Architecture",
-            "pages": [
-              "architecture/system-overview",
-              "architecture/node-architecture",
-              "architecture/workflow-execution-flow",
-              "architecture/public-verifiability",
-              "architecture/verifier-nodes",
-              "architecture/security-model"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Kwala Explorer",
-        "groups": [
-          {
-            "group": "Getting started",
-            "pages": [
-              "explorer/overview"
-            ]
-          },
-          {
-            "group": "Use the Kwala Explorer",
-            "pages": [
-              "explorer/search-workflows",
-              "explorer/view-execution-details",
-              "explorer/network-statistics"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "API Reference",
-        "groups": [
-          {
-            "group": "Getting started",
-            "pages": [
-              "api-reference/overview"
-            ]
-          },
-          {
-            "group": "API documentation",
-            "pages": [
-              "api-reference/authentication"
-            ]
-          },
-          {
-            "group": "Endpoints",
-            "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook",
-              "api-reference/endpoint/update"
-            ]
-          },
-          {
-            "group": "Reference",
-            "pages": [
-              "reference/yaml-schema",
-              "reference/actions-reference",
-              "reference/triggers-reference",
-              "reference/error-codes"
-            ]
           }
         ]
       }
@@ -155,12 +56,12 @@
       "anchors": [
         {
           "anchor": "Kwala Website",
-          "href": "https://kwala.network",
+          "href": "https://Kwala.network",
           "icon": "globe"
         },
         {
           "anchor": "Playground",
-          "href": "https://kwala.network/dashboard",
+          "href": "https://Kwala.network/dashboard",
           "icon": "code"
         },
         {
@@ -179,13 +80,13 @@
     "links": [
       {
         "label": "Support",
-        "href": "mailto:connect@kwala.network"
+        "href": "mailto:connect@Kwala.network"
       }
     ],
     "primary": {
       "type": "button",
       "label": "Dashboard",
-      "href": "https://kwala.network/dashboard"
+      "href": "https://Kwala.network/dashboard"
     }
   },
   "contextual": {
@@ -203,7 +104,7 @@
   "footer": {
     "socials": {
       "x": "https://x.com/The_MAILabs",
-      "github": "https://github.com/kwala",
+      "github": "https://github.com/Kwala",
       "linkedin": "https://www.linkedin.com/company/mai-labs/"
     }
   }

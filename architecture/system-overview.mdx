@@ -1,29 +1,29 @@
 ---
 title: 'System overview'
-description: 'High-level overview of the KWALA system architecture'
+description: 'High-level overview of the Kwala system architecture'
 ---
 
-KWALA is a verifiable, event-driven Web3 workflow automation and backend platform. It allows developers to build automation-first, backend-less dApps using simple YAML-based workflows. Behind this no-code simplicity lies a secure, decentralized-yet-permissioned infrastructure powered by Kalp Network, designed to deliver production-grade automation, regulatory compliance, and trustless execution.
+Kwala is a verifiable, event-driven Web3 workflow automation and backend platform. It allows developers to build automation-first, backend-less dApps using simple YAML-based workflows. Behind this no-code simplicity lies a secure, decentralized-yet-permissioned infrastructure powered by Kalp Network, designed to deliver production-grade automation, regulatory compliance, and trustless execution.
 
 ## Architecture overview
 
-KWALA's architecture consists of interconnected components that work together to enable stateless, decentralized workflow execution:
+Kwala's architecture consists of interconnected components that work together to enable stateless, decentralized workflow execution:
 
 <Frame>
-  <img src="/images/architecture/kwala-system-architecture.png" alt="KWALA System Architecture Diagram" />
+  <img src="/images/architecture/Kwala-system-architecture.png" alt="Kwala System Architecture Diagram" />
 </Frame>
 
 | Component | Description |
 |-----------|-------------|
 | **Stateless automation layer** | Processes workflows off-chain while retaining cryptographic guarantees |
-| **KWALA Virtual Machine (KVM)** | Deterministic runtime that interprets and executes workflow definitions |
+| **Kwala Virtual Machine (KVM)** | Deterministic runtime that interprets and executes workflow definitions |
 | **Event trigger engine** | Monitors blockchain activity and detects workflow activation conditions |
 | **Cross-chain action engine** | Executes on-chain operations across multiple networks |
 | **Web2 integration layer** | Connects workflows to external APIs and enterprise systems |
 
 ## Stateless automation layer
 
-KWALA shifts workflow logic off-chain while retaining cryptographic guarantees and verifiable execution on-chain. By separating automation logic from state transitions, KWALA enables scalable, cost-effective workflow execution without compromising decentralization.
+Kwala shifts workflow logic off-chain while retaining cryptographic guarantees and verifiable execution on-chain. By separating automation logic from state transitions, Kwala enables scalable, cost-effective workflow execution without compromising decentralization.
 
 The stateless automation layer processes workflows using four key components:
 
@@ -32,9 +32,9 @@ The stateless automation layer processes workflows using four key components:
 - **Event-driven triggers**: Monitor blockchain activity for activation conditions
 - **Cross-chain action executors**: Perform operations across multiple blockchain networks
 
-## KWALA Virtual Machine (KVM)
+## Kwala Virtual Machine (KVM)
 
-The KWALA Virtual Machine (KVM) is the execution engine that interprets and processes workflow definitions. It functions as a deterministic runtime environment where YAML-based workflows are parsed, validated, and prepared for execution across the decentralized network.
+The Kwala Virtual Machine (KVM) is the execution engine that interprets and processes workflow definitions. It functions as a deterministic runtime environment where YAML-based workflows are parsed, validated, and prepared for execution across the decentralized network.
 
 ### KVM capabilities
 
@@ -63,7 +63,7 @@ The event trigger engine monitors blockchain activity across multiple networks, 
 
 ### Simplified event parameter extraction
 
-Extracting event parameters typically requires complex regex patterns and custom parsing logic. KWALA simplifies this with the `re.event(index)` syntax—a zero-configuration approach that extracts event parameters by their index position.
+Extracting event parameters typically requires complex regex patterns and custom parsing logic. Kwala simplifies this with the `re.event(index)` syntax—a zero-configuration approach that extracts event parameters by their index position.
 
 Instead of writing ABI parsing code or regex patterns, reference event data directly:
 
@@ -104,13 +104,13 @@ The Web2 integration layer enables workflows to interact with existing infrastru
 | **Cloud functions** | Invoke serverless functions on AWS, GCP, or Azure |
 | **External services** | Integrate with any service that exposes an API |
 
-By providing native Web2 connectivity, KWALA removes a critical barrier to enterprise blockchain adoption at scale.
+By providing native Web2 connectivity, Kwala removes a critical barrier to enterprise blockchain adoption at scale.
 
 ## Key architectural principles
 
 ### Permissioned decentralization
 
-All KWALA nodes are permissioned and operate within a governed set of policies but are independently verifiable and distributed across geographies and entities. This hybrid approach combines the trust benefits of decentralization with the compliance requirements of enterprise applications.
+All Kwala nodes are permissioned and operate within a governed set of policies but are independently verifiable and distributed across geographies and entities. This hybrid approach combines the trust benefits of decentralization with the compliance requirements of enterprise applications.
 
 ### Verifiable automation
 
@@ -122,14 +122,14 @@ Nodes sign transactions using private keys stored securely in Key Management Sys
 
 ### Self-custody
 
-Every user retains control over their private keys and signs automation workflows themselves. No custodial control is imposed by KWALA. Users authorize specific actions through signed intents, maintaining full sovereignty over their assets.
+Every user retains control over their private keys and signs automation workflows themselves. No custodial control is imposed by Kwala. Users authorize specific actions through signed intents, maintaining full sovereignty over their assets.
 
 
 ## Next steps
 
 <CardGroup cols={2}>
   <Card title="Node architecture" icon="server" href="/architecture/node-architecture">
-    Deep dive into KWALA node internals
+    Deep dive into Kwala node internals
   </Card>
   <Card title="Verifier nodes" icon="shield-check" href="/architecture/verifier-nodes">
     Learn about the verification process
