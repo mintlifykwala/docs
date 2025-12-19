@@ -1,0 +1,404 @@
+---
+title: 'Multi-chain bridge monitor'
+description: 'Monitor cross-chain bridge transactions and alert on completion'
+---
+
+This guide shows you how to set up a workflow that monitors cross-chain bridge transactions and sends notifications when transactions complete or fail. By the end of this guide, you'll have a fully functional bridge monitoring system that tracks transactions across multiple blockchains and alerts you in real-time.
+
+## Prerequisites
+
+Before you begin, ensure you have:
+
+- A Web3 wallet such as MetaMask connected to Kwala
+- Sufficient Kwala credits in your account
+- Basic understanding of bridge mechanics and cross-chain transactions
+- Multi-chain wallet setup for the networks you want to monitor
+- Bridge contract addresses for the protocols you're monitoring
+
+## Use cases
+
+This template is ideal for the following scenarios:
+
+- **Tracking bridge transactions**: Monitor your cross-chain transfers and get notified when they complete on the destination chain.
+- **Portfolio management**: Track bridge transactions across multiple protocols and chains for comprehensive asset monitoring
+- **Security monitoring**: Get alerted to bridge events that might indicate suspicious activity or require immediate attention
+- **Transaction logging**: Maintain a detailed log of all bridge transactions for accounting and compliance purposes
+- **Failure notifications**: Receive instant alerts when bridge transactions fail or encounter issues
+- **Multi-protocol monitoring**: Track transactions across different bridge protocols
+
+## Step 1: Access the template
+
+1. Navigate to the [Kwala dashboard](https://app.kwala.network/dashboard) and select **My workflows**
+2. Select **Templates** from the navigation menu
+3. Find and select **Multi-Chain Bridge Monitor**
+4. Select **View Details** to open the template
+
+<Frame>
+  <img src="/images/use-cases/multi-chain-bridge-monitor/template-overview.PNG" alt="Multi-Chain Bridge Monitor template overview" />
+</Frame>
+
+## Step 2: Provide a workflow name
+
+In the template overview, select **Deploy Template** or **Edit Template** to open it in the Workflow Editor.
+
+On the YAML editor, give your workflow a descriptive name:
+
+```yaml
+Name: Bridge_Transaction_Monitor
+```
+When you update the name in the YAML editor, it also reflects in the workflow information pane.
+
+## Step 3: Configure triggers
+
+The template is pre-configured with event-based triggers that you can customize:
+
+**Execute after**
+
+Set to `event` to trigger when a transaction event occurs:
+
+```yaml
+Trigger:
+  ExecuteAfter: event
+```
+
+**Repeat after**
+
+Set to `event` to repeat every time the event occurs:
+
+```yaml
+  RepeatEvery: event
+```
+
+**Contract monitoring**
+
+Update the contract address and chain ID to match the contract you want to monitor:
+
+```yaml
+  TriggerChainID: 1  # 1 for Ethereum mainnet
+  TriggerSourceContract: 0x1f98...f984
+  TriggerEventName: AddPoints(string,uint256)
+```
+
+<Note>
+  Update the `TriggerChainID`, `TriggerSourceContract`, and `TriggerEventName` to match the specific bridge or cross-chain contract you want to monitor. Common chains: Ethereum (1), Polygon (137), BSC (56), Arbitrum (42161).
+</Note>
+
+**ABI configuration**
+
+The template includes a base64-encoded ABI. You can replace this by:
+
+1. Uploading your contract `.sol` file in the Workflow Builder
+2. Pasting the contract ABI directly
+
+```yaml
+  TriggerSourceContractABI: W3siaW5wdXRzIjpbXSwic3RhdGVNdXRhYmlsaXR5Ijoibm9ucGF5YWJsZSIsInR5cGUiOiJjb25zdHJ1Y3RvciJ9...
+```
+
+**Event filter**
+
+Set to `NA` if no filtering is needed:
+
+```yaml
+  TriggerEventFilter: NA
+```
+
+**Expiry date**
+
+Set when the workflow should stop monitoring:
+
+```yaml
+  ExpiresIn: 1781796603  # Unix timestamp
+```
+
+**Status notifications**
+
+Configure the endpoint for workflow status updates:
+
+```yaml
+  ActionStatusNotificationPOSTURL: https://workflow-notification-test.kalp.network/push_notification
+  ActionStatusNotificationAPIKey: NA
+```
+
+## Step 4: Configure recurring triggers
+
+For repeated execution, configure the recurring source to monitor events continuously:
+
+```yaml
+  RecurringChainID: 1
+  RecurringSourceContract: 0x1f98...f984
+  RecurringEventName: AddPoints(string,uint256)
+  RecurringEventFilter: NA
+  RecurringSourceContractABI: W3siaW5wdXRzIjpbXSwic3RhdGVNdXRhYmlsaXR5Ijoibm9ucGF5YWJsZSIsInR5cGUiOiJjb25zdHJ1Y3RvciJ9...
+```
+
+**Metadata**
+
+Set to `NA` if no additional metadata is needed:
+
+```yaml
+  Meta: NA
+```
+
+<Note>
+  The recurring trigger monitors the same contract for continuous event tracking. You can modify `RecurringChainID` and `RecurringSourceContract` to monitor a different chain or contract for cross-chain scenarios.
+</Note>
+
+## Step 5: Configure notification actions
+
+The template includes two actions that you can customize:
+
+**Action 1: Transfer notification**
+
+This action sends an alert when a transfer event is detected:
+
+```yaml
+Actions:
+  - Name: action_notify
+    Type: post
+    ChainID: NA
+    TargetContract: NA
+    TargetFunction: NA
+    APIEndpoint: https://workflow-notification-test.kalp.network/push_notification
+    APIPayload:
+      message: Transfer detected
+      token: ETH
+      threshold: 2000
+    RetriesUntilSuccess: 2
+```
+
+**Customization options:**
+
+- `APIEndpoint`: Replace with your webhook URL (Discord, Telegram, Slack, or custom endpoint)
+- `APIPayload.message`: Customize the notification message
+- `APIPayload.token`: Specify the token being monitored
+- `APIPayload.threshold`: Set the notification threshold value
+- `RetriesUntilSuccess`: Number of retry attempts if the notification fails
+
+You can enhance the notification payload with more details:
+
+```yaml
+  - Name: action_notify
+    Type: post
+    ChainID: NA
+    TargetContract: NA
+    TargetFunction: NA
+    APIEndpoint: https://discord.com/api/webhooks/your-webhook-id
+    APIPayload:
+      content: "Transaction Alert!"
+      embeds:
+        - title: "Cross-Chain Transfer Detected"
+          description: "A transaction has been detected"
+          fields:
+            - name: "Token"
+              value: "ETH"
+            - name: "Threshold"
+              value: "2000"
+            - name: "Chain"
+              value: "Ethereum"
+          color: 3447003
+    RetriesUntilSuccess: 5
+```
+          fields:
+            - name: "Source Chain"
+              value: "Ethereum"
+            - name: "Destination Chain"
+              value: "Polygon"
+            - name: "Token"
+              value: "USDC"
+            - name: "Status"
+              value: "Pending"
+          color: 3447003
+    RetriesUntilSuccess: 5
+```
+
+**Action 2: Transaction logging**
+
+This action logs transaction data:
+
+```yaml
+  - Name: action_log
+    Type: post
+    ChainID: NA
+    TargetContract: NA
+    TargetFunction: NA
+    APIEndpoint: https://workflow-notification-test.kalp.network/push_notification
+    APIPayload:
+      TargetContract: 0x65B2...589D
+      chainId: 1
+    RetriesUntilSuccess: 2
+```
+
+**Customization options:**
+
+- `APIEndpoint`: Replace with your logging service URL or database API
+- `APIPayload.TargetContract`: The contract address being monitored
+- `APIPayload.chainId`: The chain ID where the transaction occurred
+- `RetriesUntilSuccess`: Number of retry attempts if logging fails
+
+**Enhanced logging example:**
+
+```yaml
+  - Name: action_log
+    Type: post
+    ChainID: NA
+    TargetContract: NA
+    TargetFunction: NA
+    APIEndpoint: https://your-database-api.com/log-transaction
+    APIPayload:
+      TargetContract: 0x65B2...589D
+      chainId: 1
+      event_type: "AddPoints"
+      timestamp: "{{event.blockTimestamp}}"
+      block_number: "{{event.blockNumber}}"
+    RetriesUntilSuccess: 5
+```
+
+## Step 6: Set execution mode
+
+The template uses sequential execution, ensuring actions execute in order:
+
+```yaml
+Execution:
+  Mode: sequential
+```
+
+You can change this to `parallel` if you want actions to run simultaneously:
+
+```yaml
+Execution:
+  Mode: parallel
+```
+
+<Note>
+  Sequential execution ensures notifications are sent before logging occurs, providing a logical flow for monitoring. Use parallel mode if you want faster execution and the order doesn't matter.
+</Note>
+
+## Step 7: Add notification settings (optional)
+
+Configure status notifications to receive updates about workflow execution:
+
+```yaml
+Trigger:
+  ActionStatusNotificationPOSTURL: https://workflow-notification-test.kalp.network/push_notification
+  ActionStatusNotificationAPIKey: NA
+```
+
+### Add more actions
+
+You can extend the template to include additional actions like multiple notifications or database logging:
+
+**Example: Telegram notification**
+
+```yaml
+- Name: action_telegram
+  Type: post
+  APIEndpoint: https://api.telegram.org/bot<YOUR_BOT_TOKEN>/sendMessage
+  APIPayload:
+    chat_id: "<YOUR_CHAT_ID>"
+    text: "Bridge transaction detected on Ethereum → Polygon"
+  RetriesUntilSuccess: 3
+```
+
+**Example: Multiple protocol monitoring**
+
+```yaml
+- Name: monitor_stargate
+  Type: post
+  APIEndpoint: https://your-analytics-platform.com/track
+  APIPayload:
+    protocol: "Stargate"
+    event_type: "bridge_initiated"
+    chain: "Ethereum"
+  RetriesUntilSuccess: 2
+```
+
+## Step 8: Compile and validate
+
+Before deploying, compile and validate your workflow configuration to ensure there are no syntax errors or configuration issues.
+
+1. Click the **Validate** button in the workflow editor
+2. Review any errors or warnings that appear
+3. Make necessary corrections to your YAML configuration
+4. Re-validate until all checks pass
+
+<Tip>
+Common validation issues include incorrect chain IDs, malformed contract addresses, invalid ABI encoding, or missing required fields. The validator will provide specific error messages to help you fix these issues.
+</Tip>
+
+## Step 9: Deploy and activate
+
+Once your workflow is validated, save and deploy it to start monitoring bridge transactions.
+
+1. Click **Save** to store your workflow configuration
+2. Review the deployment details and gas estimation
+3. Approve the transaction in your connected wallet
+4. Click **Deploy** to publish your workflow to the network
+5. Click **Activate** to start monitoring bridge events
+
+Your workflow is now live and will automatically monitor bridge transactions, sending notifications and logging data as configured.
+
+## Complete workflow example
+
+Here's the full YAML configuration for the Multi-Chain Bridge Monitor workflow:
+
+```yaml
+Name: Bridge_Transaction_Monitor
+Trigger:
+  ExecuteAfter: event
+  RepeatEvery: event
+  ExpiresIn: 1781796603
+  ActionStatusNotificationPOSTURL: https://workflow-notification-test.kalp.network/push_notification
+  ActionStatusNotificationAPIKey: NA
+  TriggerChainID: 1
+  TriggerSourceContract: 0x1f9840a85d5af5bf1d1762f925bdaddc4201f984
+  TriggerEventName: AddPoints(string,uint256)
+  TriggerSourceContractABI: W3siaW5wdXRzIjpbXSwic3RhdGVNdXRhYmlsaXR5Ijoibm9uc...
+  TriggerEventFilter: NA
+  RecurringChainID: 1
+  RecurringSourceContract: 0x1f9840a85d5af5bf1d1762f925bdaddc4201f984
+  RecurringEventName: AddPoints(string,uint256)
+  RecurringSourceContractABI: W3siaW5wdXRzIjpbXSwic3RhdGVNdXRhYmlsaXR5Ijoibm...
+  RecurringEventFilter: NA
+  Meta: NA
+Actions:
+  - Name: action_notify
+    Type: post
+    ChainID: NA
+    TargetContract: NA
+    TargetFunction: NA
+    APIEndpoint: https://workflow-notification-test.kalp.network/push_notification
+    APIPayload:
+      message: Transfer detected
+      token: ETH
+      threshold: 2000
+    RetriesUntilSuccess: 2
+  - Name: action_log
+    Type: post
+    ChainID: NA
+    TargetContract: NA
+    TargetFunction: NA
+    APIEndpoint: https://workflow-notification-test.kalp.network/push_notification
+    APIPayload:
+      TargetContract: 0x65B2B850FEe0E0C13D956aB5D64271164fa6589D
+      chainId: 1
+    RetriesUntilSuccess: 2
+Execution:
+  Mode: sequential
+```
+
+## How it works
+
+The Multi-Chain Bridge Monitor workflow uses an event-based trigger system to monitor bridge transactions across multiple blockchain networks. When a bridge event is detected on the source chain (defined in `TriggerChainID` and `TriggerSourceContract`), the workflow executes immediately. The recurring trigger monitors for completion or related events on the same or different chains, allowing you to track the full lifecycle of cross-chain transactions.
+
+Actions execute sequentially to ensure notifications are sent before transaction data is logged. The workflow includes built-in retry logic (`RetriesUntilSuccess: 2`) to help handle issues such as temporary network failure or API downtime. You can customize the notification payloads to include specific transaction details, user addresses, token amounts, or any other event data captured from the blockchain.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Work with Triggers" icon="bolt" href="/concepts/work-with-triggers">
+    Learn more about event-based triggers and recurring execution patterns
+  </Card>
+  <Card title="Work with Actions" icon="play" href="/concepts/work-with-actions">
+    Explore different action types for notifications, logging, and smart contract calls
+  </Card>
+</CardGroup>
