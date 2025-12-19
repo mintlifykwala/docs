@@ -45,7 +45,7 @@
               "use-cases/nft-price-tracker",
               "use-cases/defi-yield-optimizer",
               "use-cases/dao-proposal-notifier",
-              "use-cases/multi-chain-transaction-monitor",
+              "use-cases/multi-chain-bridge-monitor",
               "use-cases/liquidation-protection"
             ]
           }
