@@ -150,7 +150,7 @@ Actions:
 - **ChainID**: Blockchain where the transfer occurs (1 for Ethereum mainnet)
 - **RetriesUntilSuccess**: Number of retry attempts if transaction fails
 
-#### Example: Transfer 1000 USDC
+**Example: Transfer 1000 USDC**
 
 ```yaml
 TargetContract: 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48
@@ -162,7 +162,7 @@ TargetParams:
 
 <Note>USDC uses 6 decimals, so 1000 USDC = 1000000000 (1000 × 10^6).</Note>
 
-#### Example: Transfer 0.5 ETH worth of WETH
+**Example: Transfer 0.5 ETH worth of WETH**
 
 ```yaml
 TargetContract: 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2
@@ -240,7 +240,7 @@ ActionStatusNotificationAPIKey: NA
 
 You can extend the workflow with additional protective measures:
 
-#### Example: Log to monitoring service
+**Example: Log to monitoring service**
 
 ```yaml
 - Name: log_protection_event
@@ -253,7 +253,7 @@ You can extend the workflow with additional protective measures:
     amount_transferred: "100"
 ```
 
-#### Example: Alert to multiple channels
+**Example: Alert to multiple channels**
 
 ```yaml
 - Name: telegram_alert
@@ -264,7 +264,7 @@ You can extend the workflow with additional protective measures:
     text: "Liquidation protection activated! Collateral added successfully."
 ```
 
-#### Example: Update dashboard
+**Example: Update dashboard**
 
 ```yaml
 - Name: update_dashboard
