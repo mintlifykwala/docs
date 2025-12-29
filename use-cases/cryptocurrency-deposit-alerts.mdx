@@ -1,0 +1,372 @@
+---
+title: 'Instant alerts for crypto or stablecoin deposits'
+description: 'Build a real-time deposit alert system that sends Discord notifications whenever stablecoins are deposited into a Treasury Vault'
+---
+
+Monitoring treasury deposits and token transfers in real time is critical for DAOs, DeFi projects, and teams that manage on-chain funds. Traditionally, that requires backend servers and cron jobs: infrastructure you must maintain and secure.
+
+Kwala Workflows removes that operational burden. With a simple YAML-driven workflow, you can listen for on-chain events and send notifications to off-chain endpoints like Discord, no backend required.
+
+In this guide, we'll build a real-time deposit alert system that sends a Discord notification whenever a stablecoin (USDC) is deposited into a Treasury Vault contract. The entire flow is driven by Kwala workflows and a single YAML configuration.
+
+## Objective
+
+Create a Kwala workflow that:
+
+<iframe
+  width="560"
+  height="315"
+  src="https://www.youtube.com/embed/7bCdHC4DEt8"
+  title="YouTube video player"
+  frameBorder="0"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+  allowFullScreen
+  style={{ width: '100%', borderRadius: '0.5rem' }}
+></iframe>
+
+- **TRIGGER:** Detects `USDCAccepted` events emitted by the Treasury Vault contract when a USDC deposit happens.
+- **ACTION:** Instantly posts a notification to a Discord channel via webhook.
+
+This eliminates the need for manual monitoring or custom backend scripts for token-transfer tracking.
+
+## Prepare your Discord webhook
+
+1. Open Discord and go to Server Settings > Apps > Create New App
+2. Select Create a Bot and configure the name, avatar, and permissions
+3. Go to Server Settings > Integrations > Webhooks
+4. Select New Webhook, choose your target channel, then select Copy Webhook URL
+5. (Optional) Test the webhook with a POST request: `{"content": "Test message from Discord Webhook!"}`
+
+<Tip>
+Keep the webhook URL handy — you'll add it to the workflow action.
+</Tip>
+
+## Step 1: Smart contract setup
+
+This use case uses two Solidity contracts: a simple ERC20 (USDC-like) and a treasury vault that accepts deposits and emits an event.
+
+**MintERC20USDC.sol**
+
+Contract Address (Base Sepolia): `0x025B55313ac120435963f571F02EcC3d35FA6e6e`
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+/// @title Simple USDC-like ERC20 (standalone)
+/// @notice Minimal ERC20 token with mint/burn and an owner-only function to transfer tokens held by the contract.
+contract USDC {
+    // ERC20 basic data
+    string public name = "USD Coin";
+    string public symbol = "USDC";
+    uint8 public constant decimals = 6; // USDC uses 6 decimals
+    uint256 public totalSupply;
+
+    // Owner
+    address public owner;
+
+    // Balances and allowances
+    mapping(address => uint256) public balanceOf;
+    mapping(address => mapping(address => uint256)) public allowance;
+
+    // Events
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed ownerAddr, address indexed spender, uint256 value);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event Mint(address indexed to, uint256 amount);
+    event Burn(address indexed from, uint256 amount);
+
+    // Modifiers
+    modifier onlyOwner() {
+        require(msg.sender == owner, "only owner");
+        _;
+    }
+
+    // Constructor sets deployer as owner
+    constructor() {
+        owner = msg.sender;
+        emit OwnershipTransferred(address(0), owner);
+    }
+
+    // ---------- ERC20 standard functions ----------
+
+    function transfer(address to, uint256 amount) external returns (bool) {
+        _transfer(msg.sender, to, amount);
+        return true;
+    }
+
+    function approve(address spender, uint256 amount) external returns (bool) {
+        allowance[msg.sender][spender] = amount;
+        emit Approval(msg.sender, spender, amount);
+        return true;
+    }
+
+    function transferFrom(address from, address to, uint256 amount) external returns (bool) {
+        uint256 allowed = allowance[from][msg.sender];
+        require(allowed >= amount, "allowance too low");
+        // deduct allowance
+        allowance[from][msg.sender] = allowed - amount;
+        _transfer(from, to, amount);
+        return true;
+    }
+
+    // ---------- Internal transfer ----------
+
+    function _transfer(address from, address to, uint256 amount) internal {
+        require(to != address(0), "transfer to zero");
+        uint256 bal = balanceOf[from];
+        require(bal >= amount, "insufficient balance");
+        balanceOf[from] = bal - amount;
+        balanceOf[to] += amount;
+        emit Transfer(from, to, amount);
+    }
+
+    // ---------- Mint / Burn (owner) ----------
+
+    /// @notice Mint tokens to an address (owner only)
+    function mint(address to, uint256 amount) external onlyOwner returns (bool) {
+        require(to != address(0), "mint to zero");
+        totalSupply += amount;
+        balanceOf[to] += amount;
+        emit Mint(to, amount);
+        emit Transfer(address(0), to, amount);
+        return true;
+    }
+
+    /// @notice Burn tokens from owner's balance
+    function burn(uint256 amount) external onlyOwner returns (bool) {
+        uint256 bal = balanceOf[owner];
+        require(bal >= amount, "insufficient owner balance");
+        balanceOf[owner] = bal - amount;
+        totalSupply -= amount;
+        emit Burn(owner, amount);
+        emit Transfer(owner, address(0), amount);
+        return true;
+    }
+
+    /// @notice Burn tokens from any account (owner only)
+    function burnFrom(address account, uint256 amount) external onlyOwner returns (bool) {
+        require(account != address(0), "burn from zero");
+        uint256 bal = balanceOf[account];
+        require(bal >= amount, "insufficient balance");
+        balanceOf[account] = bal - amount;
+        totalSupply -= amount;
+        emit Burn(account, amount);
+        emit Transfer(account, address(0), amount);
+        return true;
+    }
+
+    // ---------- Contract-held tokens forwarding ----------
+
+    /// @notice Transfer tokens that this contract currently holds to `to` (owner only).
+    /// Useful if the contract receives tokens and owner wants to forward them to their wallet.
+    function transferFromContract(address to, uint256 amount) external onlyOwner returns (bool) {
+        require(to != address(0), "to zero");
+        uint256 bal = balanceOf[address(this)];
+        require(bal >= amount, "insufficient contract balance");
+        balanceOf[address(this)] = bal - amount;
+        balanceOf[to] += amount;
+        emit Transfer(address(this), to, amount);
+        return true;
+    }
+
+    // ---------- Ownership ----------
+
+    function transferOwnership(address newOwner) external onlyOwner {
+        require(newOwner != address(0), "new owner zero");
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+
+    // ---------- Allow contract to receive ETH (optional) ----------
+    receive() external payable { }
+}
+```
+
+**TreasuryAcceptUSDC.sol**
+
+Contract Address: `0x60Fc086C786e8B66aeD0163A266bd3aF9125e8D0`
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+/// @title USDCVaultSimple
+/// @notice Accepts USDC, records who sent how much, and emits an event for every deposit.
+contract USDCVaultSimple {
+    address public usdc;  // USDC token contract address
+    uint256 public totalReceived;
+
+    struct Deposit {
+        address sender;
+        uint256 amount;
+        uint256 timestamp;
+    }
+
+    Deposit[] public deposits;
+    mapping(address => uint256) public totalReceivedBy;
+
+    event USDCAccepted(address indexed sender, uint256 amount, uint256 timestamp);
+
+    constructor(address _usdc) {
+        require(_usdc != address(0), "Invalid USDC address");
+        usdc = _usdc;
+    }
+
+    /// @notice Deposit USDC into this contract.
+    /// @dev Caller must first approve this contract to spend their USDC.
+    function deposit(uint256 amount) external {
+        require(amount > 0, "Amount must be > 0");
+
+        // Call USDC.transferFrom(msg.sender, thisContract, amount)
+        (bool success, bytes memory data) = usdc.call(
+            abi.encodeWithSignature("transferFrom(address,address,uint256)", msg.sender, address(this), amount)
+        );
+        require(success && (data.length == 0 || abi.decode(data, (bool))), "Transfer failed");
+
+        deposits.push(Deposit(msg.sender, amount, block.timestamp));
+        totalReceived += amount;
+        totalReceivedBy[msg.sender] += amount;
+
+        emit USDCAccepted(msg.sender, amount, block.timestamp);
+    }
+
+    /// @notice Returns how many deposits have been made.
+    function depositsCount() external view returns (uint256) {
+        return deposits.length;
+    }
+
+    /// @notice Returns a deposit record.
+    function getDeposit(uint256 index) external view returns (address, uint256, uint256) {
+        require(index < deposits.length, "Invalid index");
+        Deposit memory d = deposits[index];
+        return (d.sender, d.amount, d.timestamp);
+    }
+
+    /// @notice Returns current USDC balance held by this contract.
+    function contractBalance() external view returns (uint256) {
+        (bool success, bytes memory data) = usdc.staticcall(
+            abi.encodeWithSignature("balanceOf(address)", address(this))
+        );
+        require(success, "balanceOf failed");
+        return abi.decode(data, (uint256));
+    }
+}
+```
+
+**Flow summary**
+
+1. Mint USDC tokens from `MintERC20USDC`.
+2. Approve the `TreasuryAcceptUSDC` contract to spend tokens.
+3. Deposit tokens into the treasury (calls `deposit`).
+4. `TreasuryAcceptUSDC` emits `USDCAccepted`, which Kwala detects and uses to send a Discord alert.
+
+## Step 2: Build the Kwala workflow
+
+### Step 2.1: Create a new workflow
+
+- Open the Kwala Dashboard: [Kwala Dashboard](https://kwala.network/dashboard)
+- Select **Create New Workflow**
+- Name it, for example: `USDC_Received_Notifier1`
+
+### Step 2.2: Configure the trigger
+
+- **Execute After:** immediately
+- **Repeat Every:** event
+- **Recurring Source Contract:** `0x60Fc086C786e8B66aeD0163A266bd3aF9125e8D0` (Treasury contract on Base Sepolia)
+- **Recurring Chain ID:** `84532` (Base Sepolia testnet)
+- **Recurring Event Name:** `USDCAccepted(address,uint256,uint256)`
+- **Expires:** e.g., `08-10-2025 15:00` IST
+- **Action Status Notification POST URL:** `https://workflow-notification-test.kalp.network/push_notification`
+
+<Info>
+This ensures every USDC deposit triggers the workflow.
+</Info>
+
+### Step 2.3: Configure the action (Discord notification)
+
+- **Action Name:** `discord_call`
+- **Type:** `POST` (API CALL)
+- **API Endpoint:** your Discord webhook URL (example provided in the YAML)
+- **API Payload:** `content: "USDC Received on USDC Treasury Vault Smart Contract"`
+- **Retries Until Success:** `5`
+- **Execution Mode:** `sequential`
+
+## YAML: Use as-is in the Kwala dashboard
+
+```yaml
+Name: USDC_Received_Notifier1_e81e
+Trigger:
+  TriggerSourceContract: NA
+  TriggerChainID: NA
+  TriggerEventName: NA
+  TriggerEventFilter: NA
+  TriggerSourceContractABI: NA
+  TriggerPrice: NA
+  RecurringSourceContract: 0x60Fc086C786e8B66aeD0163A266bd3aF9125e8D0
+  RecurringChainID: 84532
+  RecurringEventName: USDCAccepted(address,uint256,uint256)
+  RecurringEventFilter: NA
+  RecurringSourceContractABI: WwogIHsKICAgICJpbnB1dHMiOiBbCiAgICAgIHsKICAgICAgICAiaW50ZXJuYWxUeXBlIjogImFkZHJlc3MiLAogICAgICAgICJuYW1lIjogIl91c2RjIiwKICAgICAgICAidHlwZSI6ICJhZGRyZXNzIgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJub25wYXlhYmxlIiwKICAgICJ0eXBlIjogImNvbnN0cnVjdG9yIgogIH0sCiAgewogICAgImFub255bW91cyI6IGZhbHNlLAogICAgImlucHV0cyI6IFsKICAgICAgewogICAgICAgICJpbmRleGVkIjogdHJ1ZSwKICAgICAgICAiaW50ZXJuYWxUeXBlIjogImFkZHJlc3MiLAogICAgICAgICJuYW1lIjogInNlbmRlciIsCiAgICAgICAgInR5cGUiOiAiYWRkcmVzcyIKICAgICAgfSwKICAgICAgewogICAgICAgICJpbmRleGVkIjogZmFsc2UsCiAgICAgICAgImludGVybmFsVHlwZSI6ICJ1aW50MjU2IiwKICAgICAgICAibmFtZSI6ICJhbW91bnQiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0sCiAgICAgIHsKICAgICAgICAiaW5kZXhlZCI6IGZhbHNlLAogICAgICAgICJpbnRlcm5hbFR5cGUiOiAidWludDI1NiIsCiAgICAgICAgIm5hbWUiOiAidGltZXN0YW1wIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgIm5hbWUiOiAiVVNEQ0FjY2VwdGVkIiwKICAgICJ0eXBlIjogImV2ZW50IgogIH0sCiAgewogICAgImlucHV0cyI6IFtdLAogICAgIm5hbWUiOiAiY29udHJhY3RCYWxhbmNlIiwKICAgICJvdXRwdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJ1aW50MjU2IiwKICAgICAgICAibmFtZSI6ICIiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0KICAgIF0sCiAgICAic3RhdGVNdXRhYmlsaXR5IjogInZpZXciLAogICAgInR5cGUiOiAiZnVuY3Rpb24iCiAgfSwKICB7CiAgICAiaW5wdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJ1aW50MjU2IiwKICAgICAgICAibmFtZSI6ICJhbW91bnQiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0KICAgIF0sCiAgICAibmFtZSI6ICJkZXBvc2l0IiwKICAgICJvdXRwdXRzIjogW10sCiAgICAic3RhdGVNdXRhYmlsaXR5IjogIm5vbnBheWFibGUiLAogICAgInR5cGUiOiAiZnVuY3Rpb24iCiAgfSwKICB7CiAgICAiaW5wdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJ1aW50MjU2IiwKICAgICAgICAibmFtZSI6ICIiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0KICAgIF0sCiAgICAibmFtZSI6ICJkZXBvc2l0cyIsCiAgICAib3V0cHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAiYWRkcmVzcyIsCiAgICAgICAgIm5hbWUiOiAic2VuZGVyIiwKICAgICAgICAidHlwZSI6ICJhZGRyZXNzIgogICAgICB9LAogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJ1aW50MjU2IiwKICAgICAgICAibmFtZSI6ICJhbW91bnQiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0sCiAgICAgIHsKICAgICAgICAiaW50ZXJuYWxUeXBlIjogInVpbnQyNTYiLAogICAgICAgICJuYW1lIjogInRpbWVzdGFtcCIsCiAgICAgICAgInR5cGUiOiAidWludDI1NiIKICAgICAgfQogICAgXSwKICAgICJzdGF0ZU11dGFiaWxpdHkiOiAidmlldyIsCiAgICAidHlwZSI6ICJmdW5jdGlvbiIKICB9LAogIHsKICAgICJpbnB1dHMiOiBbXSwKICAgICJuYW1lIjogImRlcG9zaXRzQ291bnQiLAogICAgIm91dHB1dHMiOiBbCiAgICAgIHsKICAgICAgICAiaW50ZXJuYWxUeXBlIjogInVpbnQyNTYiLAogICAgICAgICJuYW1lIjogIiIsCiAgICAgICAgInR5cGUiOiAidWludDI1NiIKICAgICAgfQogICAgXSwKICAgICJzdGF0ZU11dGFiaWxpdHkiOiAidmlldyIsCiAgICAidHlwZSI6ICJmdW5jdGlvbiIKICB9LAogIHsKICAgICJpbnB1dHMiOiBbCiAgICAgIHsKICAgICAgICAiaW50ZXJuYWxUeXBlIjogInVpbnQyNTYiLAogICAgICAgICJuYW1lIjogImluZGV4IiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgIm5hbWUiOiAiZ2V0RGVwb3NpdCIsCiAgICAib3V0cHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAiYWRkcmVzcyIsCiAgICAgICAgIm5hbWUiOiAiIiwKICAgICAgICAidHlwZSI6ICJhZGRyZXNzIgogICAgICB9LAogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJ1aW50MjU2IiwKICAgICAgICAibmFtZSI6ICIiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0sCiAgICAgIHsKICAgICAgICAiaW50ZXJuYWxUeXBlIjogInVpbnQyNTYiLAogICAgICAgICJuYW1lIjogIiIsCiAgICAgICAgInR5cGUiOiAidWludDI1NiIKICAgICAgfQogICAgXSwKICAgICJzdGF0ZU11dGFiaWxpdHkiOiAidmlldyIsCiAgICAidHlwZSI6ICJmdW5jdGlvbiIKICB9LAogIHsKICAgICJpbnB1dHMiOiBbXSwKICAgICJuYW1lIjogInRvdGFsUmVjZWl2ZWQiLAogICAgIm91dHB1dHMiOiBbCiAgICAgIHsKICAgICAgICAiaW50ZXJuYWxUeXBlIjogInVpbnQyNTYiLAogICAgICAgICJuYW1lIjogIiIsCiAgICAgICAgInR5cGUiOiAidWludDI1NiIKICAgICAgfQogICAgXSwKICAgICJzdGF0ZU11dGFiaWxpdHkiOiAidmlldyIsCiAgICAidHlwZSI6ICJmdW5jdGlvbiIKICB9LAogIHsKICAgICJpbnB1dHMiOiBbCiAgICAgIHsKICAgICAgICAiaW50ZXJuYWxUeXBlIjogImFkZHJlc3MiLAogICAgICAgICJuYW1lIjogIiIsCiAgICAgICAgInR5cGUiOiAiYWRkcmVzcyIKICAgICAgfQogICAgXSwKICAgICJuYW1lIjogInRvdGFsUmVjZWl2ZWRCeSIsCiAgICAib3V0cHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAidWludDI1NiIsCiAgICAgICAgIm5hbWUiOiAiIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJ2aWV3IiwKICAgICJ0eXBlIjogImZ1bmN0aW9uIgogIH0sCiAgewogICAgImlucHV0cyI6IFtdLAogICAgIm5hbWUiOiAidXNkYyIsCiAgICAib3V0cHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAiYWRkcmVzcyIsCiAgICAgICAgIm5hbWUiOiAiIiwKICAgICAgICAidHlwZSI6ICJhZGRyZXNzIgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJ2aWV3IiwKICAgICJ0eXBlIjogImZ1bmN0aW9uIgogIH0KXQ==
+  RecurringPrice: NA
+  RepeatEvery: event
+  ExecuteAfter: immediate
+  ExpiresIn: 1759915800
+  Meta: NA
+  ActionStatusNotificationPOSTURL: https://workflow-notification-test.kalp.network/push_notification
+  ActionStatusNotificationAPIKey: NA
+Actions:
+  - Name: discord_call
+    Type: post
+    APIEndpoint: https://discord.com/api/webhooks/1425037499574517760/wh9zok5wxXMI-rdVK-4atTZM-14eHghibVwbQN7erqs1iSME7keWQGulSZ6NNBVyaXA1
+    APIPayload:
+      content: "USDC Received on USDC Treasury Vault Smart Contract"
+    TargetContract: NA
+    TargetFunction: NA
+    TargetParams: NA
+    ChainID: NA
+    EncodedABI: NA
+    Bytecode: NA
+    Metadata: NA
+    RetriesUntilSuccess: 5
+Execution:
+  Mode: sequential
+```
+
+<Note>
+Paste this YAML into the Kwala dashboard, save & compile, then deploy.
+</Note>
+
+## Step 3: Deploy and test
+
+1. Save and compile the YAML workflow in Kwala.
+2. Deploy it and wait for **status: claimed**.
+3. In Remix:
+    - Mint USDC via `MintERC20USDC` (if needed).
+    - Approve the treasury contract to spend your USDC.
+    - Call `deposit(amount)` on `TreasuryAcceptUSDC`.
+4. After the deposit transaction completes, the contract emits `USDCAccepted`, Kwala detects it and your Discord webhook receives the message:
+
+**Discord output:**
+
+> USDC Received on USDC Treasury Vault Smart Contract
+
+## Conclusion
+
+You've built a real-time stablecoin deposit alert using Kwala Workflows, a single YAML workflow that connects on-chain `USDCAccepted` events to a Discord notification. No servers, no cron jobs, and no custom backend.
+
+Kwala helps you connect on-chain events to off-chain systems quickly, automate DeFi treasury monitoring without operational overhead, and build event-driven Web3 infrastructure using YAML.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Workflow Templates" icon="grid" href="/concepts/use-workflow-templates">
+    Explore pre-built workflow templates to accelerate your development
+  </Card>
+  <Card title="Monitor Your Workflows" icon="chart-line" href="/workflow-builder/monitor-workflow">
+    Learn how to track and analyze your workflow executions in real-time
+  </Card>
+  <Card title="Best Practices" icon="lightbulb" href="/concepts/best-practices">
+    Discover tips and patterns for building robust Web3 automations
+  </Card>
+</CardGroup>

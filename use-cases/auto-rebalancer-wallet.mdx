@@ -1,0 +1,306 @@
+---
+title: 'Auto-rebalancer wallet'
+description: 'Build an automated system that monitors wallet balances and automatically tops up low balances in real-time through smart contracts'
+---
+
+In this guide, we'll walk you through building a Web3 wallet auto-rebalancing system using Kwala Workflows, a low-code, YAML-based automation platform for blockchain developers.
+
+With Kwala, you can connect on-chain events to automated smart contract executions without cron jobs, servers, or custom scripts. In this use case, you'll learn how to automatically monitor wallet balances and top-up low balances in real time through smart contracts and event-driven workflows powered by Kwala.
+
+## Objective
+
+Build a two-part workflow system that:
+
+- Continuously checks wallet balances and detects when a wallet's native POL balance drops below a threshold of `0.1 POL`.
+- Automatically transfers funds to top up the wallet whenever a low-balance event is emitted.
+
+This setup enables self-sustaining wallets that stay funded without manual monitoring.
+
+## Step 1: Smart contract setup
+
+We use two Solidity contracts:
+
+### 1. `PolNativeBalanceChecker.sol`
+
+This contract checks a wallet's POL balance and emits a `LowPolBalance` event when the balance is below the predefined threshold.
+
+File name: `PolChecker.sol`
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+/// @title PolNativeBalanceChecker
+/// @notice Emits LowPolBalance(user,balanceWei) when a checked address balance < THRESHOLD (0.1 POL).
+contract PolNativeBalanceChecker {
+    uint256 public constant THRESHOLD = 0.1 ether; // 0.1 POL
+
+    event LowPolBalance(address indexed user, uint256 balanceWei);
+
+    /// @notice Returns native balance in wei
+    function polBalanceOf(address user) public view returns (uint256) {
+        return user.balance;
+    }
+
+    /// @notice Check `user` balance and emit event if below threshold.
+    function checkAndWarn(address user) public returns (uint256 balanceWei) {
+        balanceWei = user.balance;
+        if (balanceWei < THRESHOLD) {
+            emit LowPolBalance(user, balanceWei);
+        }
+    }
+
+    /// @notice Convenience: check caller
+    function checkMe() external returns (uint256) {
+        return checkAndWarn(msg.sender);
+    }
+}
+```
+
+<Note>
+Deploy this contract on Polygon Amoy Testnet and copy the deployed contract address, for example: `0x85bc99d6207aD8284fb2bD0C5A4ebaA6F4B140e4`.
+</Note>
+
+### 2. `AutoTopUp.sol`
+
+This contract performs the top-up of wallets that fall below the balance threshold.
+
+File name: `AutoTopUp.sol`
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+/// @title AutoTopUp
+/// @notice Minimal "self-executable" top-up vault.
+/// - If `to` has < 0.1 POL, calling `topUpIfLow(to)` will send 1 POL from this contract to `to`.
+/// - Anyone can call `topUpIfLow` (so it is "self-executable"); the contract must be funded first.
+/// - Includes a tiny non-reentrant guard.
+contract AutoTopUp {
+    uint256 public constant TOPUP_AMOUNT = 1 ether;      // send 1 POL
+    uint256 public constant THRESHOLD   = 0.1 ether;     // top-up when recipient < 0.1 POL
+
+    bool private locked;
+
+    event TopUpExecuted(address indexed to, uint256 amountWei);
+    event TopUpSkipped(address indexed to, uint256 currentBalanceWei);
+    event Received(address indexed from, uint256 amountWei);
+
+    modifier nonReentrant() {
+        require(!locked, "reentrant");
+        locked = true;
+        _;
+        locked = false;
+    }
+
+    // allow the contract to receive POL (treasury should send funds here)
+    receive() external payable {
+        emit Received(msg.sender, msg.value);
+    }
+
+    /// @notice If `to` has balance < THRESHOLD, transfer TOPUP_AMOUNT from this contract to `to`.
+    /// @dev Callable by anyone. Returns true on successful transfer, false if skipped due to sufficient balance.
+    function topUpIfLow(address payable to) external nonReentrant returns (bool) {
+        require(to != address(0), "invalid recipient");
+
+        uint256 recipientBal = to.balance;
+        if (recipientBal >= THRESHOLD) {
+            emit TopUpSkipped(to, recipientBal);
+            return false;
+        }
+
+        require(address(this).balance >= TOPUP_AMOUNT, "insufficient vault balance");
+
+        (bool sent, ) = to.call{ value: TOPUP_AMOUNT }("");
+        require(sent, "transfer failed");
+
+        emit TopUpExecuted(to, TOPUP_AMOUNT);
+        return true;
+    }
+
+    /// @notice View helper: whether a top-up would succeed right now.
+    function canTopUp(address to) public view returns (bool) {
+        if (to == address(0)) return false;
+        return (to.balance < THRESHOLD) && (address(this).balance >= TOPUP_AMOUNT);
+    }
+
+    /// @notice Convenience: current contract (vault) balance
+    function vaultBalance() external view returns (uint256) {
+        return address(this).balance;
+    }
+}
+```
+
+<Warning>
+Deploy `AutoTopUp` and fund it with enough POL so it can perform top-ups.
+</Warning>
+
+## Step 2: Setting up Kwala workflows
+
+This automation uses two Kwala workflows that communicate via emitted events.
+
+### Workflow 1: BCPollingperMinute polling workflow
+
+**Purpose:** Continuously monitor a wallet's POL balance by calling `checkAndWarn()`.
+
+**Trigger parameters:**
+
+- **Execute After:** `immediate`
+- **Repeat Every:** `1m` every minute
+- **Expires In:** `1759213800` timestamp
+
+**Action:** Calls `checkAndWarn(address user)` on the deployed `PolNativeBalanceChecker` contract. If the wallet's balance is below `0.1 POL`, the contract emits `LowPolBalance(address,uint256)`.
+
+**YAML 1: Polling workflow**
+
+```yaml
+Name: polling1_e81e
+Trigger:
+  TriggerSourceContract: NA
+  TriggerChainID: NA
+  TriggerEventName: NA
+  TriggerEventFilter: NA
+  TriggerSourceContractABI: NA
+  TriggerPrice: NA
+  RecurringSourceContract: NA
+  RecurringChainID: NA
+  RecurringEventName: NA
+  RecurringEventFilter: NA
+  RecurringSourceContractABI: NA
+  RecurringPrice: NA
+  RepeatEvery: 1m
+  ExecuteAfter: immediate
+  ExpiresIn: 1759213800
+  Meta: NA
+  ActionStatusNotificationPOSTURL: https://workflow-notification-test.kalp.network/push_notification
+  ActionStatusNotificationAPIKey: NA
+Actions:
+  - Name: poll1
+    Type: call
+    APIEndpoint: NA
+    APIPayload:
+      Message: NA
+    TargetContract: 0x85bc99d6207aD8284fb2bD0C5A4ebaA6F4B140e4
+    TargetFunction: function checkAndWarn(address user)
+    TargetParams:
+      - 0x0F0C0b9683180DF0a13Fc176aFFd92E1F7f380f0
+    ChainID: 80002
+    EncodedABI: NA
+    Bytecode: NA
+    Metadata: NA
+    RetriesUntilSuccess: 5
+Execution:
+  Mode: sequential
+```
+
+<Info>
+The polling workflow calls the checker every minute for the target wallet address, for example: 0x0F0C...f380f0.
+</Info>
+
+### Workflow 2: AutoTopUp1 auto top-up workflow
+
+**Purpose:** Automatically top up wallets whenever a `LowPolBalance` event is emitted.
+
+**Trigger parameters:**
+
+- **Trigger Source Contract:** `0x85bc99d6207aD8284fb2bD0C5A4ebaA6F4B140e4`
+- **Trigger Chain ID:** `80002` Polygon Amoy
+- **Trigger Event Name:** `LowPolBalance(address,uint256)`
+- **Execute After:** `event`
+- **Repeat Every:** `event`
+
+When triggered, this workflow calls the `AutoTopUp` contract's `topUpIfLow()` function to send funds.
+
+**YAML 2: AutoTopUp workflow**
+
+```yaml
+Name: autotopup1_e81e
+Trigger:
+  TriggerSourceContract: 0x85bc99d6207aD8284fb2bD0C5A4ebaA6F4B140e4
+  TriggerChainID: 80002
+  TriggerEventName: LowPolBalance(address,uint256)
+  TriggerEventFilter: NA
+  TriggerSourceContractABI: WwogIHsKICAgICJhbm9ueW1vdXMiOiBmYWxzZSwKICAgICJpbnB1dHMiOiBbCiAgICAgIHsKICAgICAgICAiaW5kZXhlZCI6IHRydWUsCiAgICAgICAgImludGVybmFsVHlwZSI6ICJhZGRyZXNzIiwKICAgICAgICAibmFtZSI6ICJ1c2VyIiwKICAgICAgICAidHlwZSI6ICJhZGRyZXNzIgogICAgICB9LAogICAgICB7CiAgICAgICAgImluZGV4ZWQiOiBmYWxzZSwKICAgICAgICAiaW50ZXJuYWxUeXBlIjogInVpbnQyNTYiLAogICAgICAgICJuYW1lIjogImJhbGFuY2VXZWkiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0KICAgIF0sCiAgICAibmFtZSI6ICJMb3dQb2xCYWxhbmNlIiwKICAgICJ0eXBlIjogImV2ZW50IgogIH0sCiAgewogICAgImlucHV0cyI6IFtdLAogICAgIm5hbWUiOiAiVEhSRVNIT0xEIiwKICAgICJvdXRwdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJ1aW50MjU2IiwKICAgICAgICAibmFtZSI6ICIiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0KICAgIF0sCiAgICAic3RhdGVNdXRhYmlsaXR5IjogInZpZXciLAogICAgInR5cGUiOiAiZnVuY3Rpb24iCiAgfSwKICB7CiAgICAiaW5wdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJhZGRyZXNzIiwKICAgICAgICAibmFtZSI6ICJ1c2VyIiwKICAgICAgICAidHlwZSI6ICJhZGRyZXNzIgogICAgICB9CiAgICBdLAogICAgIm5hbWUiOiAiY2hlY2tBbmRXYXJuIiwKICAgICJvdXRwdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJ1aW50MjU2IiwKICAgICAgICAibmFtZSI6ICJiYWxhbmNlV2VpIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJub25wYXlhYmxlIiwKICAgICJ0eXBlIjogImZ1bmN0aW9uIgogIH0sCiAgewogICAgImlucHV0cyI6IFtdLAogICAgIm5hbWUiOiAiY2hlY2tNZSIsCiAgICAib3V0cHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAidWludDI1NiIsCiAgICAgICAgIm5hbWUiOiAiIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJub25wYXlhYmxlIiwKICAgICJ0eXBlIjogImZ1bmN0aW9uIgogIH0sCiAgewogICAgImlucHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAiYWRkcmVzcyIsCiAgICAgICAgIm5hbWUiOiAidXNlciIsCiAgICAgICAgInR5cGUiOiAiYWRkcmVzcyIKICAgICAgfQogICAgXSwKICAgICJuYW1lIjogInBvbEJhbGFuY2VPZiIsCiAgICAib3V0cHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAidWludDI1NiIsCiAgICAgICAgIm5hbWUiOiAiIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJ2aWV3IiwKICAgICJ0eXBlIjogImZ1bmN0aW9uIgogIH0KXQ==
+  TriggerPrice: NA
+  RecurringSourceContract: 0x85bc99d6207aD8284fb2bD0C5A4ebaA6F4B140e4
+  RecurringChainID: 80002
+  RecurringEventName: LowPolBalance(address,uint256)
+  RecurringEventFilter: NA
+  RecurringSourceContractABI: WwogIHsKICAgICJhbm9ueW1vdXMiOiBmYWxzZSwKICAgICJpbnB1dHMiOiBbCiAgICAgIHsKICAgICAgICAiaW5kZXhlZCI6IHRydWUsCiAgICAgICAgImludGVybmFsVHlwZSI6ICJhZGRyZXNzIiwKICAgICAgICAibmFtZSI6ICJ1c2VyIiwKICAgICAgICAidHlwZSI6ICJhZGRyZXNzIgogICAgICB9LAogICAgICB7CiAgICAgICAgImluZGV4ZWQiOiBmYWxzZSwKICAgICAgICAiaW50ZXJuYWxUeXBlIjogInVpbnQyNTYiLAogICAgICAgICJuYW1lIjogImJhbGFuY2VXZWkiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0KICAgIF0sCiAgICAibmFtZSI6ICJMb3dQb2xCYWxhbmNlIiwKICAgICJ0eXBlIjogImV2ZW50IgogIH0sCiAgewogICAgImlucHV0cyI6IFtdLAogICAgIm5hbWUiOiAiVEhSRVNIT0xEIiwKICAgICJvdXRwdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJ1aW50MjU2IiwKICAgICAgICAibmFtZSI6ICIiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0KICAgIF0sCiAgICAic3RhdGVNdXRhYmlsaXR5IjogInZpZXciLAogICAgInR5cGUiOiAiZnVuY3Rpb24iCiAgfSwKICB7CiAgICAiaW5wdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJhZGRyZXNzIiwKICAgICAgICAibmFtZSI6ICJ1c2VyIiwKICAgICAgICAidHlwZSI6ICJhZGRyZXNzIgogICAgICB9CiAgICBdLAogICAgIm5hbWUiOiAiY2hlY2tBbmRXYXJuIiwKICAgICJvdXRwdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJ1aW50MjU2IiwKICAgICAgICAibmFtZSI6ICJiYWxhbmNlV2VpIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJub25wYXlhYmxlIiwKICAgICJ0eXBlIjogImZ1bmN0aW9uIgogIH0sCiAgewogICAgImlucHV0cyI6IFtdLAogICAgIm5hbWUiOiAiY2hlY2tNZSIsCiAgICAib3V0cHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAidWludDI1NiIsCiAgICAgICAgIm5hbWUiOiAiIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJub25wYXlhYmxlIiwKICAgICJ0eXBlIjogImZ1bmN0aW9uIgogIH0sCiAgewogICAgImlucHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAiYWRkcmVzcyIsCiAgICAgICAgIm5hbWUiOiAidXNlciIsCiAgICAgICAgInR5cGUiOiAiYWRkcmVzcyIKICAgICAgfQogICAgXSwKICAgICJuYW1lIjogInBvbEJhbGFuY2VPZiIsCiAgICAib3V0cHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAidWludDI1NiIsCiAgICAgICAgIm5hbWUiOiAiIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJ2aWV3IiwKICAgICJ0eXBlIjogImZ1bmN0aW9uIgogIH0KXQ==
+  RecurringPrice: NA
+  RepeatEvery: event
+  ExecuteAfter: event
+  ExpiresIn: 1759213800
+  Meta: NA
+  ActionStatusNotificationPOSTURL: https://workflow-notification-test.kalp.network/push_notification
+  ActionStatusNotificationAPIKey: NA
+Actions:
+  - Name: autotopup1
+    Type: call
+    APIEndpoint: NA
+    APIPayload:
+      Message: NA
+    TargetContract: 0x8905777D8617034ACD8088D9273186D449436e6C
+    TargetFunction: function topUpIfLow(address payable)
+    TargetParams:
+      - 0x0F0C0b9683180DF0a13Fc176aFFd92E1F7f380f0
+    ChainID: 80002
+    EncodedABI: NA
+    Bytecode: NA
+    Metadata: NA
+    RetriesUntilSuccess: 5
+Execution:
+  Mode: sequential
+```
+
+<Info>
+The auto-top-up workflow listens for LowPolBalance events emitted by the checker contract and then calls the top-up action on the AutoTopUp contract.
+</Info>
+
+## Step 3: Deploy and test the workflows
+
+1. Save and compile both YAML workflows in the Kwala Dashboard.
+2. Deploy Workflow 1 (polling) and Workflow 2 (auto top-up).
+3. Wait until both workflows show Claimed.
+4. Fund the deployed AutoTopUp contract with sufficient POL.
+
+When a monitored wallet's balance drops below `0.1 POL`:
+
+- Workflow 1 polling calls `checkAndWarn()` and the checker emits `LowPolBalance`.
+- Workflow 2 detects the event and calls `topUpIfLow()` on the AutoTopUp contract, which transfers `1 POL` to the wallet.
+
+## Step 4: Monitor workflow execution
+
+Use the Kwala Dashboard to inspect:
+
+- **Workflow Logs:** verify triggers and action calls.
+- **Execution Status:** confirm successful top-ups.
+- **Retries and Failures:** troubleshoot any missed or failed attempts.
+
+## Output
+
+Once both workflows run successfully, the AutoTopUp contract transfers `1 POL` to the wallet address whenever its balance goes below `0.1 POL`, creating a self-regulating on-chain wallet.
+
+If you add Telegram or other notifications to the workflows, you can surface messages like:
+
+> "AutoTopUp executed — wallet 0x0F0C...F380f0 rebalanced successfully."
+
+## Conclusion
+
+With just two YAML workflows, we created an auto-rebalancing wallet system using Kwala Workflows without backend scripts, centralized orchestration, or manual intervention.
+
+This use case highlights how Kwala bridges event-driven Web3 logic with automated smart contract execution, enabling developers to build real-world, autonomous blockchain systems quickly and reliably.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Workflow Templates" icon="file-code" href="/concepts/use-workflow-templates">
+    Explore pre-built workflow templates for common automation patterns
+  </Card>
+  <Card title="Monitor Your Workflows" icon="chart-line" href="/workflow-builder/monitor-workflow">
+    Learn how to track and analyze your workflow executions in real-time
+  </Card>
+  <Card title="Best Practices" icon="lightbulb" href="/concepts/best-practices">
+    Discover tips and patterns for building robust Web3 automations
+  </Card>
+</CardGroup>

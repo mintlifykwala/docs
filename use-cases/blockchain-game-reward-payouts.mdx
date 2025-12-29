@@ -1,0 +1,427 @@
+---
+title: 'Blockchain game reward payouts using Telegram'
+description: 'Build a Slide-to-Earn bounty automation that connects on-chain events to automated reward payouts and Telegram notifications'
+---
+
+In this guide, we'll build a Slide-to-Earn bounty automation using Kwala Workflows, a YAML-driven, serverless Web3 automation platform.
+
+With Kwala, you can seamlessly connect on-chain events to on-chain or off-chain actions such as contract calls, Telegram notifications, or API integrations, without deploying your own backend or cron jobs.
+
+Here you'll learn how to automate reward/bounty payouts for users who perform a "slide action" on a React frontend, using Kwala to monitor the event and trigger automatic payments and Telegram confirmations.
+
+## Objective
+
+Build a workflow that:
+
+<iframe
+  width="560"
+  height="315"
+  src="https://www.youtube.com/embed/qPcu928Juhk"
+  title="YouTube video player"
+  frameBorder="0"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+  allowFullScreen
+  style={{ width: '100%', borderRadius: '0.5rem' }}
+></iframe>
+
+- **TRIGGER:** Detects a `SlidePerformed(address)` event emitted by the `SlideBounty` smart contract on Polygon Amoy testnet.
+- **ACTION 1:** Automatically calls `payoutLast()` to pay out the reward/bounty to the last participant.
+- **ACTION 2:** Sends a Telegram message confirming the reward distribution.
+
+This setup removes centralized servers and gives you a trustless, transparent, and fully automated reward distribution mechanism.
+
+## Step 1: Smart contract setup
+
+Deploy the contract below to handle slide actions and bounty payouts.
+
+File name: `SlideBounty.sol`
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+contract SlideBounty {
+    address public owner;
+    address public lastUser;
+    uint256 public bountyAmount = 0.01 ether;
+    uint256 public lastPayoutTime;
+    uint256 public payoutCooldown = 5;
+
+    event SlidePerformed(address indexed user);
+    event BountyPaid(address indexed user, uint256 amount);
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    receive() external payable {}
+
+    function performSlide() external {
+        lastUser = msg.sender;
+        emit SlidePerformed(msg.sender);
+    }
+
+    function payoutLast() external {
+        require(block.timestamp >= lastPayoutTime + payoutCooldown, "Cooldown active");
+        require(address(this).balance >= bountyAmount, "Insufficient balance");
+        address user = lastUser;
+        require(user != address(0), "No user to pay");
+
+        payable(user).transfer(bountyAmount);
+        emit BountyPaid(user, bountyAmount);
+
+        lastUser = address(0);
+        lastPayoutTime = block.timestamp;
+    }
+
+    function setBounty(uint256 amount) external {
+        require(msg.sender == owner, "Only owner");
+        bountyAmount = amount;
+    }
+
+    function getBalance() external view returns (uint256) {
+        return address(this).balance;
+    }
+}
+```
+
+Deployed contract address: `0x5EE16Ac7BEBde8F38C99DbEFBBEA4fC5653fC34C`
+
+Network: Polygon Amoy Testnet (Chain ID: `80002`)
+
+<Warning>
+After deployment, fund the contract with test POL so it can pay bounties. You can view it on Amoy Polygonscan.
+</Warning>
+
+## Step 2: Setting up the Telegram bot
+
+Before creating the automation, configure a Telegram bot:
+
+1. Open Telegram and search **@BotFather**.
+2. Run `/newbot` to create a bot and get your **bot token**, for example, `8290848596:AAHll2dz1Me9CET3ztEwJm2uUaQQSMLNpUE`.
+3. Use [@userinfobot](https://t.me/userinfobot) to get your **chat ID**, for example, `1238754794`.
+4. Test your bot token with a POST to:
+    
+    `https://api.telegram.org/bot<YOUR_BOT_TOKEN>/sendMessage`
+    
+    Example body:
+    
+    ```json
+    {
+      "chat_id": "1238754794",
+      "text": "Test message from your Telegram bot!"
+    }
+    ```
+
+<Tip>
+If the test succeeds, your bot is ready.
+</Tip>
+
+## Step 3: Frontend (React UI)
+
+This React component provides a slide UI that calls `performSlide()` on the contract and emits the `SlidePerformed` event.
+
+**File Name:** `SlideTrigger.jsx`
+
+```jsx
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { ethers } from "ethers";
+
+const SlideTrigger = () => {
+  const [status, setStatus] = useState("Slide to earn your reward 💰");
+  const [address, setAddress] = useState("");
+  const [isSliding, setIsSliding] = useState(false);
+
+  const CONTRACT_ADDRESS = "0x5EE16Ac7BEBde8F38C99DbEFBBEA4fC5653fC34C";
+
+  // ABI with both functions
+  const CONTRACT_ABI = [
+    "function performSlide() external",
+    "function payoutLast() external",
+    "event SlidePerformed(address indexed user)",
+    "event BountyPaid(address indexed user, uint256 amount)"
+  ];
+
+  const connectWallet = async () => {
+    if (!window.ethereum) {
+      setStatus("Please install MetaMask first");
+      return;
+    }
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const addr = await signer.getAddress();
+      setAddress(addr);
+      setStatus(`Connected: ${addr.slice(0,6)}...${addr.slice(-4)}`);
+    } catch (err) {
+      console.error("Wallet connection error:", err);
+      setStatus("Failed to connect wallet");
+    }
+  };
+
+  const handleSlide = async () => {
+    if (isSliding) return;
+    try {
+      setIsSliding(true);
+      setStatus("Performing slide...");
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const slideContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+
+      // Call performSlide() – emits SlidePerformed(user)
+      const tx = await slideContract.performSlide();
+      console.log("Transaction sent:", tx.hash);
+      setStatus("📡 Waiting for confirmation...");
+      await tx.wait();
+
+      setStatus("Slide event emitted! Waiting for Kwala to process reward...");
+      console.log("SlidePerformed emitted, Kwala should now trigger payoutLast().");
+    } catch (err) {
+      console.error("Full error:", err);
+      setStatus(`Error: ${err.message || "Unknown error"}`);
+    } finally {
+      setIsSliding(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+      <div className="bg-white text-gray-800 p-8 rounded-3xl shadow-2xl w-96 text-center">
+        <h1 className="text-2xl font-bold mb-4">🎮 Slide to Earn Reward</h1>
+
+        {!address ? (
+          <button
+            onClick={connectWallet}
+            className="bg-blue-600 text-white px-6 py-2 rounded-xl hover:bg-blue-700 transition mb-6"
+          >
+            Connect Wallet
+          </button>
+        ) : (
+          <div className="relative w-full h-12 bg-gray-200 rounded-full overflow-hidden mb-4">
+            <motion.div
+              drag="x"
+              dragConstraints={{ left: 0, right: 280 }}
+              dragElastic={0}
+              whileDrag={{ scale: 1.1 }}
+              className="absolute top-0 left-0 h-12 w-12 bg-green-500 rounded-full cursor-pointer flex items-center justify-center shadow-lg"
+              onDragEnd={(event, info) => {
+                console.log("Drag ended - offset:", info.offset.x);
+                if (info.offset.x > 200) handleSlide();
+              }}
+            >
+              <span className="text-2xl">→</span>
+            </motion.div>
+            <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm pointer-events-none">
+              Slide to trigger →
+            </div>
+          </div>
+        )}
+
+        <p className="mt-4 text-sm font-medium">{status}</p>
+        {address && (
+          <p className="mt-2 text-xs text-gray-500">
+            Make sure you're on Polygon Amoy testnet
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default SlideTrigger;
+```
+
+**package.json**
+
+```json
+{
+  "name": "slide-to-earn",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "ethers": "^6.15.0",
+    "framer-motion": "^12.23.24",
+    "lucide-react": "^0.546.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.36.0",
+    "@types/react": "^19.1.16",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.0.4",
+    "eslint": "^9.36.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.22",
+    "globals": "^16.4.0",
+    "vite": "^7.1.7"
+  }
+}
+```
+
+**App.jsx**
+
+```jsx
+import SlideTrigger from './SlideTrigger'
+
+function App() {
+  return (
+    <>
+      <SlideTrigger />
+    </>
+  )
+}
+
+export default App
+```
+
+## Step 4: Kwala workflow setup
+
+Now configure the Kwala workflow to react to `SlidePerformed` events and run the payout and notification actions.
+
+1. Navigate to [Kwala Dashboard](https://kwala.network/dashboard)
+2. Select **Create New Workflow**
+3. Set **Workflow Name:** `BountyPayouts`
+
+**Trigger configuration**
+
+- **Execute After:** `event`
+- **Repeat Every:** `event`
+- **Trigger Source Contract:** `0x5EE16Ac7BEBde8F38C99DbEFBBEA4fC5653fC34C`
+- **Trigger Chain ID:** `80002`
+- **Trigger Event Name:** `SlidePerformed(address)`
+- **Expires In:** e.g., `24-10-2025 16:00` IST
+- **Action Status Notification URL:** `http://localhost:3000/`
+
+**Actions**
+
+**Action 1 — PayBounty**
+
+- **Action Type:** `CALL (smartcontract)`
+- **Target Contract:** `0x5EE16Ac7BEBde8F38C99DbEFBBEA4fC5653fC34C`
+- **Target Function:** `function payoutLast()`
+- **Chain ID:** `80002`
+- **Retries Until Success:** `2`
+
+**Action 2 — Telegramreceipt**
+
+- **Type:** `POST (API CALL)`
+- **API Endpoint:** `https://api.telegram.org/bot<YOUR_BOT_TOKEN>/sendMessage`
+- **API Payload:**
+    
+    ```json
+    {
+      "chat_id": 1238754794,
+      "text": "Congratulations! You've received a 0.01 POL bounty reward from Slide to Earn."
+    }
+    ```
+    
+- **Retries Until Success:** `2`
+
+**Execution Mode:** `Sequential` (PayBounty runs first, then Telegramreceipt)
+
+## Final YAML configuration
+
+Paste this YAML into Kwala (keeps the same structure and values used above):
+
+```yaml
+Name: BountyPayouts_f089
+Trigger:
+  TriggerSourceContract: 0x5EE16Ac7BEBde8F38C99DbEFBBEA4fC5653fC34C
+  TriggerChainID: 80002
+  TriggerEventName: SlidePerformed(address)
+  TriggerEventFilter: NA
+  TriggerSourceContractABI: W3siaW5wdXRzIjpbXSwic3RhdGVNdXRhYmlsaXR5Ijoibm9ucGF5YWJsZSIsInR5cGUiOiJjb25zdHJ1Y3RvciJ9LHsiYW5vbnltb3VzIjpmYWxzZSwiaW5wdXRzIjpbeyJpbmRleGVkIjp0cnVlLCJpbnRlcm5hbFR5cGUiOiJhZGRyZXNzIiwibmFtZSI6InVzZXIiLCJ0eXBlIjoiYWRkcmVzcyJ9LHsiaW5kZXhlZCI6ZmFsc2UsImludGVybmFsVHlwZSI6InVpbnQyNTYiLCJuYW1lIjoiYW1vdW50IiwidHlwZSI6InVpbnQyNTYifV0sIm5hbWUiOiJCb3VudHlQYWlkIiwidHlwZSI6ImV2ZW50In0seyJhbm9ueW1vdXMiOmZhbHNlLCJpbnB1dHMiOlt7ImluZGV4ZWQiOnRydWUsImludGVybmFsVHlwZSI6ImFkZHJlc3MiLCJuYW1lIjoidXNlciIsInR5cGUiOiJhZGRyZXNzIn1dLCJuYW1lIjoiU2xpZGVQZXJmb3JtZWQiLCJ0eXBlIjoiZXZlbnQifSx7ImlucHV0cyI6W10sIm5hbWUiOiJib3VudHlBbW91bnQiLCJvdXRwdXRzIjpbeyJpbnRlcm5hbFR5cGUiOiJ1aW50MjU2IiwibmFtZSI6IiIsInR5cGUiOiJ1aW50MjU2In1dLCJzdGF0ZU11dGFiaWxpdHkiOiJ2aWV3IiwidHlwZSI6ImZ1bmN0aW9uIn0seyJpbnB1dHMiOltdLCJuYW1lIjoiZ2V0QmFsYW5jZSIsIm91dHB1dHMiOlt7ImludGVybmFsVHlwZSI6InVpbnQyNTYiLCJuYW1lIjoiIiwidHlwZSI6InVpbnQyNTYifV0sInN0YXRlTXV0YWJpbGl0eSI6InZpZXciLCJ0eXBlIjoiZnVuY3Rpb24ifSx7ImlucHV0cyI6W10sIm5hbWUiOiJsYXN0UGF5b3V0VGltZSIsIm91dHB1dHMiOlt7ImludGVybmFsVHlwZSI6InVpbnQyNTYiLCJuYW1lIjoiIiwidHlwZSI6InVpbnQyNTYifV0sInN0YXRlTXV0YWJpbGl0eSI6InZpZXciLCJ0eXBlIjoiZnVuY3Rpb24ifSx7ImlucHV0cyI6W10sIm5hbWUiOiJsYXN0VXNlciIsIm91dHB1dHMiOlt7ImludGVybmFsVHlwZSI6ImFkZHJlc3MiLCJuYW1lIjoiIiwidHlwZSI6ImFkZHJlc3MifV0sInN0YXRlTXV0YWJpbGl0eSI6InZpZXciLCJ0eXBlIjoiZnVuY3Rpb24ifSx7ImlucHV0cyI6W10sIm5hbWUiOiJvd25lciIsIm91dHB1dHMiOlt7ImludGVybmFsVHlwZSI6ImFkZHJlc3MiLCJuYW1lIjoiIiwidHlwZSI6ImFkZHJlc3MifV0sInN0YXRlTXV0YWJpbGl0eSI6InZpZXciLCJ0eXBlIjoiZnVuY3Rpb24ifSx7ImlucHV0cyI6W10sIm5hbWUiOiJwYXlvdXRDb29sZG93biIsIm91dHB1dHMiOlt7ImludGVybmFsVHlwZSI6InVpbnQyNTYiLCJuYW1lIjoiIiwidHlwZSI6InVpbnQyNTYifV0sInN0YXRlTXV0YWJpbGl0eSI6InZpZXciLCJ0eXBlIjoiZnVuY3Rpb24ifSx7ImlucHV0cyI6W10sIm5hbWUiOiJwYXlvdXRMYXN0Iiwib3V0cHV0cyI6W10sInN0YXRlTXV0YWJpbGl0eSI6Im5vbnBheWFibGUiLCJ0eXBlIjoiZnVuY3Rpb24ifSx7ImlucHV0cyI6W10sIm5hbWUiOiJwZXJmb3JtU2xpZGUiLCJvdXRwdXRzIjpbXSwic3RhdGVNdXRhYmlsaXR5Ijoibm9ucGF5YWJsZSIsInR5cGUiOiJmdW5jdGlvbiJ9LHsiaW5wdXRzIjpbeyJpbnRlcm5hbFR5cGUiOiJ1aW50MjU2IiwibmFtZSI6ImFtb3VudCIsInR5cGUiOiJ1aW50MjU2In1dLCJuYW1lIjoic2V0Qm91bnR5Iiwib3V0cHV0cyI6W10sInN0YXRlTXV0YWJpbGl0eSI6Im5vbnBheWFibGUiLCJ0eXBlIjoiZnVuY3Rpb24ifSx7InN0YXRlTXV0YWJpbGl0eSI6InBheWFibGUiLCJ0eXBlIjoicmVjZWl2ZSJ9XQ==
+  TriggerPrice: NA
+  RecurringSourceContract: 0x5EE16Ac7BEBde8F38C99DbEFBBEA4fC5653fC34C
+  RecurringChainID: 80002
+  RecurringEventName: SlidePerformed(address)
+  RecurringEventFilter: NA
+  RecurringSourceContractABI: W3siaW5wdXRzIjpbXSwic3RhdGVNdXRhYmlsaXR5Ijoibm9ucGF5YWJsZSIsInR5cGUiOiJjb25zdHJ1Y3RvciJ9LHsiYW5vbnltb3VzIjpmYWxzZSwiaW5wdXRzIjpbeyJpbmRleGVkIjp0cnVlLCJpbnRlcm5hbFR5cGUiOiJhZGRyZXNzIiwibmFtZSI6InVzZXIiLCJ0eXBlIjoiYWRkcmVzcyJ9LHsiaW5kZXhlZCI6ZmFsc2UsImludGVybmFsVHlwZSI6InVpbnQyNTYiLCJuYW1lIjoiYW1vdW50IiwidHlwZSI6InVpbnQyNTYifV0sIm5hbWUiOiJCb3VudHlQYWlkIiwidHlwZSI6ImV2ZW50In0seyJhbm9ueW1vdXMiOmZhbHNlLCJpbnB1dHMiOlt7ImluZGV4ZWQiOnRydWUsImludGVybmFsVHlwZSI6ImFkZHJlc3MiLCJuYW1lIjoidXNlciIsInR5cGUiOiJhZGRyZXNzIn1dLCJuYW1lIjoiU2xpZGVQZXJmb3JtZWQiLCJ0eXBlIjoiZXZlbnQifSx7ImlucHV0cyI6W10sIm5hbWUiOiJib3VudHlBbW91bnQiLCJvdXRwdXRzIjpbeyJpbnRlcm5hbFR5cGUiOiJ1aW50MjU2IiwibmFtZSI6IiIsInR5cGUiOiJ1aW50MjU2In1dLCJzdGF0ZU11dGFiaWxpdHkiOiJ2aWV3IiwidHlwZSI6ImZ1bmN0aW9uIn0seyJpbnB1dHMiOltdLCJuYW1lIjoiZ2V0QmFsYW5jZSIsIm91dHB1dHMiOlt7ImludGVybmFsVHlwZSI6InVpbnQyNTYiLCJuYW1lIjoiIiwidHlwZSI6InVpbnQyNTYifV0sInN0YXRlTXV0YWJpbGl0eSI6InZpZXciLCJ0eXBlIjoiZnVuY3Rpb24ifSx7ImlucHV0cyI6W10sIm5hbWUiOiJsYXN0UGF5b3V0VGltZSIsIm91dHB1dHMiOlt7ImludGVybmFsVHlwZSI6InVpbnQyNTYiLCJuYW1lIjoiIiwidHlwZSI6InVpbnQyNTYifV0sInN0YXRlTXV0YWJpbGl0eSI6InZpZXciLCJ0eXBlIjoiZnVuY3Rpb24ifSx7ImlucHV0cyI6W10sIm5hbWUiOiJsYXN0VXNlciIsIm91dHB1dHMiOlt7ImludGVybmFsVHlwZSI6ImFkZHJlc3MiLCJuYW1lIjoiIiwidHlwZSI6ImFkZHJlc3MifV0sInN0YXRlTXV0YWJpbGl0eSI6InZpZXciLCJ0eXBlIjoiZnVuY3Rpb24ifSx7ImlucHV0cyI6W10sIm5hbWUiOiJvd25lciIsIm91dHB1dHMiOlt7ImludGVybmFsVHlwZSI6ImFkZHJlc3MiLCJuYW1lIjoiIiwidHlwZSI6ImFkZHJlc3MifV0sInN0YXRlTXV0YWJpbGl0eSI6InZpZXciLCJ0eXBlIjoiZnVuY3Rpb24ifSx7ImlucHV0cyI6W10sIm5hbWUiOiJwYXlvdXRDb29sZG93biIsIm91dHB1dHMiOlt7ImludGVybmFsVHlwZSI6InVpbnQyNTYiLCJuYW1lIjoiIiwidHlwZSI6InVpbnQyNTYifV0sInN0YXRlTXV0YWJpbGl0eSI6InZpZXciLCJ0eXBlIjoiZnVuY3Rpb24ifSx7ImlucHV0cyI6W10sIm5hbWUiOiJwYXlvdXRMYXN0Iiwib3V0cHV0cyI6W10sInN0YXRlTXV0YWJpbGl0eSI6Im5vbnBheWFibGUiLCJ0eXBlIjoiZnVuY3Rpb24ifSx7ImlucHV0cyI6W10sIm5hbWUiOiJwZXJmb3JtU2xpZGUiLCJvdXRwdXRzIjpbXSwic3RhdGVNdXRhYmlsaXR5Ijoibm9ucGF5YWJsZSIsInR5cGUiOiJmdW5jdGlvbiJ9LHsiaW5wdXRzIjpbeyJpbnRlcm5hbFR5cGUiOiJ1aW50MjU2IiwibmFtZSI6ImFtb3VudCIsInR5cGUiOiJ1aW50MjU2In1dLCJuYW1lIjoic2V0Qm91bnR5Iiwib3V0cHV0cyI6W10sInN0YXRlTXV0YWJpbGl0eSI6Im5vbnBheWFibGUiLCJ0eXBlIjoiZnVuY3Rpb24ifSx7InN0YXRlTXV0YWJpbGl0eSI6InBheWFibGUiLCJ0eXBlIjoicmVjZWl2ZSJ9XQ==
+  RecurringPrice: NA
+  RepeatEvery: event
+  ExecuteAfter: event
+  ExpiresIn: 1761302760
+  Meta: NA
+  ActionStatusNotificationPOSTURL: http://localhost:3000
+  ActionStatusNotificationAPIKey: NA
+Actions:
+  - Name: PayBounty
+    Type: call
+    APIEndpoint: NA
+    APIPayload:
+      Message: NA
+    TargetContract: 0x5EE16Ac7BEBde8F38C99DbEFBBEA4fC5653fC34C
+    TargetFunction: function payoutLast()
+    TargetParams:
+    ChainID: 80002
+    EncodedABI: NA
+    Bytecode: NA
+    Metadata: NA
+    RetriesUntilSuccess: 2
+  - Name: Telegramreceipt
+    Type: post
+    APIEndpoint: https://api.telegram.org/bot8290848596:AAHll2dz1Me9CET3ztEwJm2uUaQQSMLNpUE/sendMessage
+    APIPayload:
+      chat_id: '1238754794'
+      text: Congratulats, You got 0.01 POL Bounty from Slide to Earn Reward
+    TargetContract: NA
+    TargetFunction: NA
+    TargetParams: 
+    ChainID: NA
+    EncodedABI: NA
+    Bytecode: NA
+    Metadata: NA
+    RetriesUntilSuccess: 2
+Execution:
+  Mode: sequential
+```
+
+## Step 5: Deploy and test
+
+1. Create and deploy the workflow in the Kwala Dashboard with the YAML above.
+2. Wait for the workflow status to show **Claimed** or **Active**.
+3. Run your React app and perform a slide (`performSlide()`).
+4. Kwala should detect the event, call `payoutLast()`, and then send the Telegram message.
+5. Verify `BountyPaid` events on Amoy Polygonscan and check Telegram for the success message:
+    
+    > "Congratulats, You got 0.01 POL Bounty from Slide to Earn Reward"
+
+## Step 6: Monitor workflow execution
+
+In the Kwala Dashboard → Workflows → Logs, you can inspect:
+
+- **Event Triggers** — confirm `SlidePerformed` events.
+- **Action Executions** — verify `payoutLast()` calls and Telegram posts.
+- **Retries & Failures** — debug any failed attempts or delivery issues.
+
+## Conclusion
+
+With a smart contract, a lightweight React frontend, and a simple YAML workflow, you've built a Slide-to-Earn automated bounty payout system using Kwala Workflows.
+
+This use case demonstrates how Kwala enables event-driven Web3 automations, connecting on-chain triggers to contract interactions and off-chain notifications, all without a centralized backend.
+
+You can easily extend this architecture to power real-time on-chain rewards, gaming and engagement token drops, and community participation payouts.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Workflow Templates" icon="grid" href="/concepts/use-workflow-templates">
+    Explore pre-built workflow templates to accelerate your development
+  </Card>
+  <Card title="Monitor Your Workflows" icon="chart-line" href="/workflow-builder/monitor-workflow">
+    Learn how to track and analyze your workflow executions in real-time
+  </Card>
+  <Card title="Best Practices" icon="lightbulb" href="/concepts/best-practices">
+    Discover tips and patterns for building robust Web3 automations
+  </Card>
+</CardGroup>

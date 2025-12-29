@@ -1,0 +1,178 @@
+---
+title: 'Read blockchain block count alert notifier'
+description: 'Build an automated workflow that sends Telegram notifications when the blockchain reaches a specific block number'
+---
+
+Tracking blockchain milestones like block counts usually requires backend scripts or continuous polling systems. Those approaches can be hard to maintain and aren't ideal when you want a quick automation.
+
+With Kwala, you can automate blockchain monitoring and real-time alerting without writing backend code. This guide shows how to create a Telegram alert that automatically triggers when the blockchain reaches a specific block number using Kwala's low-code workflow automation.
+
+## Objective
+
+Create a Kwala workflow that sends a Telegram alert as soon as the Polygon network reaches a defined block number. This example demonstrates how a simple YAML configuration can monitor the chain and integrate with real-world notification systems.
+
+<iframe
+  width="560"
+  height="315"
+  src="https://www.youtube.com/embed/E-elJqkvypU"
+  title="YouTube video player"
+  frameBorder="0"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+  allowFullScreen
+  style={{ width: '100%', borderRadius: '0.5rem' }}
+></iframe>
+
+## Prerequisites
+
+You'll need:
+
+- Access to the Kwala Dashboard to create the workflow: [Kwala Dashboard](https://kwala.network/dashboard).
+- A Telegram bot created through [@BotFather](https://t.me/BotFather) for notifications.
+
+<Tip>
+Test your bot token with an API tool like ReqBin or Postman using a POST request. If the token works, it will deliver a test notification to Telegram.
+</Tip>
+
+<Note>
+This use case does not require a Solidity smart contract. You only need a YAML configuration file for the workflow on Kwala.
+</Note>
+
+## Workflow setup on Kwala
+
+Follow these steps to configure and deploy the workflow on Kwala:
+
+### Step 1: Create a new workflow
+
+1. Open your Kwala Dashboard.
+2. Select Create Workflow.
+3. In the Basic Info section, enter the workflow name, for example: `blockno4`.
+
+### Step 2: Configure the trigger
+
+The trigger fires when the Polygon chain reaches your target block number.
+
+- **Execute after:** Block number, fires once the specified block is mined; for example, activates when block no. `76757000` is mined.
+- **Expires in:** Defines how long the workflow remains valid, for example, `22-09-2025 13:00` in IST.
+- **Trigger source configuration:**
+    - **Block no:** `76,757,000` activates when block `#76757000` is mined on Polygon.
+    - **Chain ID:** `137` Polygon Mainnet.
+- **Action status Notification POST URL:** Add your workflow's notification URL.
+
+<Info>
+This setup ensures the workflow activates automatically when the blockchain condition is met without manual intervention or backend service required.
+</Info>
+
+### Step 3: Configure the action
+
+When the trigger fires, the workflow will send a Telegram message.
+
+Key settings:
+
+- **Action name:** any name, e.g., `telegram`.
+- **Action Type:** `POST request`.
+- **API Endpoint:** Telegram Bot API.
+- **API Payload:**
+
+```json
+{
+  "chat_id": 968602918,
+  "text": "Polygon has reached to the desired block number 76763500"
+}
+```
+
+- **chat_id:** Telegram user or group that receives the alert, for example: `968602918`.
+- **Retries Until Success:** `5` Kwala will retry up to 5 times on failure.
+
+Once you've set these parameters, save and deploy the workflow.
+
+## Step 4: Add the YAML configuration
+
+Use the YAML below for your Kwala workflow. Save and compile this in the Kwala dashboard, then deploy it.
+
+```yaml
+Name: blockno4
+Trigger:
+  TriggerSourceContract: NA
+  TriggerChainID: 137
+  TriggerEventName: NA
+  TriggerEventFilter: NA
+  TriggerSourceContractABI: NA
+  TriggerPrice: NA
+  RecurringSourceContract: NA
+  RecurringChainID: NA
+  RecurringEventName: NA
+  RecurringEventFilter: NA
+  RecurringSourceContractABI: NA
+  RecurringPrice: NA
+  RepeatEvery: NA
+  ExecuteAfter: BL76763500
+  ExpiresIn: 1758547740
+  Meta: NA
+  ActionStatusNotificationPOSTURL: https://workflow-notification-test.kalp.network/push_notification
+  ActionStatusNotificationAPIKey: NA
+Actions:
+  - Name: tel
+    Type: post
+    APIEndpoint: https://api.telegram.org/bot8424424970:AAEwOZU3XBL3pl-ufSNqCTLwkemGjO0cMbA/sendMessage
+    APIPayload:
+      chat_id: 968602918,
+      text: "Polygon has reached to the desired block number 76763500"
+    TargetContract: NA
+    TargetFunction: NA
+    TargetParams:
+      NA
+    ChainID: NA
+    EncodedABI: NA
+    Bytecode: NA
+    Metadata: NA
+    RetriesUntilSuccess: 5
+Execution:
+  Mode: sequential
+```
+
+### Step 5: Save and deploy
+
+1. Save and compile the YAML workflow.
+2. Deploy it.
+3. Activate the workflow in Kwala and wait for its status to show **claimed**.
+
+Once deployed, Kwala starts monitoring the blockchain. When Polygon reaches block `76,757,000`, the Telegram bot will send an instant notification.
+
+## Output
+
+When the workflow executes, you'll receive this Telegram alert:
+
+> *Polygon has reached the desired block number 76,757,000*
+
+This confirms your automation is live and working.
+
+## Why Kwala?
+
+Kwala Workflows let developers:
+
+- Eliminate backend polling systems for blockchain monitoring.
+- Integrate on-chain and off-chain systems using simple YAML.
+- Create event-driven automations in minutes.
+- Build scalable, reliable Web3 automations without heavy infra.
+
+Whether it's notifications, API triggers, or contract interactions — Kwala makes Web3 automation simple, fast, and code-light.
+
+## Conclusion
+
+In this guide, you built a real-time block number alert using Kwala Workflows. The workflow sends a Telegram message when a specific block is reached, all configured via a YAML file, with no backend servers or manual checks.
+
+Kwala bridges on-chain events and real-world systems so you can automate Web3 logic quickly and reliably.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Workflow Templates" icon="file-code" href="/concepts/use-workflow-templates">
+    Explore pre-built workflow templates for common automation patterns
+  </Card>
+  <Card title="Monitor Your Workflows" icon="chart-line" href="/workflow-builder/monitor-workflow">
+    Learn how to track and analyze your workflow executions in real-time
+  </Card>
+  <Card title="Best Practices" icon="lightbulb" href="/concepts/best-practices">
+    Discover tips and patterns for building robust Web3 automations
+  </Card>
+</CardGroup>

@@ -1,0 +1,324 @@
+---
+title: 'Low wallet balance notifier'
+description: 'Build an automated workflow that sends Telegram alerts when a wallet balance falls below a specified threshold using Kwala'
+---
+
+Manually tracking wallet balances in decentralized apps can mean missed alerts and failed transactions. In this guide, we'll build a low-balance notifier that automatically sends a Telegram alert when a wallet's native token balance falls below a chosen threshold using Kwala's low-code automation platform.
+
+With Kwala, you can create event-driven workflows using simple YAML scripts, no backend servers required.
+
+## Objective
+
+This guide helps you set up an automation that:
+
+<iframe 
+  width="100%" 
+  height="400" 
+  src="https://www.youtube.com/embed/dccnvcBx9QE" 
+  frameborder="0" 
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+  allowfullscreen
+></iframe>
+
+- Monitors a wallet balance on the Polygon Amoy testnet.
+- Emits an event when the balance is below **0.1 POL**.
+- Sends an instant Telegram alert to the user.
+
+## Prerequisites
+
+Make sure you have:
+
+- A MetaMask wallet connected to the Polygon Amoy Testnet and Kwala network.
+- Remix IDE to deploy the Solidity smart contract.
+- A Telegram bot created via [@BotFather](https://t.me/BotFather).
+- Access to the Kwala Dashboard to set up the workflow: [Kwala Dashboard](https://kwala.network/dashboard).
+
+## Step 1: Build and deploy the Solidity smart contract
+
+This Solidity contract checks user balances and emits an event when the balance drops below 0.1 POL.
+
+Solidity smart contract:
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+/// @title Native POL balance checker (Polygon)
+/// @notice Emits an event if a user's native POL balance is below 0.1 POL.
+contract PolNativeBalanceChecker {
+    // 1 POL == 1 ether in EVM units; 0.1 POL is 0.1 ether.
+    uint256 public constant THRESHOLD = 0.1 ether;
+
+    event LowPolBalance(address indexed user, uint256 balanceWei);
+
+    /// @notice Read-only helper to get any address's native POL balance.
+    function polBalanceOf(address user) public view returns (uint256) {
+        return user.balance; // Wei
+    }
+
+    /// @notice Checks `user` balance and emits LowPolBalance if below 0.1 POL.
+    /// @return balanceWei The user's current balance in wei.
+    function checkAndWarn(address user) public returns (uint256 balanceWei) {
+        balanceWei = user.balance;
+        if (balanceWei < THRESHOLD) {
+            emit LowPolBalance(user, balanceWei);
+        }
+    }
+
+    /// @notice Convenience for the caller; checks your own balance and may emit.
+    function checkMe() external returns (uint256) {
+        return checkAndWarn(msg.sender);
+    }
+}
+```
+
+**How it works**
+
+- The contract compares a user's balance with the defined threshold.
+- If the balance is below the threshold, it emits a `LowPolBalance` event: this event becomes the **trigger** for your Kwala workflow.
+
+<Note>
+Deploy the contract using Remix and connect your MetaMask wallet to Polygon Amoy Testnet. You must have POL Faucet to deploy the smart contract.
+</Note>
+
+After deployment, copy your deployed smart contract address from the Amoy Polygon explorer (`https://amoy.polygonscan.com/`) to inspect the contract and its transactions.
+
+## Step 2: Configure the Telegram bot
+
+Before building the Kwala workflow, set up your Telegram bot:
+
+1. Open Telegram and search @BotFather.
+2. Run `/newbot` to create a bot and get a bot token.
+3. Use [@userinfobot](https://t.me/userinfobot) to obtain your chat ID.
+
+Note both:
+
+- Bot token to access the HTTP API, for example, `7754368882:AAHS4KbbOkl5rEHoBBIR8eljgwq2PARYLyY`
+- Chat ID, for example, `968602918`
+
+Use these credentials inside the workflow to send notifications later.
+
+<Tip>
+Test your bot token using an API tool like ReqBin or Postman with a POST request. If the token works, the test request will deliver a Telegram notification.
+</Tip>
+
+## Step 3: Build the workflow in Kwala
+
+### Create a new workflow
+
+1. Navigate to your [Kwala dashboard](https://kwala.network/dashboard).
+2. Select **"Create New Workflow"**.
+3. Give your workflow a name, for example, `LowBalanceNotifier1`.
+
+### Workflow configuration
+
+**Workflow 1 for low balance alert via Kwala**
+
+### A. Basic info
+
+- **Workflow name:** (Give a name to your workflow) e.g., `LowBalanceNotifier1`
+
+### B. Trigger
+
+This is the event that activates your workflow.
+
+- **Execute After:** Set to event: executes the action after the event is emitted, for example, `immediate`.
+- **Repeat Every:** `EVENT` triggered by the event.
+- **Expires:** timestamp for expiry, for example, `17-09-2025 16:00` in IST.
+- **ParameterValue: RecurringSource Contract:** `0x1C5a23Fd1F7fEd9A5d020858BD4b93e5c93C92a8` the deployed smart contract address, available on Amoy Polygonscan.
+- **Trigger Chain ID:** `80002` Polygon Amoy Testnet
+- **Recurring Event Name:** `LowPolBalance(address, uint256)`
+- **Event Filter:** `NA`
+- **Smart contract (optional):** You can paste the Solidity code or upload the `.sol` file.
+- **Recurring source contract ABI:** Automatically fetched from the deployed contract.
+- **Action status Notification POST URL:** Add the workflow's notification URL.
+
+### C. Actions
+
+**Add the action (Telegram notification)**: defines what happens when the event occurs.
+
+- **Action Name:** for example, `telegram_notifier`
+- **Action Type:** `POST API CALL`
+- **API Endpoint:** `https://api.telegram.org/bot<YOUR_BOT>/sendMessage`
+- **API Payload (JSON):**
+
+```json
+{
+  "chat_id": 968602918,
+  "text": "Low Balance! Recharge your wallet. Add 5 POL."
+}
+```
+
+- **Retries Until Success:** `5`
+- **Execution Mode:** `Sequential` actions run in order
+
+This workflow listens for the `LowPolBalance` event and triggers the action whenever it's emitted.
+
+## Step 4: Add the YAML configuration
+
+Below is the YAML script to use for your Kwala workflow. Save and compile this code in the Kwala dashboard.
+
+```yaml
+Name: LowBalanceNotification15
+Trigger:
+  TriggerSourceContract: NA
+  TriggerChainID: NA
+  TriggerEventName: NA
+  TriggerEventFilter: NA
+  TriggerSourceContractABI: NA
+  TriggerPrice: NA
+  RecurringSourceContract: 0x1C5a23Fd1F7fEd9A5d020858BD4b93e5c93C92a8
+  RecurringChainID: 80002
+  RecurringEventName: LowPolBalance(address,uint256)
+  RecurringEventFilter: NA
+  RecurringSourceContractABI: WwogIHsKICAgICJhbm9ueW1vdXMiOiBmYWxzZSwKICAgICJpbnB1dHMiOiBbCiAgICAgIHsKICAgICAgICAiaW5kZXhlZCI6IHRydWUsCiAgICAgICAgImludGVybmFsVHlwZSI6ICJhZGRyZXNzIiwKICAgICAgICAibmFtZSI6ICJ1c2VyIiwKICAgICAgICAidHlwZSI6ICJhZGRyZXNzIgogICAgICB9LAogICAgICB7CiAgICAgICAgImluZGV4ZWQiOiBmYWxzZSwKICAgICAgICAiaW50ZXJuYWxUeXBlIjogInVpbnQyNTYiLAogICAgICAgICJuYW1lIjogImJhbGFuY2VXZWkiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0KICAgIF0sCiAgICAibmFtZSI6ICJMb3dQb2xCYWxhbmNlIiwKICAgICJ0eXBlIjogImV2ZW50IgogIH0sCiAgewogICAgImlucHV0cyI6IFtdLAogICAgIm5hbWUiOiAiVEhSRVNIT0xEIiwKICAgICJvdXRwdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJ1aW50MjU2IiwKICAgICAgICAibmFtZSI6ICIiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0KICAgIF0sCiAgICAic3RhdGVNdXRhYmlsaXR5IjogInZpZXciLAogICAgInR5cGUiOiAiZnVuY3Rpb24iCiAgfSwKICB7CiAgICAiaW5wdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJhZGRyZXNzIiwKICAgICAgICAibmFtZSI6ICJ1c2VyIiwKICAgICAgICAidHlwZSI6ICJhZGRyZXNzIgogICAgICB9CiAgICBdLAogICAgIm5hbWUiOiAiY2hlY2tBbmRXYXJuIiwKICAgICJvdXRwdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJ1aW50MjU2IiwKICAgICAgICAibmFtZSI6ICJiYWxhbmNlV2VpIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJub25wYXlhYmxlIiwKICAgICJ0eXBlIjogAiZnVuY3Rpb24iCiAgfSwKICB7CiAgICAiaW5wdXRzIjogIFtdLAogICAgIm5hbWUiOiAiY2hlY2tNZSIsCiAgICAib3V0cHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAidWludDI1NiIsCiAgICAgICAgIm5hbWUiOiAiIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJub25wYXlhYmxlIiwKICAgICJ0eXBlIjogImZ1bmN0aW9uIgogIH0sCiAgewogICAgImlucHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAiYWRkcmVzcyIsCiAgICAgICAgIm5hbWUiOiAidXNlciIsCiAgICAgICAgInR5cGUiOiAiYWRkcmVzcyIKICAgICAgfQogICAgXSwKICAgICJuYW1lIjogInBvbEJhbGFuY2VPZiIsCiAgICAib3V0cHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAidWludDI1NiIsCiAgICAgICAgIm5hbWUiOiAiIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJ2aWV3IiwKICAgICJ0eXBlIjogImZ1bmN0aW9uIgogIH0KXQ==
+  RecurringPrice: NA
+  RepeatEvery: event
+  ExecuteAfter: immediate
+  ExpiresIn: 1758212940
+  Meta: NA
+  ActionStatusNotificationPOSTURL: https://workflow-notification-test.kalp.network/push_notification
+  ActionStatusNotificationAPIKey: NA
+Actions:
+  - Name: telegram_notifier
+    Type: post
+    APIEndpoint: https://api.telegram.org/bot8424424970:AAEwOZU3XBL3pl-ufSNqCTLwkemGjO0cMbA/sendMessage
+    APIPayload:
+      chat_id: 968602918,
+      text: "LOW BALANCE! Recharge your wallet. Add 5 POL"
+    TargetContract: NA
+    TargetFunction: NA
+    TargetParams: NA
+    ChainID: NA
+    EncodedABI: NA
+    Bytecode: NA
+    Metadata: NA
+    RetriesUntilSuccess: 5
+Execution:
+  Mode: sequential
+```
+
+After successful compilation, deploy the workflow. Activate it in Kwala and wait for the workflow status to show **claimed**.
+
+<Warning>
+Make sure you are in the Kwala network (not Polygon Amoy testnet) in MetaMask when creating/deploying this workflow.
+</Warning>
+
+## Step 5: Create a polling workflow (Optional)
+
+You can also create a polling workflow that calls the contract on a schedule.
+
+**Workflow name:** e.g., `Polling123`
+
+### Trigger
+
+- **Execute After:** `event` — executes the action (e.g., `immediate`)
+- **Repeat Every:** Time interval (actions repeat on a schedule)
+- **Expires:** e.g., `17-09-2025 16:00` in IST
+- **Recurring source value configurationInterval value:** time interval you want (e.g., `1` in unit `Min/hour/days`)
+- **Action status Notification POST URL:** add the workflow's notification URL
+
+### Actions
+
+**Add the action (Smart Contract Call)**
+
+- **Action Name:** e.g., `Polling123`
+- **Action Type:** `CALL (Smart Contract)`
+- **Target Function:** `function checkAndWarn(address user)`
+- **Target Smart contract:** `0x1C5a23Fd1F7fEd9A5d020858BD4b93e5c93C92a8` (deployed contract address)
+- **Trigger Chain ID:** `80002` (Polygon Amoy Testnet)
+
+Request body example:
+
+```json
+{
+  "chat_id": 968602918,
+  "text": "Low Balance! Recharge your wallet. Add 5 POL."
+}
+```
+
+Provide the wallet address that has Polygon Amoy testnet faucet tokens when calling the function.
+
+### Add the YAML configuration for polling
+
+```yaml
+Name: Polling123
+Trigger:
+  TriggerSourceContract: NA
+  TriggerChainID: NA
+  TriggerEventName: NA
+  TriggerEventFilter: NA
+  TriggerSourceContractABI: NA
+  TriggerPrice: NA
+  RecurringSourceContract: NA
+  RecurringChainID: NA
+  RecurringEventName: NA
+  RecurringEventFilter: NA
+  RecurringSourceContractABI: NA
+  RecurringPrice: NA
+  RepeatEvery: 1m
+  ExecuteAfter: immediate
+  ExpiresIn: 1758212940
+  Meta: NA
+  ActionStatusNotificationPOSTURL: https://workflow-notification-test.kalp.network/push_notification
+  ActionStatusNotificationAPIKey: NA
+Actions:
+  - Name: polling
+    Type: call
+    APIEndpoint: NA
+    APIPayload:
+      Message: NA
+    TargetContract: 0x1C5a23Fd1F7fEd9A5d020858BD4b93e5c93C92a8
+    TargetFunction: function checkAndWarn(address user)
+    TargetParams:
+      - 0x0F0C0b9683180DF0a13Fc176aFFd92E1F7f380f0
+    ChainID: 80002
+    EncodedABI: NA
+    Bytecode: NA
+    Metadata: NA
+    RetriesUntilSuccess: 5
+Execution:
+  Mode: sequential
+```
+
+Save, compile, and deploy this workflow. Activate it and wait for the workflow status to show **claimed**.
+
+## How it works
+
+- The trigger monitors the **LowPolBalance** event.
+- When the event fires, the workflow sends a **POST request** to your Telegram bot API endpoint with a custom message.
+- Within seconds, you'll receive a Telegram message automatically.
+- The second automated Kwala workflow (polling) runs every minute after `checkAndWarn` is called in Remix; it will trigger a notification each minute.
+- Your Telegram will display: **"LOW BALANCE! Recharge your wallet. Add 5 POL"** repeatedly, every minute.
+- The process runs automatically: no manual checks required.
+
+## Test the workflow
+
+1. Ensure your wallet balance is **below 0.1 POL**.
+2. In Remix, call `checkAndWarn(address user)`.
+3. When the balance condition is met, the event is emitted, and Kwala's nodes detect it.
+4. Kwala executes the Telegram notification instantly.
+
+You'll receive: **"LOW BALANCE! Recharge your wallet. Add 5 POL."** every minute (as the polling workflow repeats).
+
+## Conclusion
+
+In a few steps, you built a real-time wallet balance notifier using Kwala's low-code workflow automation.
+
+No backend servers, no infrastructure overhead: just a smart contract and a YAML configuration.
+
+Kwala empowers developers to create, automate, and scale on-chain logic effortlessly.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Workflow Templates" icon="grid" href="/concepts/use-workflow-templates">
+    Explore pre-built workflow templates to accelerate your development
+  </Card>
+  <Card title="Monitor Your Workflows" icon="chart-line" href="/workflow-builder/monitor-workflow">
+    Learn how to track and analyze your workflow executions in real-time
+  </Card>
+  <Card title="Best Practices" icon="lightbulb" href="/concepts/best-practices">
+    Discover tips and patterns for building robust Web3 automations
+  </Card>
+</CardGroup>

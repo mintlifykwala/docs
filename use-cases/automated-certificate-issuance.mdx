@@ -1,0 +1,366 @@
+---
+title: "Automated on-chain certificate issuance"
+description: "Build a fully automated system to issue tamper-proof blockchain credentials and notify students in real-time."
+---
+
+Issuing certificates on blockchain is a powerful way to create tamper-proof, verifiable academic or professional credentials. A traditional implementation usually requires:
+
+- Backend servers listening to on-chain events
+- Relayers or cron jobs to call issuing contracts
+- Notification services to inform students
+
+This increases infrastructure complexity and operational cost.
+
+In this use case, we demonstrate how Kwala Workflows can fully automate the end-to-end certificate lifecycle, from student registration to certificate issuance and real-time notification, without writing any backend server logic.
+
+## Overview
+
+The system consists of three core layers:
+
+- Student registration: On-chain
+- Certificate issuance: On-chain automation
+- Student notification: Off-chain via Telegram
+
+The entire flow is driven by smart contracts, on-chain events and YAML-based Kwala workflows. Kwala acts as the event-driven automation layer, bridging smart contracts and external systems.
+
+<iframe
+  width="560"
+  height="315"
+  src="https://www.youtube.com/embed/CMsJLFC0x7c"
+  title="YouTube video player"
+  frameBorder="0"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+  allowFullScreen
+  style={{ width: '100%', borderRadius: '0.5rem' }}
+></iframe>
+
+The complete flow involves two smart contracts and two Kwala workflows working together to automatically issue certificates and notify students when registration occurs.
+
+
+## Step 1: Student registration smart contract
+
+The StudentRegistry contract is responsible for registering students on-chain with:
+
+- A unique student ID
+- A wallet address
+
+Once a student registers, the contract emits an event that becomes the trigger for automation.
+
+**Deployed contract address**
+
+<Tip>
+**StudentRegistry Contract:** `0x2b9ab67a9ebfe5e5481d007071e38950ea29da4a`
+</Tip>
+
+In this contract:
+
+- Each wallet can register only once
+- Each student ID is globally unique
+- Registration emits an event consumed by Kwala
+
+**Smart Contract (SC1)**
+
+```solidity StudentRegistry.sol
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+contract StudentRegistry {
+    // ---- Storage ----
+    uint256 public totalRegistered;
+    mapping(address => uint256) public studentIdOf;
+    mapping(uint256 => address) public walletOfStudentId;
+    
+    // ---- Events ----
+    event StudentRegistered(address indexed student, uint256 indexed studentId);
+
+    // ---- Actions ----
+    /// @notice Register the calling wallet with a studentId. Caller must be the student wallet.
+    /// @param student The wallet address of the student (must equal msg.sender)
+    /// @param studentId The numeric student identifier (non-zero, unique)
+    function register(address student, uint256 studentId) external {
+        require(student != address(0), "invalid student address");
+        require(msg.sender == student, "caller must be student");
+        require(studentId != 0, "studentId cannot be zero");
+        require(studentIdOf[student] == 0, "wallet already registered");
+        require(walletOfStudentId[studentId] == address(0), "studentId already taken");
+
+        studentIdOf[student] = studentId;
+        walletOfStudentId[studentId] = student;
+        totalRegistered += 1;
+
+        emit StudentRegistered(student, studentId);
+    }
+}
+```
+
+<Info>
+**Event Signature:** `StudentRegistered(address indexed student, uint256 indexed studentId)`
+
+This event triggers the automated certificate issuance workflow.
+</Info>
+
+---
+
+## Step 2: Certificate issuance smart Contract
+
+The **CertificateIssuer** contract issues certificates only once per student and records:
+
+- Certificate ID
+- Student wallet
+- Student ID
+
+It is **not called directly by users**. Instead, it is invoked automatically by **Kwala** when a registration event occurs.
+
+**Deployed Contract Address**
+
+<Tip>
+**CertificateIssuer Contract:** `0x192c91565ed652675fcd88a23e096261b5e290e1`
+</Tip>
+
+**Smart Contract (SC2)**
+
+```solidity CertificateIssuer.sol
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+/// @title CertificateIssuer
+/// @notice Receives student wallet and ID via relayer like Kwala and issues on-chain certificates.
+contract CertificateIssuer {
+    uint256 public totalCertificates;
+
+    // Mapping: certificate ID => student wallet
+    mapping(uint256 => address) public certificateToStudent;
+    // Mapping: student wallet => certificate ID
+    mapping(address => uint256) public studentToCertificate;
+
+    event CertificateIssued(
+        address indexed student,
+        uint256 indexed studentId,
+        uint256 certificateId
+    );
+
+    /// @notice Issue a certificate to a student. Triggered externally via relayer when StudentRegistered event is emitted.
+    /// @param student Wallet address of the student
+    /// @param studentId Student's unique ID
+    function issueCertificate(address student, uint256 studentId) external {
+        require(student != address(0), "invalid address");
+        require(studentToCertificate[student] == 0, "already issued");
+
+        totalCertificates++;
+        uint256 certId = totalCertificates;
+
+        certificateToStudent[certId] = student;
+        studentToCertificate[student] = certId;
+
+        emit CertificateIssued(student, studentId, certId);
+    }
+}
+```
+
+<Warning>
+**Important:** This contract should only be called by trusted relayers like Kwala to prevent unauthorized certificate issuance.
+</Warning>
+
+---
+
+## Step 3: Workflow 1 - Auto-issuing certificates via Kwala
+
+Automatically issue a certificate immediately after student registration.
+
+**Trigger**
+
+- **Event:** `StudentRegistered(address,uint256)`
+- **Source Contract:** StudentRegistry (SC1) `0x2b9AB67a9EBfe5E5481d007071E38950EA29da4a`
+- **Chain:** Polygon Amoy 80002
+
+**Actions**
+
+1. **CALL** `issueCertificate(student, studentId)` on CertificateIssuer
+2. **POST** a Telegram message indicating certificate issuance has started
+
+**Workflow YAML: Issue certificate**
+
+```yaml IssueCertificate.yaml
+Name: IssueCertificateS1
+Trigger:
+  TriggerSourceContract: 0x2b9AB67a9EBfe5E5481d007071E38950EA29da4a
+  TriggerChainID: 80002
+  TriggerEventName: StudentRegistered(address,uint256)
+  TriggerEventFilter: NA
+  TriggerSourceContractABI: W3siYW5vbnltb3VzIjpmYWxzZSwiaW5wdXRzIjpbeyJpbmRleGVkIjp0cnVlLCJpbnRlcm5hbFR5cGUiOiJhZGRyZXNzIiwibmFtZSI6InN0dWRlbnQiLCJ0eXBlIjoiYWRkcmVzcyJ9LHsiaW5kZXhlZCI6dHJ1ZSwiaW50ZXJuYWxUeXBlIjoidWludDI1NiIsIm5hbWUiOiJzdHVkZW50SWQiLCJ0eXBlIjoidWludDI1NiJ9XSwibmFtZSI6IlN0dWRlbnRSZWdpc3RlcmVkIiwidHlwZSI6ImV2ZW50In0seyJpbnB1dHMiOlt7ImludGVybmFsVHlwZSI6ImFkZHJlc3MiLCJuYW1lIjoic3R1ZGVudCIsInR5cGUiOiJhZGRyZXNzIn0seyJpbnRlcm5hbFR5cGUiOiJ1aW50MjU2IiwibmFtZSI6InN0dWRlbnRJZCIsInR5cGUiOiJ1aW50MjU2In1dLCJuYW1lIjoicmVnaXN0ZXIiLCJvdXRwdXRzIjpbXSwic3RhdGVNdXRhYmlsaXR5Ijoibm9ucGF5YWJsZSIsInR5cGUiOiJmdW5jdGlvbiJ9LHsiaW5wdXRzIjpbeyJpbnRlcm5hbFR5cGUiOiJhZGRyZXNzIiwibmFtZSI6IiIsInR5cGUiOiJhZGRyZXNzIn1dLCJuYW1lIjoic3R1ZGVudElkT2YiLCJvdXRwdXRzIjpbeyJpbnRlcm5hbFR5cGUiOiJ1aW50MjU2IiwibmFtZSI6IiIsInR5cGUiOiJ1aW50MjU2In1dLCJzdGF0ZU11dGFiaWxpdHkiOiJ2aWV3IiwidHlwZSI6ImZ1bmN0aW9uIn0seyJpbnB1dHMiOltdLCJuYW1lIjoidG90YWxSZWdpc3RlcmVkIiwib3V0cHV0cyI6W3siaW50ZXJuYWxUeXBlIjoidWludDI1NiIsIm5hbWUiOiIiLCJ0eXBlIjoidWludDI1NiJ9XSwic3RhdGVNdXRhYmlsaXR5IjoidmlldyIsInR5cGUiOiJmdW5jdGlvbiJ9LHsiaW5wdXRzIjpbeyJpbnRlcm5hbFR5cGUiOiJ1aW50MjU2IiwibmFtZSI6IiIsInR5cGUiOiJ1aW50MjU2In1dLCJuYW1lIjoid2FsbGV0T2ZTdHVkZW50SWQiLCJvdXRwdXRzIjpbeyJpbnRlcm5hbFR5cGUiOiJhZGRyZXNzIiwibmFtZSI6IiIsInR5cGUiOiJhZGRyZXNzIn1dLCJzdGF0ZU11dGFiaWxpdHkiOiJ2aWV3IiwidHlwZSI6ImZ1bmN0aW9uIn1d
+  TriggerPrice: NA
+  RecurringSourceContract: 0x2b9AB67a9EBfe5E5481d007071E38950EA29da4a
+  RecurringChainID: 80002
+  RecurringEventName: StudentRegistered(address,uint256)
+  RecurringEventFilter: NA
+  RecurringSourceContractABI: W3siYW5vbnltb3VzIjpmYWxzZSwiaW5wdXRzIjpbeyJpbmRleGVkIjp0cnVlLCJpbnRlcm5hbFR5cGUiOiJhZGRyZXNzIiwibmFtZSI6InN0dWRlbnQiLCJ0eXBlIjoiYWRkcmVzcyJ9LHsiaW5kZXhlZCI6dHJ1ZSwiaW50ZXJuYWxUeXBlIjoidWludDI1NiIsIm5hbWUiOiJzdHVkZW50SWQiLCJ0eXBlIjoidWludDI1NiJ9XSwibmFtZSI6IlN0dWRlbnRSZWdpc3RlcmVkIiwidHlwZSI6ImV2ZW50In0seyJpbnB1dHMiOlt7ImludGVybmFsVHlwZSI6ImFkZHJlc3MiLCJuYW1lIjoic3R1ZGVudCIsInR5cGUiOiJhZGRyZXNzIn0seyJpbnRlcm5hbFR5cGUiOiJ1aW50MjU2IiwibmFtZSI6InN0dWRlbnRJZCIsInR5cGUiOiJ1aW50MjU2In1dLCJuYW1lIjoicmVnaXN0ZXIiLCJvdXRwdXRzIjpbXSwic3RhdGVNdXRhYmlsaXR5Ijoibm9ucGF5YWJsZSIsInR5cGUiOiJmdW5jdGlvbiJ9LHsiaW5wdXRzIjpbeyJpbnRlcm5hbFR5cGUiOiJhZGRyZXNzIiwibmFtZSI6IiIsInR5cGUiOiJhZGRyZXNzIn1dLCJuYW1lIjoic3R1ZGVudElkT2YiLCJvdXRwdXRzIjpbeyJpbnRlcm5hbFR5cGUiOiJ1aW50MjU2IiwibmFtZSI6IiIsInR5cGUiOiJ1aW50MjU2In1dLCJzdGF0ZU11dGFiaWxpdHkiOiJ2aWV3IiwidHlwZSI6ImZ1bmN0aW9uIn0seyJpbnB1dHMiOltdLCJuYW1lIjoidG90YWxSZWdpc3RlcmVkIiwib3V0cHV0cyI6W3siaW50ZXJuYWxUeXBlIjoidWludDI1NiIsIm5hbWUiOiIiLCJ0eXBlIjoidWludDI1NiJ9XSwic3RhdGVNdXRhYmlsaXR5IjoidmlldyIsInR5cGUiOiJmdW5jdGlvbiJ9LHsiaW5wdXRzIjpbeyJpbnRlcm5hbFR5cGUiOiJ1aW50MjU2IiwibmFtZSI6IiIsInR5cGUiOiJ1aW50MjU2In1dLCJuYW1lIjoid2FsbGV0T2ZTdHVkZW50SWQiLCJvdXRwdXRzIjpbeyJpbnRlcm5hbFR5cGUiOiJhZGRyZXNzIiwibmFtZSI6IiIsInR5cGUiOiJhZGRyZXNzIn1dLCJzdGF0ZU11dGFiaWxpdHkiOiJ2aWV3IiwidHlwZSI6ImZ1bmN0aW9uIn1d
+  RecurringPrice: NA
+  RepeatEvery: event
+  ExecuteAfter: event
+  ExpiresIn: 1763541000
+  Meta: NA
+  ActionStatusNotificationPOSTURL: https://workflow-notification-test.kalp.network/push_notification
+  ActionStatusNotificationAPIKey: NA
+Actions:
+  - Name: call1
+    Type: call
+    APIEndpoint: NA
+    APIPayload:
+      Message: NA
+    TargetContract: 0x192c91565ed652675FCd88A23e096261b5e290E1
+    TargetFunction: function issueCertificate(address student, uint256 studentId)
+    TargetParams:
+      - re.event(0)
+      - re.event(1)
+    ChainID: 80002
+    EncodedABI: NA
+    Bytecode: NA
+    Metadata: NA
+    RetriesUntilSuccess: 5
+  - Name: telg1
+    Type: post
+    APIEndpoint: https://api.telegram.org/bot8424424970:AAEwOZU3XBL3pl-ufSNqCTLwkemGjO0cMbA/sendMessage
+    APIPayload:
+      chat_id: 968602918
+      text: It's working...issuing the certificate
+    TargetContract: NA
+    TargetFunction: NA
+    TargetParams: 
+    ChainID: NA
+    EncodedABI: NA
+    Bytecode: NA
+    Metadata: NA
+    RetriesUntilSuccess: 5
+Execution:
+  Mode: parallel
+```
+
+Kwala extracts event parameters dynamically using `re.event(index)` and passes them directly to smart contract calls without backend parsing required.
+
+- `re.event(0)` → student address
+- `re.event(1)` → student ID
+
+## Step 4: Workflow 2 - Certificate delivery notification
+
+Notify the student once the certificate is successfully issued on-chain.
+
+**Trigger**
+
+- **Event:** `CertificateIssued(address,uint256,uint256)`
+- **Source Contract:** CertificateIssuer (SC2) `0x192c91565ed652675FCd88A23e096261b5e290E1`
+- **Chain:** Polygon Amoy 80002
+
+**Action**
+
+Send a personalized Telegram message containing:
+- Student ID
+- Certificate ID
+- Wallet address
+
+**Workflow YAML: Certificate notification**
+
+```yaml CertificateNotification.yaml
+Name: certificatenotification4
+Trigger:
+  TriggerSourceContract: 0x192c91565ed652675FCd88A23e096261b5e290E1
+  TriggerChainID: 80002
+  TriggerEventName: CertificateIssued(address,uint256,uint256)
+  TriggerEventFilter: NA
+  TriggerSourceContractABI: W3siYW5vbnltb3VzIjpmYWxzZSwiaW5wdXRzIjpbeyJpbmRleGVkIjp0cnVlLCJpbnRlcm5hbFR5cGUiOiJhZGRyZXNzIiwibmFtZSI6InN0dWRlbnQiLCJ0eXBlIjoiYWRkcmVzcyJ9LHsiaW5kZXhlZCI6dHJ1ZSwiaW50ZXJuYWxUeXBlIjoidWludDI1NiIsIm5hbWUiOiJzdHVkZW50SWQiLCJ0eXBlIjoidWludDI1NiJ9LHsiaW5kZXhlZCI6ZmFsc2UsImludGVybmFsVHlwZSI6InVpbnQyNTYiLCJuYW1lIjoiY2VydGlmaWNhdGVJZCIsInR5cGUiOiJ1aW50MjU2In1dLCJuYW1lIjoiQ2VydGlmaWNhdGVJc3N1ZWQiLCJ0eXBlIjoiZXZlbnQifSx7ImlucHV0cyI6W3siaW50ZXJuYWxUeXBlIjoidWludDI1NiIsIm5hbWUiOiIiLCJ0eXBlIjoidWludDI1NiJ9XSwibmFtZSI6ImNlcnRpZmljYXRlVG9TdHVkZW50Iiwib3V0cHV0cyI6W3siaW50ZXJuYWxUeXBlIjoiYWRkcmVzcyIsIm5hbWUiOiIiLCJ0eXBlIjoiYWRkcmVzcyJ9XSwic3RhdGVNdXRhYmlsaXR5IjoidmlldyIsInR5cGUiOiJmdW5jdGlvbiJ9LHsiaW5wdXRzIjpbeyJpbnRlcm5hbFR5cGUiOiJhZGRyZXNzIiwibmFtZSI6InN0dWRlbnQiLCJ0eXBlIjoiYWRkcmVzcyJ9LHsiaW50ZXJuYWxUeXBlIjoidWludDI1NiIsIm5hbWUiOiJzdHVkZW50SWQiLCJ0eXBlIjoidWludDI1NiJ9XSwibmFtZSI6Imlzc3VlQ2VydGlmaWNhdGUiLCJvdXRwdXRzIjpbXSwic3RhdGVNdXRhYmlsaXR5Ijoibm9ucGF5YWJsZSIsInR5cGUiOiJmdW5jdGlvbiJ9LHsiaW5wdXRzIjpbeyJpbnRlcm5hbFR5cGUiOiJhZGRyZXNzIiwibmFtZSI6IiIsInR5cGUiOiJhZGRyZXNzIn1dLCJuYW1lIjoic3R1ZGVudFRvQ2VydGlmaWNhdGUiLCJvdXRwdXRzIjpbeyJpbnRlcm5hbFR5cGUiOiJ1aW50MjU2IiwibmFtZSI6IiIsInR5cGUiOiJ1aW50MjU2In1dLCJzdGF0ZU11dGFiaWxpdHkiOiJ2aWV3IiwidHlwZSI6ImZ1bmN0aW9uIn0seyJpbnB1dHMiOltdLCJuYW1lIjoidG90YWxDZXJ0aWZpY2F0ZXMiLCJvdXRwdXRzIjpbeyJpbnRlcm5hbFR5cGUiOiJ1aW50MjU2IiwibmFtZSI6IiIsInR5cGUiOiJ1aW50MjU2In1dLCJzdGF0ZU11dGFiaWxpdHkiOiJ2aWV3IiwidHlwZSI6ImZ1bmN0aW9uIn1d
+  TriggerPrice: NA
+  RecurringSourceContract: 0x192c91565ed652675FCd88A23e096261b5e290E1
+  RecurringChainID: 80002
+  RecurringEventName: CertificateIssued(address,uint256,uint256)
+  RecurringEventFilter: NA
+  RecurringSourceContractABI: W3siYW5vbnltb3VzIjpmYWxzZSwiaW5wdXRzIjpbeyJpbmRleGVkIjp0cnVlLCJpbnRlcm5hbFR5cGUiOiJhZGRyZXNzIiwibmFtZSI6InN0dWRlbnQiLCJ0eXBlIjoiYWRkcmVzcyJ9LHsiaW5kZXhlZCI6dHJ1ZSwiaW50ZXJuYWxUeXBlIjoidWludDI1NiIsIm5hbWUiOiJzdHVkZW50SWQiLCJ0eXBlIjoidWludDI1NiJ9LHsiaW5kZXhlZCI6ZmFsc2UsImludGVybmFsVHlwZSI6InVpbnQyNTYiLCJuYW1lIjoiY2VydGlmaWNhdGVJZCIsInR5cGUiOiJ1aW50MjU2In1dLCJuYW1lIjoiQ2VydGlmaWNhdGVJc3N1ZWQiLCJ0eXBlIjoiZXZlbnQifSx7ImlucHV0cyI6W3siaW50ZXJuYWxUeXBlIjoidWludDI1NiIsIm5hbWUiOiIiLCJ0eXBlIjoidWludDI1NiJ9XSwibmFtZSI6ImNlcnRpZmljYXRlVG9TdHVkZW50Iiwib3V0cHV0cyI6W3siaW50ZXJuYWxUeXBlIjoiYWRkcmVzcyIsIm5hbWUiOiIiLCJ0eXBlIjoiYWRkcmVzcyJ9XSwic3RhdGVNdXRhYmlsaXR5IjoidmlldyIsInR5cGUiOiJmdW5jdGlvbiJ9LHsiaW5wdXRzIjpbeyJpbnRlcm5hbFR5cGUiOiJhZGRyZXNzIiwibmFtZSI6InN0dWRlbnQiLCJ0eXBlIjoiYWRkcmVzcyJ9LHsiaW50ZXJuYWxUeXBlIjoidWludDI1NiIsIm5hbWUiOiJzdHVkZW50SWQiLCJ0eXBlIjoidWludDI1NiJ9XSwibmFtZSI6Imlzc3VlQ2VydGlmaWNhdGUiLCJvdXRwdXRzIjpbXSwic3RhdGVNdXRhYmlsaXR5Ijoibm9ucGF5YWJsZSIsInR5cGUiOiJmdW5jdGlvbiJ9LHsiaW5wdXRzIjpbeyJpbnRlcm5hbFR5cGUiOiJhZGRyZXNzIiwibmFtZSI6IiIsInR5cGUiOiJhZGRyZXNzIn1dLCJuYW1lIjoic3R1ZGVudFRvQ2VydGlmaWNhdGUiLCJvdXRwdXRzIjpbeyJpbnRlcm5hbFR5cGUiOiJ1aW50MjU2IiwibmFtZSI6IiIsInR5cGUiOiJ1aW50MjU2In1dLCJzdGF0ZU11dGFiaWxpdHkiOiJ2aWV3IiwidHlwZSI6ImZ1bmN0aW9uIn0seyJpbnB1dHMiOltdLCJuYW1lIjoidG90YWxDZXJ0aWZpY2F0ZXMiLCJvdXRwdXRzIjpbeyJpbnRlcm5hbFR5cGUiOiJ1aW50MjU2IiwibmFtZSI6IiIsInR5cGUiOiJ1aW50MjU2In1dLCJzdGF0ZU11dGFiaWxpdHkiOiJ2aWV3IiwidHlwZSI6ImZ1bmN0aW9uIn1d
+  RecurringPrice: NA
+  RepeatEvery: event
+  ExecuteAfter: event
+  ExpiresIn: 1762957800
+  Meta: NA
+  ActionStatusNotificationPOSTURL: https://workflow-notification-test.kalp.network/push_notification
+  ActionStatusNotificationAPIKey: NA
+Actions:
+  - Name: telegramNoti1
+    Type: post
+    APIEndpoint: https://api.telegram.org/bot8424424970:AAEwOZU3XBL3pl-ufSNqCTLwkemGjO0cMbA/sendMessage
+    APIPayload:
+      chat_id: '968602918'
+      text: Hi re.event(1), your certificate ID re.event(2) is credited on your wallet address re.event(0).
+    TargetContract: NA
+    TargetFunction: NA
+    TargetParams: 
+    ChainID: NA
+    EncodedABI: NA
+    Bytecode: NA
+    Metadata: NA
+    RetriesUntilSuccess: 5
+Execution:
+  Mode: parallel
+```
+
+**API payload**
+
+```json
+{
+  "chat_id": "968602918",
+  "text": "Hi re.event(1), your certificate ID re.event(2) is credited on your wallet address re.event(0)."
+}
+```
+
+<Info>
+**Dynamic Parameters:**
+- `re.event(0)` → student wallet address
+- `re.event(1)` → student ID
+- `re.event(2)` → certificate ID
+
+Kwala automatically substitutes these placeholders with actual event data at runtime.
+</Info>
+
+## Complete flow summary
+
+The certificate issuance workflow follows these four steps:
+
+1. **Step 1: Registration** - Student calls register() on StudentRegistry contract
+2. **Step 2: Event emitted** - StudentRegistered event triggers Workflow 1
+3. **Step 3: Certificate issued** - Kwala calls issueCertificate() on CertificateIssuer
+4. **Step 4: Notification** - CertificateIssued event triggers Workflow 2 and Telegram notification sent
+
+This architecture can be extended for:
+
+- **Academic credentials** - Degrees, diplomas, and course completions
+- **Professional badges** - Skill certifications and training credentials
+- **Government IDs** - Verifiable identity documents and licenses
+- **Enterprise credentials** - Employee certifications and compliance records
+
+## Conclusion
+
+This use case demonstrates how **Kwala Workflows** can be used to build a **production-ready, automated certificate issuance system** using solidity smart contracts, on-chain events and YAML workflow definitions.
+
+By combining **StudentRegistry**, **CertificateIssuer**, and **Kwala**, institutions can issue verifiable certificates at scale securely, transparently, and without infrastructure overhead. Kwala handles the automation. Blockchain guarantees trust.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Workflow Templates"
+    icon="file-code"
+    href="/concepts/use-workflow-templates"
+  >
+    Explore pre-built workflow templates for common automation patterns
+  </Card>
+  <Card
+    title="Monitor Your Workflow"
+    icon="chart-mixed"
+    href="/workflow-builder/monitor-workflow"
+  >
+    Track execution history, debug issues, and optimize your automation
+  </Card>
+  <Card
+    title="Best Practices"
+    icon="lightbulb"
+    href="/concepts/best-practices"
+  >
+    Learn optimization strategies and production patterns
+  </Card>
+</CardGroup>
