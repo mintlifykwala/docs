@@ -11,13 +11,18 @@ This guide shows a lightweight, production-minded pattern:
 - A small optional backend helper to read records when needed
 - A Kwala workflow that listens for the on-chain `RecordSaved` event and sends instant Telegram confirmations
 
-Result: secure on-chain registration and immediate off-chain UX, without running a dedicated cron/relay server for the event to notification glue.
+Result: secure on-chain registration and immediate off-chain UX, without running a dedicated cron or relay server for the event to notification glue.
 
 Kwala provides YAML-driven workflow automation to connect on-chain triggers with off-chain actions (webhooks, bots, contract calls), so you can focus on product logic, not infra.
 
 ## Objective
 
 Create an onboarding flow where:
+
+- **TRIGGER:** Kwala listens for `RecordSaved(address,string,string,string,uint256)` emitted by the `SaveData` smart contract when a user registers via the frontend.
+- **ACTION:** Kwala posts a personalized Telegram welcome message to the registered chat ID.
+
+This provides a real-time, auditable onboarding experience: the data is stored on-chain and users receive immediate confirmation through Telegram, all driven by a YAML workflow.
 
 <iframe
   width="560"
@@ -30,25 +35,16 @@ Create an onboarding flow where:
   style={{ width: '100%', borderRadius: '0.5rem' }}
 ></iframe>
 
-- **TRIGGER:** Kwala listens for `RecordSaved(address,string,string,string,uint256)` emitted by the `SaveData` smart contract when a user registers via the frontend.
-- **ACTION:** Kwala posts a personalized Telegram welcome message to the registered chat ID.
-
-This provides a real-time, auditable onboarding experience: the data is stored on-chain and users receive immediate confirmation through Telegram — all driven by a small YAML workflow.
-
----
 
 ## Prerequisites
 
-<Note>
 Before you begin, ensure you have:
 
 1. MetaMask (or compatible wallet) connected to the target RPC (this guide uses Polygon Amoy testnet)
 2. Telegram bot token and chat IDs (create via `@BotFather`)
 3. Kwala Dashboard access to create and deploy workflows: [https://kwala.network/dashboard](https://kwala.network/dashboard)
 4. Familiarity with Solidity and frontend tooling (ethers.js / BrowserProvider, simple HTML/JS, or React)
-</Note>
 
----
 
 ## Step 1: Smart contract (SaveData.sol)
 
@@ -103,8 +99,6 @@ contract SaveData {
 <Info>
 Save the deployed contract address and ABI — Kwala uses the event ABI to detect `RecordSaved`.
 </Info>
-
----
 
 ## Step 2: Frontend (simple onboarding UI)
 
@@ -265,17 +259,13 @@ A lightweight HTML + ethers frontend collects name + Telegram chat ID and calls 
 </html>
 ```
 
-<Info>
-**Frontend Usage:**
+**Frontend usage:**
 
 1. Open the page in a browser with MetaMask
 2. Click **Connect MetaMask** and sign the request
 3. Fill **Name** and **Telegram Chat ID** (wallet optional)
 4. Click **Sign Up** — MetaMask will prompt and the frontend calls `saveRecord()`
 5. Once mined, `RecordSaved` is emitted
-</Info>
-
----
 
 ## Telegram helper bot (get chat ID)
 
@@ -300,8 +290,6 @@ console.log('Bot is running...');
 <Warning>
 Keep bot tokens secret in production — use environment variables and secure hosting.
 </Warning>
-
----
 
 ## Optional step 3: Small backend helper
 
@@ -390,8 +378,6 @@ app.listen(3000, () => console.log('Server running on port 3000'));
 Use environment variables for tokens and RPC endpoints in production.
 </Tip>
 
----
-
 ## Step 4: Kwala workflow (event → Telegram)
 
 Create a Kwala workflow that listens for `RecordSaved` and posts a Telegram message. This is the core serverless glue — Kwala runs it for you.
@@ -421,7 +407,7 @@ Create a Kwala workflow that listens for `RecordSaved` and posts a Telegram mess
      ```
    - **Retries Until Success:** `5`
    - **Execution Mode:** `parallel` (or `sequential` — choose based on your need)
-5. Save & deploy. Kwala will return the workflow address and status (e.g., `claimed`).
+5. Save and deploy. Kwala will return the workflow address and status (e.g., `claimed`).
 
 ### YAML configuration
 
@@ -465,8 +451,6 @@ Execution:
   Mode: parallel
 ```
 
----
-
 ## Deploy and test
 
 1. Deploy `SaveData` or use the provided address: `0x3e2f859DA20e1e74A5696Bf3246606218c246C9F`
@@ -475,7 +459,6 @@ Execution:
 4. Kwala detects the event and posts to the configured Telegram chat ID
 5. Optionally use the backend `/sendMessages` endpoint to read stored records and send messages in bulk
 
----
 
 ## Monitor and debug
 
@@ -494,8 +477,6 @@ Execution:
 - Check bot token validity and chat ID correctness if messages don't arrive
 - Review Kwala logs for HTTP errors and retry traces
 </Tip>
-
----
 
 ## Conclusion
 
