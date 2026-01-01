@@ -41,16 +41,6 @@ Workflows execute identically across all nodes, producing consistent, verifiable
 
 Every action is signed and logged, creating an immutable audit trail traceable to the original user intent.
 
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   User Intent   │────▶│   Node Action   │────▶│   On-Chain Log  │
-│   (signed)      │     │   (signed)      │     │   (immutable)   │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-        │                       │                       │
-        └───────────────────────┴───────────────────────┘
-                    Cryptographic chain of custody
-```
-
 ### Immutable workflow history
 
 All executions are permanently recorded on the Kalp Chain to enable audits and verification. You can use intent hashes, execution logs, and reports to verify historical workflow executions.

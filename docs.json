@@ -34,7 +34,7 @@
               "workflow-builder/configure-workflow",
               "workflow-builder/deploy-workflow",
               "workflow-builder/monitor-workflow",
-              "concepts/use-workflow-templates",
+              "concepts/workflow-templates",
               "concepts/best-practices"
             ]
           },
@@ -50,6 +50,42 @@
               "use-cases/blockchain-game-reward-payouts",
               "use-cases/onboard-users-onchain-frontend",
               "use-cases/automated-certificate-issuance"
+            ]
+          },
+          {
+            "group": "Concepts",
+            "pages": [
+              "concepts/supported-chains",
+              "concepts/yaml-workflow-basics",
+              "concepts/workflow-execution",
+              "concepts/actions",
+              "concepts/triggers",
+              "concepts/regex-usage",
+              "concepts/limits-and-quotas"
+            ]
+          },
+          {
+            "group": "Resources",
+            "pages": [
+              "support/faq",
+              "support/glossary",
+              "support/community-and-contact"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Architecture",
+        "groups": [
+          {
+            "group": "Architecture",
+            "pages": [
+              "architecture/system-overview",
+              "architecture/node-architecture",
+              "architecture/workflow-execution-flow",
+              "architecture/verifier-nodes",
+              "architecture/public-verifiability",
+              "architecture/security-model"
             ]
           }
         ]
