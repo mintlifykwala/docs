@@ -11,6 +11,10 @@ With Kwala, you can create event-driven workflows using simple YAML scripts, no 
 
 This guide helps you set up an automation that:
 
+- Monitors a wallet balance on the Polygon Amoy testnet.
+- Emits an event when the balance is below **0.1 POL**.
+- Sends an instant Telegram alert to the user.
+
 <iframe 
   width="100%" 
   height="400" 
@@ -20,10 +24,6 @@ This guide helps you set up an automation that:
   allowfullscreen
 ></iframe>
 
-- Monitors a wallet balance on the Polygon Amoy testnet.
-- Emits an event when the balance is below **0.1 POL**.
-- Sends an instant Telegram alert to the user.
-
 ## Prerequisites
 
 Make sure you have:
@@ -31,7 +31,7 @@ Make sure you have:
 - A MetaMask wallet connected to the Polygon Amoy Testnet and Kwala network.
 - Remix IDE to deploy the Solidity smart contract.
 - A Telegram bot created via [@BotFather](https://t.me/BotFather).
-- Access to the Kwala Dashboard to set up the workflow: [Kwala Dashboard](https://kwala.network/dashboard).
+- Access to the [Kwala Dashboard](https://kwala.network/dashboard) to set up the workflow.
 
 ## Step 1: Build and deploy the Solidity smart contract
 
@@ -114,11 +114,11 @@ Test your bot token using an API tool like ReqBin or Postman with a POST request
 
 **Workflow 1 for low balance alert via Kwala**
 
-### A. Basic info
+**Basic information**
 
 - **Workflow name:** (Give a name to your workflow) e.g., `LowBalanceNotifier1`
 
-### B. Trigger
+**Triggers**
 
 This is the event that activates your workflow.
 
@@ -133,9 +133,9 @@ This is the event that activates your workflow.
 - **Recurring source contract ABI:** Automatically fetched from the deployed contract.
 - **Action status Notification POST URL:** Add the workflow's notification URL.
 
-### C. Actions
+**Actions**
 
-**Add the action (Telegram notification)**: defines what happens when the event occurs.
+Add the action (Telegram notification) to define what happens when the event occurs.
 
 - **Action Name:** for example, `telegram_notifier`
 - **Action Type:** `POST API CALL`
@@ -210,7 +210,7 @@ You can also create a polling workflow that calls the contract on a schedule.
 
 **Workflow name:** e.g., `Polling123`
 
-### Trigger
+**Trigger**
 
 - **Execute After:** `event` — executes the action (e.g., `immediate`)
 - **Repeat Every:** Time interval (actions repeat on a schedule)
@@ -218,9 +218,9 @@ You can also create a polling workflow that calls the contract on a schedule.
 - **Recurring source value configurationInterval value:** time interval you want (e.g., `1` in unit `Min/hour/days`)
 - **Action status Notification POST URL:** add the workflow's notification URL
 
-### Actions
+**Actions**
 
-**Add the action (Smart Contract Call)**
+Add the action, a smart contract call.
 
 - **Action Name:** e.g., `Polling123`
 - **Action Type:** `CALL (Smart Contract)`
@@ -285,12 +285,9 @@ Save, compile, and deploy this workflow. Activate it and wait for the workflow s
 
 ## How it works
 
-- The trigger monitors the **LowPolBalance** event.
-- When the event fires, the workflow sends a **POST request** to your Telegram bot API endpoint with a custom message.
-- Within seconds, you'll receive a Telegram message automatically.
-- The second automated Kwala workflow (polling) runs every minute after `checkAndWarn` is called in Remix; it will trigger a notification each minute.
-- Your Telegram will display: **"LOW BALANCE! Recharge your wallet. Add 5 POL"** repeatedly, every minute.
-- The process runs automatically: no manual checks required.
+The trigger monitors the **LowPolBalance** event, and when the event fires, the workflow sends a **POST request** to your Telegram bot API endpoint with a custom message. Within seconds, you'll receive a Telegram message automatically. 
+
+The second automated Kwala workflow (polling) runs every minute after `checkAndWarn` is called in Remix; it will trigger a notification each minute. Your Telegram will display: **"LOW BALANCE! Recharge your wallet. Add 5 POL"** repeatedly, every minute. The process runs automatically with no manual checks required.
 
 ## Test the workflow
 
@@ -303,18 +300,11 @@ You'll receive: **"LOW BALANCE! Recharge your wallet. Add 5 POL."** every minute
 
 ## Conclusion
 
-In a few steps, you built a real-time wallet balance notifier using Kwala's low-code workflow automation.
-
-No backend servers, no infrastructure overhead: just a smart contract and a YAML configuration.
-
-Kwala empowers developers to create, automate, and scale on-chain logic effortlessly.
+In this guide, you built a real-time wallet balance notifier using Kwala's low-code workflow automation. The notifier has no backend servers or infrastructure overhead; just a smart contract and a YAML configuration. Kwala empowers developers to create, automate, and scale on-chain logic effortlessly.
 
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Workflow Templates" icon="grid" href="/concepts/workflow-templates">
-    Explore pre-built workflow templates to accelerate your development
-  </Card>
   <Card title="Monitor Your Workflows" icon="chart-line" href="/workflow-builder/monitor-workflow">
     Learn how to track and analyze your workflow executions in real-time
   </Card>

@@ -7,13 +7,13 @@ Workflow execution on Kwala is the automated process of monitoring for specific 
 
 ## Workflow components
 
-Every Kwala workflow consists of several components that define its behavior and execution:
+Every workflow consists of several components that define its behavior and execution:
 
-- **Triggers**: A trigger defines when and how workflows are activated. Triggers listen to specific events, conditions, or time intervals to initiate workflow execution. Learn more about [Kwala workflow triggers](/concepts/triggers).
+- **Triggers**: A trigger defines when and how workflows are activated. Triggers listen to specific events, conditions, or time intervals to initiate workflow execution. Learn more about [workflow triggers](/concepts/triggers).
 
 - **Condition**: Determines whether the workflow should proceed based on specific criteria. Conditions evaluate trigger data and decide if actions should execute. For example, only proceeding if a transaction amount exceeds a threshold or a specific wallet address is involved.
 
-- **Action**: Defines what happens when the trigger fires and conditions are met. Actions can include calling smart contracts on any supported chain, sending webhooks to external APIs, transferring tokens between addresses, or coordinating multiple operations across different networks. Learn more about [Kwala workflow actions](/concepts/actions).
+- **Action**: Defines what happens when the trigger fires and conditions are met. Actions can include calling smart contracts on any supported chain, sending webhooks to external APIs, transferring tokens between addresses, or coordinating multiple operations across different networks. Learn more about [workflow actions](/concepts/actions).
 
 - **Execution policy**: Specifies how the workflow runs, including execution mode, retry logic, and priority settings. This determines whether actions run sequentially or in parallel, and how the system handles failures.
 
