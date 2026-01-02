@@ -7,10 +7,6 @@ Public verifiability is a core principle of the Kwala network. All core activity
 
 Kwala ensures that every workflow execution can be independently verified by anyone. This transparency creates trust without requiring users to rely on any single party, including Kwala itself.
 
-<Frame>
-  <img src="/images/architecture/Kwala-public-verifiability.png" alt="Kwala Public Verifiability Architecture" />
-</Frame>
-
 ## Verifiability features
 
 | Feature | Explanation |
@@ -23,23 +19,6 @@ Kwala ensures that every workflow execution can be independently verified by any
 ## Intent hashing
 
 When a user submits a workflow, the complete YAML definition is cryptographically hashed and stored on Kalp Chain alongside the user's signature.
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    User Workflow                        │
-│  ┌─────────────────┐    ┌─────────────────────────────┐ │
-│  │   YAML Intent   │───▶│   Keccak-256 Hash           │ │
-│  └─────────────────┘    └─────────────────────────────┘ │
-│           │                          │                  │
-│           ▼                          ▼                  │
-│  ┌─────────────────┐    ┌─────────────────────────────┐ │
-│  │  User Signature │    │   On-Chain Record           │ │
-│  └─────────────────┘    │   - Intent Hash             │ │
-│                         │   - Signature               │ │
-│                         │   - Timestamp               │ │
-│                         └─────────────────────────────┘ │
-└─────────────────────────────────────────────────────────┘
-```
 
 This creates a non-repudiable record that:
 
