@@ -11,7 +11,7 @@ In this guide, we'll build a real-time SOL oracle price alert system that sends 
 
 ## Objective
 
-We'll configure a Kwala workflow that continuously monitors the SOL price oracle on-chain.
+We'll configure a Kwala workflow that continuously monitors the SOL price oracle on-chain. When the SOL price falls below $195, it automatically triggers a Telegram alert. This use case highlights how simple YAML configurations can connect on-chain oracle data with real-world notification systems.
 
 <iframe
   width="560"
@@ -24,13 +24,11 @@ We'll configure a Kwala workflow that continuously monitors the SOL price oracle
   style={{ width: '100%', borderRadius: '0.5rem' }}
 ></iframe>
 
-When the SOL price falls below $195, it automatically triggers a Telegram alert. This use case highlights how simple YAML configurations can connect on-chain oracle data with real-world notification systems.
-
 ## Prerequisites
 
-Before you begin, make sure you have:
+Before you begin, ensure you have:
 
-- Access to the Kwala Dashboard to create and deploy workflows: [Kwala Dashboard](https://kwala.network/dashboard)
+- Access to the [Kwala Dashboard](https://kwala.network/dashboard) to create and deploy workflows.
 - A Telegram bot created using [@BotFather](https://t.me/BotFather)
     - Retrieve your bot token and verify it using API testing tools like Reqbin or Postman with a POST request.
     - Once verified, your bot is ready to send automated notifications.
@@ -76,9 +74,7 @@ This is the smart contract address for the SOL price oracle, which Kwala automat
 - **Trigger Price:** `$195`
 - **Action Status Notification POST URL:** Add the workflow's URL (already available in the placeholder)
 
-<Info>
 This setup ensures the workflow listens directly to the oracle price feed — without continuous polling or backend processes.
-</Info>
 
 ### Step 3: Configure the action
 
@@ -101,9 +97,7 @@ When the price condition is met, Kwala automatically sends a Telegram notificati
 - **Retries Until Success:** `5`
 - **Execution Mode:** `Sequential` (actions run one after another)
 
-<Tip>
-This ensures reliable delivery — if the Telegram API experiences a temporary issue, Kwala retries the request until it succeeds.
-</Tip>
+The retry policy ensures reliable delivery such that if the Telegram API experiences a temporary issue, Kwala retries the request until it succeeds.
 
 Review all configurations carefully before proceeding. Once saved, the workflow is generated automatically.
 
@@ -180,9 +174,6 @@ This use case shows how Kwala bridges blockchain data and real-world systems, em
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Workflow Templates" icon="grid" href="/concepts/workflow-templates">
-    Explore pre-built workflow templates to accelerate your development
-  </Card>
   <Card title="Monitor Your Workflows" icon="chart-line" href="/workflow-builder/monitor-workflow">
     Learn how to track and analyze your workflow executions in real-time
   </Card>

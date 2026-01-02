@@ -40,10 +40,10 @@ This provides a real-time, auditable onboarding experience: the data is stored o
 
 Before you begin, ensure you have:
 
-1. MetaMask (or compatible wallet) connected to the target RPC (this guide uses Polygon Amoy testnet)
+1. MetaMask (or compatible wallet) connected to the target RPC. This guide uses the Polygon Amoy testnet. 
 2. Telegram bot token and chat IDs (create via `@BotFather`)
 3. Kwala Dashboard access to create and deploy workflows: [https://kwala.network/dashboard](https://kwala.network/dashboard)
-4. Familiarity with Solidity and frontend tooling (ethers.js / BrowserProvider, simple HTML/JS, or React)
+4. Familiarity with Solidity and frontend tooling such as ethers.js, BrowserProvider, simple HTML/JS, or React
 
 
 ## Step 1: Smart contract (SaveData.sol)
@@ -102,7 +102,7 @@ Save the deployed contract address and ABI — Kwala uses the event ABI to detec
 
 ## Step 2: Frontend (simple onboarding UI)
 
-A lightweight HTML + ethers frontend collects name + Telegram chat ID and calls `saveRecord(...)`. Open this page in a browser with MetaMask installed.
+A lightweight HTML and ethers frontend collects name + Telegram chat ID and calls `saveRecord(...)`. Open this page in a browser with MetaMask installed.
 
 ```html index.html
 <!doctype html>
@@ -486,14 +486,11 @@ You now have a full onboarding pattern that is:
 - **Real-time and user-friendly:** Kwala sends instant Telegram confirmations after the `RecordSaved` event
 - **Low-operational overhead:** No polling servers required for event to notification glue
 
-This pattern is easy to extend: swap Telegram for Discord, email, or custom webhooks; or add a backend for analytics or bulk messaging. Kwala lets you plug in actions quickly without rebuilding infrastructure.
+This pattern is extendable in that you can swap Telegram for Discord, email, or custom webhooks; or add a backend for analytics or bulk messaging. Kwala lets you plug in actions quickly without rebuilding infrastructure.
 
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Workflow Templates" icon="grid" href="/concepts/workflow-templates">
-    Explore pre-built workflow templates to accelerate your development
-  </Card>
   <Card
     title="Monitor Your Workflow"
     icon="chart-mixed"

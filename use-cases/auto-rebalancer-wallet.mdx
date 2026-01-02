@@ -1,6 +1,6 @@
 ---
 title: 'Auto-rebalancer wallet'
-description: 'Build an automated system that monitors wallet balances and automatically tops up low balances in real-time through smart contracts'
+description: 'Build a system that monitors wallet balances and automatically tops up low balances in real-time through smart contracts'
 ---
 
 In this guide, we'll walk you through building a Web3 wallet auto-rebalancing system using Kwala Workflows, a low-code, YAML-based automation platform for blockchain developers.
@@ -14,7 +14,18 @@ Build a two-part workflow system that:
 - Continuously checks wallet balances and detects when a wallet's native POL balance drops below a threshold of `0.1 POL`.
 - Automatically transfers funds to top up the wallet whenever a low-balance event is emitted.
 
-This setup enables self-sustaining wallets that stay funded without manual monithttps://kwala-1f7da9fb-document-use-cases.mintlify.app/oring.
+This setup enables self-sustaining wallets that stay funded without manual monitoring.
+
+<iframe
+  width="560"
+  height="315"
+  src="https://www.youtube.com/embed/-yEN9LlwUg0"
+  title="YouTube video player"
+  frameBorder="0"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+  allowFullScreen
+  style={{ width: '100%', borderRadius: '0.5rem' }}
+></iframe>
 
 ## Step 1: Smart contract setup
 
@@ -287,16 +298,13 @@ If you add Telegram or other notifications to the workflows, you can surface mes
 
 ## Conclusion
 
-With just two YAML workflows, we created an auto-rebalancing wallet system using Kwala Workflows without backend scripts, centralized orchestration, or manual intervention.
+With thr two YAML workflows, we created an auto-rebalancing wallet system using Kwala Workflows without backend scripts, centralized orchestration, or manual intervention.
 
 This use case highlights how Kwala bridges event-driven Web3 logic with automated smart contract execution, enabling developers to build real-world, autonomous blockchain systems quickly and reliably.
 
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Workflow Templates" icon="file-code" href="/concepts/workflow-templates">
-    Explore pre-built workflow templates for common automation patterns
-  </Card>
   <Card title="Monitor Your Workflows" icon="chart-line" href="/workflow-builder/monitor-workflow">
     Learn how to track and analyze your workflow executions in real-time
   </Card>

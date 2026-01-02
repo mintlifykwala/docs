@@ -13,6 +13,11 @@ In this guide, we'll build a real-time deposit alert system that sends a Discord
 
 Create a Kwala workflow that:
 
+- **TRIGGER:** Detects `USDCAccepted` events emitted by the Treasury Vault contract when a USDC deposit happens.
+- **ACTION:** Instantly posts a notification to a Discord channel via webhook.
+
+This eliminates the need for manual monitoring or custom backend scripts for token-transfer tracking.
+
 <iframe
   width="560"
   height="315"
@@ -23,11 +28,6 @@ Create a Kwala workflow that:
   allowFullScreen
   style={{ width: '100%', borderRadius: '0.5rem' }}
 ></iframe>
-
-- **TRIGGER:** Detects `USDCAccepted` events emitted by the Treasury Vault contract when a USDC deposit happens.
-- **ACTION:** Instantly posts a notification to a Discord channel via webhook.
-
-This eliminates the need for manual monitoring or custom backend scripts for token-transfer tracking.
 
 ## Prepare your Discord webhook
 
@@ -360,9 +360,6 @@ Kwala helps you connect on-chain events to off-chain systems quickly, automate D
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Workflow Templates" icon="grid" href="/concepts/workflow-templates">
-    Explore pre-built workflow templates to accelerate your development
-  </Card>
   <Card title="Monitor Your Workflows" icon="chart-line" href="/workflow-builder/monitor-workflow">
     Learn how to track and analyze your workflow executions in real-time
   </Card>

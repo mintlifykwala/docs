@@ -13,6 +13,12 @@ Here you'll learn how to automate reward/bounty payouts for users who perform a 
 
 Build a workflow that:
 
+- **TRIGGER:** Detects a `SlidePerformed(address)` event emitted by the `SlideBounty` smart contract on Polygon Amoy testnet.
+- **ACTION 1:** Automatically calls `payoutLast()` to pay out the reward/bounty to the last participant.
+- **ACTION 2:** Sends a Telegram message confirming the reward distribution.
+
+This setup removes centralized servers and gives you a trustless, transparent, and fully automated reward distribution mechanism.
+
 <iframe
   width="560"
   height="315"
@@ -23,12 +29,6 @@ Build a workflow that:
   allowFullScreen
   style={{ width: '100%', borderRadius: '0.5rem' }}
 ></iframe>
-
-- **TRIGGER:** Detects a `SlidePerformed(address)` event emitted by the `SlideBounty` smart contract on Polygon Amoy testnet.
-- **ACTION 1:** Automatically calls `payoutLast()` to pay out the reward/bounty to the last participant.
-- **ACTION 2:** Sends a Telegram message confirming the reward distribution.
-
-This setup removes centralized servers and gives you a trustless, transparent, and fully automated reward distribution mechanism.
 
 ## Step 1: Smart contract setup
 
@@ -408,16 +408,11 @@ In the Kwala Dashboard → Workflows → Logs, you can inspect:
 
 With a smart contract, a lightweight React frontend, and a simple YAML workflow, you've built a Slide-to-Earn automated bounty payout system using Kwala Workflows.
 
-This use case demonstrates how Kwala enables event-driven Web3 automations, connecting on-chain triggers to contract interactions and off-chain notifications, all without a centralized backend.
-
-You can easily extend this architecture to power real-time on-chain rewards, gaming and engagement token drops, and community participation payouts.
+This use case demonstrates how Kwala enables event-driven Web3 automations, connecting on-chain triggers to contract interactions and off-chain notifications, all without a centralized backend. You can extend this architecture to power real-time on-chain rewards, gaming and engagement token drops, and community participation payouts.
 
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Workflow Templates" icon="grid" href="/concepts/workflow-templates">
-    Explore pre-built workflow templates to accelerate your development
-  </Card>
   <Card title="Monitor Your Workflows" icon="chart-line" href="/workflow-builder/monitor-workflow">
     Learn how to track and analyze your workflow executions in real-time
   </Card>
