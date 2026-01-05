@@ -5,8 +5,6 @@ description: 'Learn about verifier nodes in the Kwala network'
 
 Verifier nodes are lightweight, independently deployed actors responsible for ensuring fidelity of automation. They provide the trust layer that makes Kwala's decentralized execution verifiable and tamper-proof.
 
-## Overview
-
 While execution nodes process workflows and perform actions, verifier nodes act as independent auditors. They ensure that every workflow execution adheres strictly to the user's signed intent and the defined workflow logic.
 
 ## Role of verifier nodes
@@ -43,64 +41,6 @@ Verifier nodes perform four primary functions in the Kwala network:
     If results match, the verifier attests to the execution validity. If results differ, the verifier files a dispute to the arbitration contract.
   </Step>
 </Steps>
-
-## Verification modes
-
-Verifier nodes operate in different modes depending on workflow requirements:
-
-### Periodic verification
-
-Verifiers run on scheduled intervals to audit a sample of recent executions. This provides continuous coverage without requiring verification of every single execution.
-
-### Random assignment
-
-For high-value workflows, verifiers are randomly assigned to specific executions. This randomization prevents collusion between executors and verifiers.
-
-### On-demand verification
-
-Users or governance can request immediate verification of specific workflow executions when disputes arise or for compliance requirements.
-
-## Dispute resolution
-
-When a verifier detects a deviation between expected and actual execution results:
-
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   Verifier      │     │   Arbitration   │     │   Governance    │
-│   Node          │────▶│   Contract      │────▶│   Decision      │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-        │                       │                       │
-        │  Files dispute        │  Evaluates evidence   │  Slashing or
-        │  with proof           │  from both parties    │  exoneration
-        ▼                       ▼                       ▼
-```
-
-### Dispute process
-
-1. **Evidence submission**: Verifier submits the discrepancy with cryptographic proof
-2. **Executor response**: The accused executor can submit counter-evidence
-3. **Arbitration**: The arbitration contract evaluates both submissions
-4. **Resolution**: Governance enforces the decision (slashing or exoneration)
-
-### Slashing mechanism
-
-Executor nodes found to have deviated from user intent face penalties:
-
-| Violation severity | Consequence |
-|--------------------|-------------|
-| **Minor deviation** | Warning and reputation penalty |
-| **Significant deviation** | Partial stake slashing |
-| **Malicious behavior** | Full stake slashing and blacklisting |
-
-## Verifier node requirements
-
-| Requirement | Specification |
-|-------------|---------------|
-| **Independence** | Must operate separately from execution nodes |
-| **Registration** | Governance approval via Kalp Network |
-| **Stake** | Minimum stake required for participation |
-| **Availability** | Must respond to verification requests within SLA |
-| **Computation** | Capable of running KVM for workflow re-computation |
 
 ## Security guarantees
 

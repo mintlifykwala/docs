@@ -5,13 +5,11 @@ description: 'Understanding Kwala node architecture and security model'
 
 Kwala nodes are the backbone of the automation execution engine. Each node runs independently, but under permissioned access control, with security and auditability enforced at multiple layers.
 
-## Overview
-
 Kwala nodes form a distributed network responsible for monitoring triggers, executing workflows, and generating verifiable proofs. While nodes operate independently, they follow strict governance policies enforced through the Kalp Network.
 
 ## Node security
 
-Kwala implements multiple security layers to ensure trustless execution and protect user assets.
+Kwala implements multiple security layers to ensure trustless execution and protect workflows.
 
 ### Permissioned participation
 
@@ -33,30 +31,6 @@ Nodes are issued public-private key pairs, but private keys are stored within Ke
 ### Non-extractable signing
 
 Signing operations are performed inside the KMS. The private key never leaves the hardware enclave.
-
-```
-┌─────────────────────────────────────────────────┐
-│                   Kwala Node                    │
-│  ┌───────────────┐      ┌───────────────────┐   │
-│  │   Workflow    │      │   Sign Request    │   │
-│  │   Executor    │─────▶│   (hash only)     │   │
-│  └───────────────┘      └─────────┬─────────┘   │
-└───────────────────────────────────┼─────────────┘
-                                    │
-                                    ▼
-                    ┌───────────────────────────┐
-                    │      KMS Hardware         │
-                    │  ┌─────────────────────┐  │
-                    │  │   Private Key       │  │
-                    │  │   (never exported)  │  │
-                    │  └─────────────────────┘  │
-                    │            │              │
-                    │            ▼              │
-                    │  ┌─────────────────────┐  │
-                    │  │   Signed Result     │  │
-                    │  └─────────────────────┘  │
-                    └───────────────────────────┘
-```
 
 ### TLS and mutual authentication
 
@@ -99,7 +73,7 @@ Nodes follow a structured process to claim and execute workflows securely.
 
 Each Kwala node consists of several internal components:
 
-### Trigger monitor
+**Trigger monitor**
 
 Continuously watches blockchain networks and external sources for events that activate workflows:
 
@@ -107,7 +81,7 @@ Continuously watches blockchain networks and external sources for events that ac
 - Polls time-based triggers according to cron schedules
 - Receives webhook inputs from external systems
 
-### Workflow engine
+**Workflow engine**
 
 Runs the Kwala Virtual Machine (KVM) to process workflow logic:
 
@@ -115,7 +89,7 @@ Runs the Kwala Virtual Machine (KVM) to process workflow logic:
 - Extracts event parameters using `re.event(n)` syntax
 - Orchestrates multi-step action sequences
 
-### Action executor
+**Action executor**
 
 Handles the execution of workflow actions:
 
@@ -123,7 +97,7 @@ Handles the execution of workflow actions:
 - Calls external APIs and webhooks
 - Manages retry logic for failed operations
 
-### Proof generator
+**Proof generator**
 
 Creates cryptographic proofs of execution:
 
