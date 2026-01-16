@@ -56,8 +56,7 @@ The trigger fires when the Polygon chain reaches your target block number.
 - **Trigger source configuration:**
     - **Block no:** `76,757,000` activates when block `#76757000` is mined on Polygon.
     - **Chain ID:** `137` Polygon Mainnet.
-- **Action status Notification POST URL:** Add your workflow's notification URL.
-
+- Action status Notification POST URL:
 <Info>
 This setup ensures the workflow activates automatically when the blockchain condition is met without manual intervention or backend service required.
 </Info>
@@ -90,7 +89,7 @@ Once you've set these parameters, save and deploy the workflow.
 Use the YAML below for your Kwala workflow. Save and compile this in the Kwala dashboard, then deploy it.
 
 ```yaml
-Name: blockno4
+Name: blockno1
 Trigger:
   TriggerSourceContract: NA
   TriggerChainID: 137
@@ -106,28 +105,28 @@ Trigger:
   RecurringPrice: NA
   RepeatEvery: NA
   ExecuteAfter: BL76763500
-  ExpiresIn: 1758547740
+  ExpiresIn: 1789646400
   Meta: NA
-  ActionStatusNotificationPOSTURL: https://workflow-notification-test.kalp.network/push_notification
+  ActionStatusNotificationPOSTURL:  
   ActionStatusNotificationAPIKey: NA
 Actions:
-  - Name: tel
+  - Name: telegram
     Type: post
-    APIEndpoint: https://api.telegram.org/bot8424424970:AAEwOZU3XBL3pl-ufSNqCTLwkemGjO0cMbA/sendMessage
+    APIEndpoint: https://api.telegram.org/bot7754368882:AAHS4KbbOkl5rEHoBBIR8eljgwq2PARYLyY/sendMessage
     APIPayload:
-      chat_id: 968602918,
-      text: "Polygon has reached to the desired block number 76763500"
+      chat_id: '968602918'
+      text: Polygon has reached to the desired block number 76763500
     TargetContract: NA
     TargetFunction: NA
-    TargetParams:
-      NA
+    TargetParams: 
     ChainID: NA
     EncodedABI: NA
     Bytecode: NA
+    EncodedGoContract: NA
     Metadata: NA
     RetriesUntilSuccess: 5
 Execution:
-  Mode: sequential
+  Mode: parallel
 ```
 
 ### Step 5: Save and deploy

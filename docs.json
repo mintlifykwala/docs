@@ -45,7 +45,7 @@
               "use-cases/low-wallet-balance-notifier",
               "use-cases/blockchain-block-count-alert",
               "use-cases/oracle-price-alert-notifications",
-              "use-cases/auto-rebalancer-wallet",
+              "use-cases/auto-top-up-wallet",
               "use-cases/cryptocurrency-deposit-alerts",
               "use-cases/blockchain-game-reward-payouts",
               "use-cases/onboard-users-onchain-frontend",

@@ -393,7 +393,7 @@ Create a Kwala workflow that listens for `RecordSaved` and posts a Telegram mess
    - **Recurring Chain ID:** `80002` (Polygon Amoy)
    - **Recurring Event Name:** `RecordSaved(address,string,string,string,uint256)`
    - **Recurring Source Contract ABI:** paste the event ABI (Kwala can fetch/accept the ABI)
-   - **Action Status Notification POST URL:** `https://workflow-notification-test.kalp.network/push_notification`
+   - **Action Status Notification POST URL:** 
 4. **Action:**
    - **Action Name:** `Telegram_notificatier`
    - **Type:** `POST API CALL`
@@ -430,12 +430,12 @@ Trigger:
   ExecuteAfter: immediate
   ExpiresIn: 1761296400
   Meta: NA
-  ActionStatusNotificationPOSTURL: https://workflow-notification-test.kalp.network/push_notification
+  ActionStatusNotificationPOSTURL: 
   ActionStatusNotificationAPIKey: NA
 Actions:
   - Name: Telegram_notificatier
     Type: post
-    APIEndpoint: https://api.telegram.org/bot8470789989:AAGakdfUOTak81UpR90j8oayHCxjTyzzi28/sendmessage
+    APIEndpoint: https://api.telegram.org/bot7754368882:AAHS4KbbOkl5rEHoBBIR8eljgwq2PARYLyY/sendMessage
     APIPayload:
       chat_id: '7118280412'
       text: Welcome to Kwala! Create your automation workflows with Kwala Network

@@ -84,7 +84,7 @@ When the price condition is met, Kwala automatically sends a Telegram notificati
 
 - **Action Name:** `telegram_notifier1`
 - **Action Type:** `POST API CALL`
-- **API Endpoint:** `https://api.telegram.org/bot8424424970:AAEwOZU3XBL3pl-ufSNqCTLwkemGjO0cMbA/sendMessage`
+- **API Endpoint:** `https://api.telegram.org/bot7754368882:AAHS4KbbOkl5rEHoBBIR8eljgwq2PARYLyY/sendMessage`
 - **API Payload (JSON):**
 
 ```json
@@ -124,12 +124,12 @@ Trigger:
   ExecuteAfter: oracle_price
   ExpiresIn: 1758618000
   Meta: NA
-  ActionStatusNotificationPOSTURL: https://workflow-notification-test.kalp.network/push_notification
+  ActionStatusNotificationPOSTURL:
   ActionStatusNotificationAPIKey: NA
 Actions:
   - Name: telegram_notifier1
     Type: post
-    APIEndpoint: https://api.telegram.org/bot8424424970:AAEwOZU3XBL3pl-ufSNqCTLwkemGjO0cMbA/sendMessage
+    APIEndpoint: https://api.telegram.org/bot7754368882:AAHS4KbbOkl5rEHoBBIR8eljgwq2PARYLyY/sendMessage
     APIPayload:
       chat_id: 968602918,
       text: "Sol price has dropped to $195.0"

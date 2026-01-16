@@ -92,8 +92,8 @@ Now that the contract and Telegram bot are ready, let's move to Kwala and create
 
 This is the event that will activate your workflow.
 
-- **Execute After**: Set to `event`: executes the action after an event is emitted, for example, `immediate`.
-- **Repeat Every**: `EVENT` triggered after the event occurs.
+- **Execute After**: Set to `event`: executes the action after an event is emitted.
+- **Repeat Every**: `event` triggered after the event occurs.
 - **Expires**: timestamp for expiry, for example: `17-09-2025 16:00` in IST.
 - **Trigger Chain ID**: `80002` here: Polygon Amoy Testnet.
 - **Source Contract Address**: for example, `0x8ff6dEe7e8860146E51029E6116096239D8006ed` the address of the deployed smart contract, available on the Amoy Polygonscan website.
@@ -101,7 +101,6 @@ This is the event that will activate your workflow.
 - **Event Filter**: `NA`
 - **Smart contract (optional):** Here, you can simply copy and paste the Solidity code or upload the same `.sol` file.
 - **Recurring source contract ABI:** This will be automatically fetched from your deployed smart contract.
-- **Action status Notification POST URL:** Add the Workflow's URL already available in the placeholder.
 
 ### Step 3.3: Add the action (Telegram notification)
 
@@ -133,27 +132,43 @@ Name: Telegram_Notifier1
 Trigger:
   TriggerSourceContract: 0x8ff6dEe7e8860146E51029E6116096239D8006ed
   TriggerChainID: 80002
-  TriggerEventName: ValueIncreased(address, uint256)
+  TriggerEventName: ValueIncreased(address,uint256)
   TriggerEventFilter: NA
+  TriggerSourceContractABI: WwogIHsKICAgICJhbm9ueW1vdXMiOiBmYWxzZSwKICAgICJpbnB1dHMiOiBbCiAgICAgIHsKICAgICAgICAiaW5kZXhlZCI6IHRydWUsCiAgICAgICAgImludGVybmFsVHlwZSI6ICJhZGRyZXNzIiwKICAgICAgICAibmFtZSI6ICJjYWxsZXIiLAogICAgICAgICJ0eXBlIjogImFkZHJlc3MiCiAgICAgIH0sCiAgICAgIHsKICAgICAgICAiaW5kZXhlZCI6IGZhbHNlLAogICAgICAgICJpbnRlcm5hbFR5cGUiOiAidWludDI1NiIsCiAgICAgICAgIm5hbWUiOiAibmV3VmFsdWUiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0KICAgIF0sCiAgICAibmFtZSI6ICJWYWx1ZUluY3JlYXNlZCIsCiAgICAidHlwZSI6ICJldmVudCIKICB9LAogIHsKICAgICJpbnB1dHMiOiBbXSwKICAgICJuYW1lIjogImluY3JlYXNlIiwKICAgICJvdXRwdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJ1aW50MjU2IiwKICAgICAgICAibmFtZSI6ICIiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0KICAgIF0sCiAgICAic3RhdGVNdXRhYmlsaXR5IjogIm5vbnBheWFibGUiLAogICAgInR5cGUiOiAiZnVuY3Rpb24iCiAgfSwKICB7CiAgICAiaW5wdXRzIjogW10sCiAgICAibmFtZSI6ICJ2YWx1ZSIsCiAgICAib3V0cHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAidWludDI1NiIsCiAgICAgICAgIm5hbWUiOiAiIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJ2aWV3IiwKICAgICJ0eXBlIjogImZ1bmN0aW9uIgogIH0KXQ==
+  TriggerPrice: NA
+  RecurringSourceContract: 0x8ff6dEe7e8860146E51029E6116096239D8006ed
+  RecurringChainID: 80002
+  RecurringEventName: ValueIncreased(address,uint256)
+  RecurringEventFilter: NA
+  RecurringSourceContractABI: WwogIHsKICAgICJhbm9ueW1vdXMiOiBmYWxzZSwKICAgICJpbnB1dHMiOiBbCiAgICAgIHsKICAgICAgICAiaW5kZXhlZCI6IHRydWUsCiAgICAgICAgImludGVybmFsVHlwZSI6ICJhZGRyZXNzIiwKICAgICAgICAibmFtZSI6ICJjYWxsZXIiLAogICAgICAgICJ0eXBlIjogImFkZHJlc3MiCiAgICAgIH0sCiAgICAgIHsKICAgICAgICAiaW5kZXhlZCI6IGZhbHNlLAogICAgICAgICJpbnRlcm5hbFR5cGUiOiAidWludDI1NiIsCiAgICAgICAgIm5hbWUiOiAibmV3VmFsdWUiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0KICAgIF0sCiAgICAibmFtZSI6ICJWYWx1ZUluY3JlYXNlZCIsCiAgICAidHlwZSI6ICJldmVudCIKICB9LAogIHsKICAgICJpbnB1dHMiOiBbXSwKICAgICJuYW1lIjogImluY3JlYXNlIiwKICAgICJvdXRwdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJ1aW50MjU2IiwKICAgICAgICAibmFtZSI6ICIiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0KICAgIF0sCiAgICAic3RhdGVNdXRhYmlsaXR5IjogIm5vbnBheWFibGUiLAogICAgInR5cGUiOiAiZnVuY3Rpb24iCiAgfSwKICB7CiAgICAiaW5wdXRzIjogW10sCiAgICAibmFtZSI6ICJ2YWx1ZSIsCiAgICAib3V0cHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAidWludDI1NiIsCiAgICAgICAgIm5hbWUiOiAiIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJ2aWV3IiwKICAgICJ0eXBlIjogImZ1bmN0aW9uIgogIH0KXQ==
+  RecurringPrice: NA
   RepeatEvery: event
-  ExecuteAfter: immediate
+  ExecuteAfter: event
   ExpiresIn: 1781796603
-  ActionStatusNotificationPOSTURL: https://workflow-notification-test.kalp.network/push_notification
+  Meta: NA
+  ActionStatusNotificationPOSTURL: 
+  ActionStatusNotificationAPIKey: 
 Actions:
   - Name: Telegram_notification
     Type: post
     APIEndpoint: https://api.telegram.org/bot7754368882:AAHS4KbbOkl5rEHoBBIR8eljgwq2PARYLyY/sendMessage
     APIPayload:
       chat_id: 968602918,
-      text: "Hi ! You have a new notification, check your polscan."
+      text: Hi ! You have a new notification, check your polscan.
+    TargetContract: NA
+    TargetFunction: NA
+    TargetParams: 
+    ChainID: NA
+    EncodedABI: NA
+    Bytecode: NA
+    EncodedGoContract: NA
+    Metadata: NA
     RetriesUntilSuccess: 5
 Execution:
   Mode: sequential
 ```
 
-Now save and compile this YAML workflow code.
-
-After successful compilation, deploy it.
+You can now save and compile this YAML workflow code. Upon successful compilation, deploy it.
 
 <Warning>
 Make sure that you're in the Kwala network (not Polygon Amoy Testnet) in your MetaMask to implement this.

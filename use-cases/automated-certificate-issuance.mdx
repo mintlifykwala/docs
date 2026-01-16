@@ -196,7 +196,7 @@ Trigger:
   ExecuteAfter: event
   ExpiresIn: 1763541000
   Meta: NA
-  ActionStatusNotificationPOSTURL: https://workflow-notification-test.kalp.network/push_notification
+  ActionStatusNotificationPOSTURL:
   ActionStatusNotificationAPIKey: NA
 Actions:
   - Name: call1
@@ -216,7 +216,7 @@ Actions:
     RetriesUntilSuccess: 5
   - Name: telg1
     Type: post
-    APIEndpoint: https://api.telegram.org/bot8424424970:AAEwOZU3XBL3pl-ufSNqCTLwkemGjO0cMbA/sendMessage
+    APIEndpoint: https://api.telegram.org/bot7754368882:AAHS4KbbOkl5rEHoBBIR8eljgwq2PARYLyY/sendMessage
     APIPayload:
       chat_id: 968602918
       text: It's working...issuing the certificate
@@ -275,12 +275,12 @@ Trigger:
   ExecuteAfter: event
   ExpiresIn: 1762957800
   Meta: NA
-  ActionStatusNotificationPOSTURL: https://workflow-notification-test.kalp.network/push_notification
+  ActionStatusNotificationPOSTURL:
   ActionStatusNotificationAPIKey: NA
 Actions:
   - Name: telegramNoti1
     Type: post
-    APIEndpoint: https://api.telegram.org/bot8424424970:AAEwOZU3XBL3pl-ufSNqCTLwkemGjO0cMbA/sendMessage
+    APIEndpoint: https://api.telegram.org/bot7754368882:AAHS4KbbOkl5rEHoBBIR8eljgwq2PARYLyY/sendMessage
     APIPayload:
       chat_id: '968602918'
       text: Hi re.event(1), your certificate ID re.event(2) is credited on your wallet address re.event(0).

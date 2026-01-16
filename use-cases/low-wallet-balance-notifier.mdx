@@ -74,8 +74,7 @@ contract PolNativeBalanceChecker {
 
 **How it works**
 
-- The contract compares a user's balance with the defined threshold.
-- If the balance is below the threshold, it emits a `LowPolBalance` event: this event becomes the **trigger** for your Kwala workflow.
+The contract compares a user's balance with the defined threshold. If the balance is below the threshold, it emits a `LowPolBalance` event: this event becomes the **trigger** for your Kwala workflow.
 
 <Note>
 Deploy the contract using Remix and connect your MetaMask wallet to Polygon Amoy Testnet. You must have POL Faucet to deploy the smart contract.
@@ -104,38 +103,29 @@ Test your bot token using an API tool like ReqBin or Postman with a POST request
 
 ## Step 3: Build the workflow in Kwala
 
-### Create a new workflow
-
 1. Navigate to your [Kwala dashboard](https://kwala.network/dashboard).
 2. Select **"Create New Workflow"**.
-3. Give your workflow a name, for example, `LowBalanceNotifier1`.
+3. Give your workflow a name. For example, `LowBalanceNotifier1`.
 
 ### Workflow configuration
-
-**Workflow 1 for low balance alert via Kwala**
-
-**Basic information**
-
-- **Workflow name:** (Give a name to your workflow) e.g., `LowBalanceNotifier1`
 
 **Triggers**
 
 This is the event that activates your workflow.
 
-- **Execute After:** Set to event: executes the action after the event is emitted, for example, `immediate`.
-- **Repeat Every:** `EVENT` triggered by the event.
-- **Expires:** timestamp for expiry, for example, `17-09-2025 16:00` in IST.
+- **Execute After:** Set to event: executes the action after the event is emitted.
+- **Repeat Every:** `event` triggered by the event.
+- **Expires:** Add an expiration timestamp. For example, `17-09-2025 16:00` in IST.
 - **ParameterValue: RecurringSource Contract:** `0x1C5a23Fd1F7fEd9A5d020858BD4b93e5c93C92a8` the deployed smart contract address, available on Amoy Polygonscan.
 - **Trigger Chain ID:** `80002` Polygon Amoy Testnet
 - **Recurring Event Name:** `LowPolBalance(address, uint256)`
 - **Event Filter:** `NA`
 - **Smart contract (optional):** You can paste the Solidity code or upload the `.sol` file.
 - **Recurring source contract ABI:** Automatically fetched from the deployed contract.
-- **Action status Notification POST URL:** Add the workflow's notification URL.
 
 **Actions**
 
-Add the action (Telegram notification) to define what happens when the event occurs.
+Next, configure the action - a Telegram notification that executes when the event occurs.
 
 - **Action Name:** for example, `telegram_notifier`
 - **Action Type:** `POST API CALL`
@@ -161,37 +151,38 @@ Below is the YAML script to use for your Kwala workflow. Save and compile this c
 ```yaml
 Name: LowBalanceNotification15
 Trigger:
-  TriggerSourceContract: NA
-  TriggerChainID: NA
-  TriggerEventName: NA
+  TriggerSourceContract: 0x1C5a23Fd1F7fEd9A5d020858BD4b93e5c93C92a8
+  TriggerChainID: 80002
+  TriggerEventName: LowPolBalance(address,uint256)
   TriggerEventFilter: NA
-  TriggerSourceContractABI: NA
+  TriggerSourceContractABI: WwogIHsKICAgICJhbm9ueW1vdXMiOiBmYWxzZSwKICAgICJpbnB1dHMiOiBbCiAgICAgIHsKICAgICAgICAiaW5kZXhlZCI6IHRydWUsCiAgICAgICAgImludGVybmFsVHlwZSI6ICJhZGRyZXNzIiwKICAgICAgICAibmFtZSI6ICJ1c2VyIiwKICAgICAgICAidHlwZSI6ICJhZGRyZXNzIgogICAgICB9LAogICAgICB7CiAgICAgICAgImluZGV4ZWQiOiBmYWxzZSwKICAgICAgICAiaW50ZXJuYWxUeXBlIjogInVpbnQyNTYiLAogICAgICAgICJuYW1lIjogImJhbGFuY2VXZWkiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0KICAgIF0sCiAgICAibmFtZSI6ICJMb3dQb2xCYWxhbmNlIiwKICAgICJ0eXBlIjogImV2ZW50IgogIH0sCiAgewogICAgImlucHV0cyI6IFtdLAogICAgIm5hbWUiOiAiVEhSRVNIT0xEIiwKICAgICJvdXRwdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJ1aW50MjU2IiwKICAgICAgICAibmFtZSI6ICIiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0KICAgIF0sCiAgICAic3RhdGVNdXRhYmlsaXR5IjogInZpZXciLAogICAgInR5cGUiOiAiZnVuY3Rpb24iCiAgfSwKICB7CiAgICAiaW5wdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJhZGRyZXNzIiwKICAgICAgICAibmFtZSI6ICJ1c2VyIiwKICAgICAgICAidHlwZSI6ICJhZGRyZXNzIgogICAgICB9CiAgICBdLAogICAgIm5hbWUiOiAiY2hlY2tBbmRXYXJuIiwKICAgICJvdXRwdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJ1aW50MjU2IiwKICAgICAgICAibmFtZSI6ICJiYWxhbmNlV2VpIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJub25wYXlhYmxlIiwKICAgICJ0eXBlIjogImZ1bmN0aW9uIgogIH0sCiAgewogICAgImlucHV0cyI6IFtdLAogICAgIm5hbWUiOiAiY2hlY2tNZSIsCiAgICAib3V0cHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAidWludDI1NiIsCiAgICAgICAgIm5hbWUiOiAiIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJub25wYXlhYmxlIiwKICAgICJ0eXBlIjogImZ1bmN0aW9uIgogIH0sCiAgewogICAgImlucHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAiYWRkcmVzcyIsCiAgICAgICAgIm5hbWUiOiAidXNlciIsCiAgICAgICAgInR5cGUiOiAiYWRkcmVzcyIKICAgICAgfQogICAgXSwKICAgICJuYW1lIjogInBvbEJhbGFuY2VPZiIsCiAgICAib3V0cHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAidWludDI1NiIsCiAgICAgICAgIm5hbWUiOiAiIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJ2aWV3IiwKICAgICJ0eXBlIjogImZ1bmN0aW9uIgogIH0KXQ==
   TriggerPrice: NA
   RecurringSourceContract: 0x1C5a23Fd1F7fEd9A5d020858BD4b93e5c93C92a8
   RecurringChainID: 80002
   RecurringEventName: LowPolBalance(address,uint256)
   RecurringEventFilter: NA
-  RecurringSourceContractABI: WwogIHsKICAgICJhbm9ueW1vdXMiOiBmYWxzZSwKICAgICJpbnB1dHMiOiBbCiAgICAgIHsKICAgICAgICAiaW5kZXhlZCI6IHRydWUsCiAgICAgICAgImludGVybmFsVHlwZSI6ICJhZGRyZXNzIiwKICAgICAgICAibmFtZSI6ICJ1c2VyIiwKICAgICAgICAidHlwZSI6ICJhZGRyZXNzIgogICAgICB9LAogICAgICB7CiAgICAgICAgImluZGV4ZWQiOiBmYWxzZSwKICAgICAgICAiaW50ZXJuYWxUeXBlIjogInVpbnQyNTYiLAogICAgICAgICJuYW1lIjogImJhbGFuY2VXZWkiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0KICAgIF0sCiAgICAibmFtZSI6ICJMb3dQb2xCYWxhbmNlIiwKICAgICJ0eXBlIjogImV2ZW50IgogIH0sCiAgewogICAgImlucHV0cyI6IFtdLAogICAgIm5hbWUiOiAiVEhSRVNIT0xEIiwKICAgICJvdXRwdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJ1aW50MjU2IiwKICAgICAgICAibmFtZSI6ICIiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0KICAgIF0sCiAgICAic3RhdGVNdXRhYmlsaXR5IjogInZpZXciLAogICAgInR5cGUiOiAiZnVuY3Rpb24iCiAgfSwKICB7CiAgICAiaW5wdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJhZGRyZXNzIiwKICAgICAgICAibmFtZSI6ICJ1c2VyIiwKICAgICAgICAidHlwZSI6ICJhZGRyZXNzIgogICAgICB9CiAgICBdLAogICAgIm5hbWUiOiAiY2hlY2tBbmRXYXJuIiwKICAgICJvdXRwdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJ1aW50MjU2IiwKICAgICAgICAibmFtZSI6ICJiYWxhbmNlV2VpIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJub25wYXlhYmxlIiwKICAgICJ0eXBlIjogAiZnVuY3Rpb24iCiAgfSwKICB7CiAgICAiaW5wdXRzIjogIFtdLAogICAgIm5hbWUiOiAiY2hlY2tNZSIsCiAgICAib3V0cHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAidWludDI1NiIsCiAgICAgICAgIm5hbWUiOiAiIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJub25wYXlhYmxlIiwKICAgICJ0eXBlIjogImZ1bmN0aW9uIgogIH0sCiAgewogICAgImlucHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAiYWRkcmVzcyIsCiAgICAgICAgIm5hbWUiOiAidXNlciIsCiAgICAgICAgInR5cGUiOiAiYWRkcmVzcyIKICAgICAgfQogICAgXSwKICAgICJuYW1lIjogInBvbEJhbGFuY2VPZiIsCiAgICAib3V0cHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAidWludDI1NiIsCiAgICAgICAgIm5hbWUiOiAiIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJ2aWV3IiwKICAgICJ0eXBlIjogImZ1bmN0aW9uIgogIH0KXQ==
+  RecurringSourceContractABI: WwogIHsKICAgICJhbm9ueW1vdXMiOiBmYWxzZSwKICAgICJpbnB1dHMiOiBbCiAgICAgIHsKICAgICAgICAiaW5kZXhlZCI6IHRydWUsCiAgICAgICAgImludGVybmFsVHlwZSI6ICJhZGRyZXNzIiwKICAgICAgICAibmFtZSI6ICJ1c2VyIiwKICAgICAgICAidHlwZSI6ICJhZGRyZXNzIgogICAgICB9LAogICAgICB7CiAgICAgICAgImluZGV4ZWQiOiBmYWxzZSwKICAgICAgICAiaW50ZXJuYWxUeXBlIjogInVpbnQyNTYiLAogICAgICAgICJuYW1lIjogImJhbGFuY2VXZWkiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0KICAgIF0sCiAgICAibmFtZSI6ICJMb3dQb2xCYWxhbmNlIiwKICAgICJ0eXBlIjogImV2ZW50IgogIH0sCiAgewogICAgImlucHV0cyI6IFtdLAogICAgIm5hbWUiOiAiVEhSRVNIT0xEIiwKICAgICJvdXRwdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJ1aW50MjU2IiwKICAgICAgICAibmFtZSI6ICIiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0KICAgIF0sCiAgICAic3RhdGVNdXRhYmlsaXR5IjogInZpZXciLAogICAgInR5cGUiOiAiZnVuY3Rpb24iCiAgfSwKICB7CiAgICAiaW5wdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJhZGRyZXNzIiwKICAgICAgICAibmFtZSI6ICJ1c2VyIiwKICAgICAgICAidHlwZSI6ICJhZGRyZXNzIgogICAgICB9CiAgICBdLAogICAgIm5hbWUiOiAiY2hlY2tBbmRXYXJuIiwKICAgICJvdXRwdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJ1aW50MjU2IiwKICAgICAgICAibmFtZSI6ICJiYWxhbmNlV2VpIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJub25wYXlhYmxlIiwKICAgICJ0eXBlIjogImZ1bmN0aW9uIgogIH0sCiAgewogICAgImlucHV0cyI6IFtdLAogICAgIm5hbWUiOiAiY2hlY2tNZSIsCiAgICAib3V0cHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAidWludDI1NiIsCiAgICAgICAgIm5hbWUiOiAiIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJub25wYXlhYmxlIiwKICAgICJ0eXBlIjogImZ1bmN0aW9uIgogIH0sCiAgewogICAgImlucHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAiYWRkcmVzcyIsCiAgICAgICAgIm5hbWUiOiAidXNlciIsCiAgICAgICAgInR5cGUiOiAiYWRkcmVzcyIKICAgICAgfQogICAgXSwKICAgICJuYW1lIjogInBvbEJhbGFuY2VPZiIsCiAgICAib3V0cHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAidWludDI1NiIsCiAgICAgICAgIm5hbWUiOiAiIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJ2aWV3IiwKICAgICJ0eXBlIjogImZ1bmN0aW9uIgogIH0KXQ==
   RecurringPrice: NA
   RepeatEvery: event
-  ExecuteAfter: immediate
-  ExpiresIn: 1758212940
+  ExecuteAfter: event
+  ExpiresIn: 1789749000
   Meta: NA
-  ActionStatusNotificationPOSTURL: https://workflow-notification-test.kalp.network/push_notification
+  ActionStatusNotificationPOSTURL: 
   ActionStatusNotificationAPIKey: NA
 Actions:
   - Name: telegram_notifier
     Type: post
-    APIEndpoint: https://api.telegram.org/bot8424424970:AAEwOZU3XBL3pl-ufSNqCTLwkemGjO0cMbA/sendMessage
+    APIEndpoint: https://api.telegram.org/bot7754368882:AAHS4KbbOkl5rEHoBBIR8eljgwq2PARYLyY/sendMessage
     APIPayload:
-      chat_id: 968602918,
-      text: "LOW BALANCE! Recharge your wallet. Add 5 POL"
+      chat_id: '968602918'
+      text: LOW BALANCE! Recharge your wallet. Add 5 POL
     TargetContract: NA
     TargetFunction: NA
-    TargetParams: NA
+    TargetParams: 
     ChainID: NA
     EncodedABI: NA
     Bytecode: NA
+    EncodedGoContract: NA
     Metadata: NA
     RetriesUntilSuccess: 5
 Execution:
@@ -208,21 +199,21 @@ Make sure you are in the Kwala network (not Polygon Amoy testnet) in MetaMask wh
 
 You can also create a polling workflow that calls the contract on a schedule.
 
-**Workflow name:** e.g., `Polling123`
+**Workflow name:** for example, `Polling1`
 
 **Trigger**
 
-- **Execute After:** `event` — executes the action (e.g., `immediate`)
+- **Execute After:** `immediate` — executes the action
 - **Repeat Every:** Time interval (actions repeat on a schedule)
-- **Expires:** e.g., `17-09-2025 16:00` in IST
-- **Recurring source value configurationInterval value:** time interval you want (e.g., `1` in unit `Min/hour/days`)
+- **Expires:** for example, `17-09-2025 16:00` in IST
+- **Recurring source value configurationInterval value:** time interval you want (for example, `1` in unit `Min/hour/days`)
 - **Action status Notification POST URL:** add the workflow's notification URL
 
 **Actions**
 
 Add the action, a smart contract call.
 
-- **Action Name:** e.g., `Polling123`
+- **Action Name:** for example, `Polling1`
 - **Action Type:** `CALL (Smart Contract)`
 - **Target Function:** `function checkAndWarn(address user)`
 - **Target Smart contract:** `0x1C5a23Fd1F7fEd9A5d020858BD4b93e5c93C92a8` (deployed contract address)
@@ -242,7 +233,7 @@ Provide the wallet address that has Polygon Amoy testnet faucet tokens when call
 ### Add the YAML configuration for polling
 
 ```yaml
-Name: Polling123
+Name: Polling1
 Trigger:
   TriggerSourceContract: NA
   TriggerChainID: NA
@@ -258,27 +249,28 @@ Trigger:
   RecurringPrice: NA
   RepeatEvery: 1m
   ExecuteAfter: immediate
-  ExpiresIn: 1758212940
+  ExpiresIn: 1789732800
   Meta: NA
-  ActionStatusNotificationPOSTURL: https://workflow-notification-test.kalp.network/push_notification
+  ActionStatusNotificationPOSTURL: 
   ActionStatusNotificationAPIKey: NA
 Actions:
-  - Name: polling
+  - Name: Polling1
     Type: call
     APIEndpoint: NA
     APIPayload:
       Message: NA
-    TargetContract: 0x1C5a23Fd1F7fEd9A5d020858BD4b93e5c93C92a8
+    TargetContract: 0x0F0C0b9683180DF0a13Fc176aFFd92E1F7f380f0
     TargetFunction: function checkAndWarn(address user)
     TargetParams:
       - 0x0F0C0b9683180DF0a13Fc176aFFd92E1F7f380f0
     ChainID: 80002
     EncodedABI: NA
     Bytecode: NA
+    EncodedGoContract: NA
     Metadata: NA
     RetriesUntilSuccess: 5
 Execution:
-  Mode: sequential
+  Mode: parallel
 ```
 
 Save, compile, and deploy this workflow. Activate it and wait for the workflow status to show **claimed**.

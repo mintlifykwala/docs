@@ -277,7 +277,7 @@ contract USDCVaultSimple {
 - **Recurring Chain ID:** `84532` (Base Sepolia testnet)
 - **Recurring Event Name:** `USDCAccepted(address,uint256,uint256)`
 - **Expires:** e.g., `08-10-2025 15:00` IST
-- **Action Status Notification POST URL:** `https://workflow-notification-test.kalp.network/push_notification`
+- **Action Status Notification POST URL:** 
 
 <Info>
 This ensures every USDC deposit triggers the workflow.
@@ -313,7 +313,7 @@ Trigger:
   ExecuteAfter: immediate
   ExpiresIn: 1759915800
   Meta: NA
-  ActionStatusNotificationPOSTURL: https://workflow-notification-test.kalp.network/push_notification
+  ActionStatusNotificationPOSTURL: 
   ActionStatusNotificationAPIKey: NA
 Actions:
   - Name: discord_call
