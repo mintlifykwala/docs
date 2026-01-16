@@ -119,7 +119,7 @@
     "links": [
       {
         "label": "Support",
-        "href": "mailto:connect@Kwala.network"
+        "href": "https://discord.gg/3hhm564TDq"
       }
     ],
     "primary": {
@@ -143,7 +143,7 @@
   "footer": {
     "socials": {
       "x": "https://x.com/KWALA_official",
-      "github": "https://github.com/Kwala",
+      "Discord": "https://discord.gg/3hhm564TDq",
       "linkedin": "https://www.linkedin.com/company/kwala-official/"
     }
   }
