@@ -132,13 +132,18 @@ When adding target parameters for your action, you can use the event parameters 
 
 **Example POST configuration**
 
+Here's and example usage where both fixed values and event parameters can be used when calling web2 APIs.
+
 ```yaml
-  - Name: telg1
+    - Name: notification_action
     Type: post
-    APIEndpoint: https://api.telegram.org/bot7754368882:AAHS4KbbOkl5rEHoBBIR8eljgwq2PARYLyY/sendMessage
+    APIEndpoint: https://dev-api.kalp.network/webhook
     APIPayload:
-      chat_id: '968602918'           # fixed value
-      text: Hi re.event(1), your certificate ID re.event(2) is credited on your wallet address re.event(0).   # mixed: text + event parameters
+      {
+      message: Transfer detected      //fixed value
+      token: ETH            //fixed value
+      amount: re.event(2)    //event parameter
+      }
     RetriesUntilSuccess: 5
 ```
 
