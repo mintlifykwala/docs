@@ -139,9 +139,9 @@ The following example shows a POST action where both fixed values and event para
     Type: post
     APIEndpoint: https://dev-api.kalp.network/webhook
     APIPayload:
-      message: Transfer detected      //fixed value
-      token: ETH            //fixed value
-      amount: re.event(2)    //event parameter
+      message: Transfer detected      # fixed value
+      token: ETH            # fixed value
+      amount: re.event(2)    # event parameter
     RetriesUntilSuccess: 5
 ```
 
