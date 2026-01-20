@@ -3,13 +3,9 @@ title: 'Public verifiability'
 description: 'Understanding public verifiability in Kwala'
 ---
 
-Public verifiability is a core principle of the Kwala network. All core activity logs and proofs are stored immutably on the Kalp Chain, enabling complete transparency and auditability of workflow executions.
+Public verifiability is a core principle of the Kwala network. All core activity logs and proofs are stored immutably on the Kalp Chain, which enables complete transparency and auditability of workflow executions.
 
 Kwala ensures that every workflow execution can be independently verified by anyone. This transparency creates trust without requiring users to rely on any single party, including Kwala itself.
-
-<Frame>
-  <img src="/images/architecture/Kwala-public-verifiability.png" alt="Kwala Public Verifiability Architecture" />
-</Frame>
 
 ## Verifiability features
 
@@ -24,23 +20,6 @@ Kwala ensures that every workflow execution can be independently verified by any
 
 When a user submits a workflow, the complete YAML definition is cryptographically hashed and stored on Kalp Chain alongside the user's signature.
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    User Workflow                        │
-│  ┌─────────────────┐    ┌─────────────────────────────┐ │
-│  │   YAML Intent   │───▶│   Keccak-256 Hash           │ │
-│  └─────────────────┘    └─────────────────────────────┘ │
-│           │                          │                  │
-│           ▼                          ▼                  │
-│  ┌─────────────────┐    ┌─────────────────────────────┐ │
-│  │  User Signature │    │   On-Chain Record           │ │
-│  └─────────────────┘    │   - Intent Hash             │ │
-│                         │   - Signature               │ │
-│                         │   - Timestamp               │ │
-│                         └─────────────────────────────┘ │
-└─────────────────────────────────────────────────────────┘
-```
-
 This creates a non-repudiable record that:
 
 - Proves the user authorized the specific workflow
@@ -49,9 +28,7 @@ This creates a non-repudiable record that:
 
 ## Execution logs
 
-All workflow executions generate detailed logs stored in Merkle-tree-based structures on Kalp Chain.
-
-### Logged data
+All workflow executions generate detailed logs stored in Merkle-tree-based structures on Kalp Chain. The logged data includes:
 
 | Data type | Description |
 |-----------|-------------|
@@ -62,30 +39,9 @@ All workflow executions generate detailed logs stored in Merkle-tree-based struc
 | **Timestamps** | Precise timing of each execution step |
 | **Node identity** | Which execution node processed the workflow |
 
-### Merkle tree structure
-
-Execution logs are organized in Merkle trees, enabling:
-
-- **Efficient verification**: Verify specific log entries without downloading entire history
-- **Tamper detection**: Any modification invalidates the Merkle root
-- **Compact proofs**: Generate small proofs for specific execution claims
-
 ## Verifier reports
 
-Verifier nodes submit reports to Kalp Chain that attest to execution correctness.
-
-### Report types
-
-<CardGroup cols={2}>
-  <Card title="Zero-knowledge proofs" icon="lock">
-    Cryptographic proofs that verify execution without revealing sensitive data
-  </Card>
-  <Card title="Full execution logs" icon="list">
-    Complete step-by-step records of workflow re-computation
-  </Card>
-</CardGroup>
-
-### Report contents
+Verifier nodes submit reports to Kalp Chain that attest to execution correctness. The reports can be zero-knowledge prrofs that verify execution without revealing sensitive data or full logs to validate workflow computation.
 
 Each verifier report includes:
 
@@ -97,9 +53,7 @@ Each verifier report includes:
 
 ## Auditability
 
-Any third party or regulator can replay and verify historical workflow executions using the public records on Kalp Chain.
-
-### Audit process
+Any third party or regulator can replay and verify historical workflow executions using the public records on Kalp Chain. The audit process is as follows:
 
 <Steps>
   <Step title="Retrieve intent">
@@ -119,7 +73,7 @@ Any third party or regulator can replay and verify historical workflow execution
   </Step>
 </Steps>
 
-### Audit use cases
+The audit data can be used in several scenarios, including: 
 
 | Use case | Description |
 |----------|-------------|
@@ -130,19 +84,19 @@ Any third party or regulator can replay and verify historical workflow execution
 
 ## Benefits of public verifiability
 
-### For users
+**For users**
 
 - **Transparency**: See exactly what actions were taken on your behalf
 - **Accountability**: Hold execution nodes responsible for their actions
 - **Trust**: Verify without relying on any single party
 
-### For enterprises
+**For enterprises**
 
 - **Compliance**: Meet regulatory requirements for audit trails
 - **Risk management**: Independently verify automated operations
 - **Due diligence**: Audit third-party workflow providers
 
-### For the network
+**For the network**
 
 - **Integrity**: Ensure all participants follow the rules
 - **Decentralization**: Remove reliance on trusted intermediaries
@@ -150,16 +104,18 @@ Any third party or regulator can replay and verify historical workflow execution
 
 ## Accessing verification data
 
-### Kwala Explorer
+You can access verification data by using the Kwala explorer or directly accessing the Kalp chain.
 
-The [Kwala Explorer](/explorer/overview) provides a user-friendly interface to:
+**Kwala Explorer**
+
+The [Kwala Explorer](https://kwala-explorer.lovable.app/) provides a user-friendly interface where you can:
 
 - View workflow execution history
 - Inspect execution logs and proofs
 - Verify specific transactions
 - Download audit reports
 
-### Kalp Chain direct access
+**Kalp Chain**
 
 Developers can query Kalp Chain directly to:
 
@@ -174,8 +130,7 @@ Developers can query Kalp Chain directly to:
   <Card title="Verifier nodes" icon="shield-check" href="/architecture/verifier-nodes">
     Learn how verifiers validate executions
   </Card>
-  <Card title="Kwala Explorer" icon="magnifying-glass" href="/explorer/overview">
+  <Card title="Kwala Explorer" icon="magnifying-glass" href="https://kwala-explorer.lovable.app/">
     Explore workflow executions
   </Card>
 </CardGroup>
-

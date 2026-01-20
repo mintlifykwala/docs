@@ -1,0 +1,216 @@
+---
+title: 'Real-time Telegram notifications'
+description: 'Create real-time Telegram notification automations using Kwala Workflows' 
+--- 
+In this guide, we'll walk you through how to build a Telegram notification automation using Kwala Workflows, a no-server, YAML-based Web3 automation platform.
+
+With Kwala, you can connect on-chain events to off-chain APIs like Telegram, Discord, or Slack without writing complex backend logic. Every time a smart contract emits an event, your Telegram bot will instantly send a message, all automated using Kwala.
+
+## Objective
+
+Build a workflow that:
+
+- Listens to a smart contract event on-chain. Here, the Polygon chain, Amoy Testnet, is used.
+- Sends an instant Telegram message when the event is triggered.
+
+<iframe
+  width="560"
+  height="315"
+  src="https://www.youtube.com/embed/cSrmg3vHoGQ"
+  title="YouTube video player"
+  frameBorder="0"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+  allowFullScreen
+  style={{ width: '100%', borderRadius: '0.5rem' }}
+></iframe>
+
+## Step 1: Smart contract setup
+
+Let's begin with a simple Solidity smart contract that emits an event each time its counter is increased.
+
+File name: `TestIncValue.sol`
+
+(You can give any name to your Solidity file with a `.sol` extension.)
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+ 
+contract AmoyCounter {
+    uint256 public value;
+ 
+    event ValueIncreased(address indexed caller, uint256 newValue);
+ 
+    function increase() external returns (uint256) {
+        value += 1;
+        emit ValueIncreased(msg.sender, value);
+        return value;
+    }
+}
+```
+
+Deploy the contract using the Remix IDE and connect your Metamask wallet to **Polygon Amoy Testnet**.
+
+<Note>
+You must have POL Faucet to deploy the smart contract.
+</Note>
+
+Once successfully deployed, copy your deployed smart **contract address** from the Amoy Polygon explorer.
+
+(Refer to `https://amoy.polygonscan.com/` to check the deployed smart contract and related transactions.)
+
+## Step 2: Setting up the Telegram bot
+
+Before configuring the Kwala workflow, set up your Telegram bot:
+
+1. Open Telegram and search **@BotFather**.
+2. Run `/newbot` to create a new bot and get a **bot token**.
+3. Use [@userinfobot](https://t.me/userinfobot) to get your **chat ID**.
+
+Note both:
+
+- **Bot Token** to access the HTTP API, for example, `7754368882:AAHS4KbbOkl5rEHoBBIR8eljgwq2PARYLyY`
+- **Chat ID**, for example, `968602918`
+
+Use these credentials inside the workflow to send notifications later.
+
+<Tip>
+Make sure to check your bot token on any API testing tool like ReqBin or Postman using a POST request. If your bot token is working, it will send a test notification message via Telegram.
+</Tip>
+
+## Step 3: Setting up the Kwala workflow
+
+Now that the contract and Telegram bot are ready, let's move to Kwala and create the automation.
+
+### Step 3.1: Create a new workflow
+
+1. Navigate to your [Kwala Dashboard](https://kwala.network/dashboard).
+2. Select **Create New Workflow**.
+3. Give it a **Name**, for example: `Telegram_Notifier1`.
+
+### Step 3.2: Configure the trigger
+
+This is the event that will activate your workflow.
+
+- **Execute After**: Set to `event`: executes the action after an event is emitted.
+- **Repeat Every**: `event` triggered after the event occurs.
+- **Expires**: timestamp for expiry, for example: `17-09-2025 16:00` in IST.
+- **Trigger Chain ID**: `80002` here: Polygon Amoy Testnet.
+- **Source Contract Address**: for example, `0x8ff6dEe7e8860146E51029E6116096239D8006ed` the address of the deployed smart contract, available on the Amoy Polygonscan website.
+- **Recurring Event Name**: `ValueIncreased(address, uint256)`
+- **Event Filter**: `NA`
+- **Smart contract (optional):** Here, you can simply copy and paste the Solidity code or upload the same `.sol` file.
+- **Recurring source contract ABI:** This will be automatically fetched from your deployed smart contract.
+
+### Step 3.3: Add the action (Telegram notification)
+
+This defines what happens when the event occurs.
+
+- **Action Name**: for example, `Telegram_notification`
+- **Action Type**: `POST API CALL`
+- **API Endpoint**: for example, `https://api.telegram.org/bot<YOUR_BOT>/sendMessage`
+- **API Payload**:
+
+```json
+{
+  "chat_id": "968602918",
+  "text": "Hi! You have a new notification, check your polscan"
+}
+```
+
+- **Retries Until Success**: `5`
+- **Execution Mode**: `Sequential` actions run one after another
+
+Ensure you review your configurations before proceeding.
+
+After that, create the workflow, and a workflow will be automatically generated for you.
+
+## YAML workflow configuration
+
+```yaml
+Name: Telegram_Notifier1
+Trigger:
+  TriggerSourceContract: 0x8ff6dEe7e8860146E51029E6116096239D8006ed
+  TriggerChainID: 80002
+  TriggerEventName: ValueIncreased(address,uint256)
+  TriggerEventFilter: NA
+  TriggerSourceContractABI: WwogIHsKICAgICJhbm9ueW1vdXMiOiBmYWxzZSwKICAgICJpbnB1dHMiOiBbCiAgICAgIHsKICAgICAgICAiaW5kZXhlZCI6IHRydWUsCiAgICAgICAgImludGVybmFsVHlwZSI6ICJhZGRyZXNzIiwKICAgICAgICAibmFtZSI6ICJjYWxsZXIiLAogICAgICAgICJ0eXBlIjogImFkZHJlc3MiCiAgICAgIH0sCiAgICAgIHsKICAgICAgICAiaW5kZXhlZCI6IGZhbHNlLAogICAgICAgICJpbnRlcm5hbFR5cGUiOiAidWludDI1NiIsCiAgICAgICAgIm5hbWUiOiAibmV3VmFsdWUiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0KICAgIF0sCiAgICAibmFtZSI6ICJWYWx1ZUluY3JlYXNlZCIsCiAgICAidHlwZSI6ICJldmVudCIKICB9LAogIHsKICAgICJpbnB1dHMiOiBbXSwKICAgICJuYW1lIjogImluY3JlYXNlIiwKICAgICJvdXRwdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJ1aW50MjU2IiwKICAgICAgICAibmFtZSI6ICIiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0KICAgIF0sCiAgICAic3RhdGVNdXRhYmlsaXR5IjogIm5vbnBheWFibGUiLAogICAgInR5cGUiOiAiZnVuY3Rpb24iCiAgfSwKICB7CiAgICAiaW5wdXRzIjogW10sCiAgICAibmFtZSI6ICJ2YWx1ZSIsCiAgICAib3V0cHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAidWludDI1NiIsCiAgICAgICAgIm5hbWUiOiAiIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJ2aWV3IiwKICAgICJ0eXBlIjogImZ1bmN0aW9uIgogIH0KXQ==
+  TriggerPrice: NA
+  RecurringSourceContract: 0x8ff6dEe7e8860146E51029E6116096239D8006ed
+  RecurringChainID: 80002
+  RecurringEventName: ValueIncreased(address,uint256)
+  RecurringEventFilter: NA
+  RecurringSourceContractABI: WwogIHsKICAgICJhbm9ueW1vdXMiOiBmYWxzZSwKICAgICJpbnB1dHMiOiBbCiAgICAgIHsKICAgICAgICAiaW5kZXhlZCI6IHRydWUsCiAgICAgICAgImludGVybmFsVHlwZSI6ICJhZGRyZXNzIiwKICAgICAgICAibmFtZSI6ICJjYWxsZXIiLAogICAgICAgICJ0eXBlIjogImFkZHJlc3MiCiAgICAgIH0sCiAgICAgIHsKICAgICAgICAiaW5kZXhlZCI6IGZhbHNlLAogICAgICAgICJpbnRlcm5hbFR5cGUiOiAidWludDI1NiIsCiAgICAgICAgIm5hbWUiOiAibmV3VmFsdWUiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0KICAgIF0sCiAgICAibmFtZSI6ICJWYWx1ZUluY3JlYXNlZCIsCiAgICAidHlwZSI6ICJldmVudCIKICB9LAogIHsKICAgICJpbnB1dHMiOiBbXSwKICAgICJuYW1lIjogImluY3JlYXNlIiwKICAgICJvdXRwdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJ1aW50MjU2IiwKICAgICAgICAibmFtZSI6ICIiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0KICAgIF0sCiAgICAic3RhdGVNdXRhYmlsaXR5IjogIm5vbnBheWFibGUiLAogICAgInR5cGUiOiAiZnVuY3Rpb24iCiAgfSwKICB7CiAgICAiaW5wdXRzIjogW10sCiAgICAibmFtZSI6ICJ2YWx1ZSIsCiAgICAib3V0cHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAidWludDI1NiIsCiAgICAgICAgIm5hbWUiOiAiIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJ2aWV3IiwKICAgICJ0eXBlIjogImZ1bmN0aW9uIgogIH0KXQ==
+  RecurringPrice: NA
+  RepeatEvery: event
+  ExecuteAfter: event
+  ExpiresIn: 1781796603
+  Meta: NA
+  ActionStatusNotificationPOSTURL: 
+  ActionStatusNotificationAPIKey: 
+Actions:
+  - Name: Telegram_notification
+    Type: post
+    APIEndpoint: https://api.telegram.org/bot7754368882:AAHS4KbbOkl5rEHoBBIR8eljgwq2PARYLyY/sendMessage
+    APIPayload:
+      chat_id: 968602918,
+      text: Hi ! You have a new notification, check your polscan.
+    TargetContract: NA
+    TargetFunction: NA
+    TargetParams: 
+    ChainID: NA
+    EncodedABI: NA
+    Bytecode: NA
+    EncodedGoContract: NA
+    Metadata: NA
+    RetriesUntilSuccess: 5
+Execution:
+  Mode: sequential
+```
+
+You can now save and compile this YAML workflow code. Upon successful compilation, deploy it.
+
+<Warning>
+Make sure that you're in the Kwala network (not Polygon Amoy Testnet) in your MetaMask to implement this.
+</Warning>
+
+## Step 4: Deploy and test the workflow
+
+Activate your workflow in Kwala, and you'll get your workflow address. Wait for its status to show `claimed`.
+
+Then go to Remix and call the **increase()** function in your deployed contract. 
+
+<Warning>
+Make sure you're in the Polygon Amoy Testnet in your MetaMask when executing the contract via Remix IDE.
+</Warning>
+
+Each time the function runs, it emits the `ValueIncreased` event.
+
+Within seconds, you'll receive a **Telegram message** automatically.
+
+Your Telegram should display: `"Hi! You have a new notification, check your polscan."`
+
+## Step 5: Monitor workflow execution
+
+In the **Kwala Dashboard**, navigate to:
+
+- **Workflow Logs** – to view event triggers and API calls
+- **Execution Status** – to confirm successful Telegram notifications
+- **Retries and Failures** – to debug if notifications didn't reach
+
+## Conclusion
+
+In this guide, we created a real-time blockchain-to-Telegram notification system using Kwala Workflows: no servers, no SDKs, just YAML automation. This setup shows how developers can easily integrate Web3 event triggers with Web APIs, enabling system alerts, user notifications, or smart contract monitors with minimal effort.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Monitor Your Workflows" icon="chart-line" href="/workflow-builder/monitor-workflow">
+    Learn how to track and analyze your workflow executions in real-time
+  </Card>
+  <Card title="Best Practices" icon="lightbulb" href="/concepts/best-practices">
+    Discover tips and patterns for building robust Web3 automations
+  </Card>
+</CardGroup>
+
+Start building your own Web3 automations today and let Kwala handle the backend logic for you.

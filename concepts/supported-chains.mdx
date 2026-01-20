@@ -3,6 +3,21 @@ title: 'Supported chains'
 description: 'List of all blockchain networks supported by Kwala'
 ---
 
-## Overview
+Kwala supports both EVM-compatible and non-EVM blockchain networks. This allows you to build workflows that interact with smart contracts across multiple chains. Each chain is identified by a unique Chain ID that you specify when configuring workflow triggers and actions. Some supported chains include:
 
-Kwala supports both EVM-compatible and non-EVM blockchain networks. This allows you to build workflows that interact with smart contracts across multiple chains. Each chain is identified by a unique Chain ID that you specify in your workflow actions and triggers.
+## EVM-Compatible Chains
+
+- **Ethereum** - Chain ID: 1
+- **Base** - Chain ID: 8453
+- **Polygon** - Chain ID: 137
+- **BNB Chain** (formerly Binance Smart Chain) - Chain ID: 56
+- **Avalanche C-Chain** - Chain ID: 43114
+- **Celo** - Chain ID: 42220
+
+## Test before mainnet deployment
+
+You should fully build, test, and validate your workflows on testnets before deploying them to the mainnet. This allows you to safely verify that your automations work as expected without risking real assets. Once everything is tested and validated on the testnet, you can switch to the corresponding mainnet instantly by simply changing the Chain ID, no need to rebuild or modify your automation logic.
+
+For example, you can develop and test on Sepolia (Chain ID: 11155111) and then deploy to Ethereum Mainnet (Chain ID: 1) when ready. Similarly, you can switch your YAML workflow target from Fuji (Chain ID: 43113) to Avalanche C-Chain Mainnet (Chain ID: 43114) after testing the end-to-end flow.
+
+

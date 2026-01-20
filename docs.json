@@ -34,19 +34,58 @@
               "workflow-builder/configure-workflow",
               "workflow-builder/deploy-workflow",
               "workflow-builder/monitor-workflow",
-              "concepts/use-workflow-templates",
+              "concepts/workflow-templates",
               "concepts/best-practices"
             ]
           },
           {
             "group": "Use cases",
             "pages": [
-              "use-cases/token-transfer-alert",
-              "use-cases/nft-price-tracker",
-              "use-cases/defi-yield-optimizer",
-              "use-cases/dao-proposal-notifier",
-              "use-cases/multi-chain-bridge-monitor",
-              "use-cases/liquidation-protection"
+              "use-cases/telegram-notification-automation",
+              "use-cases/low-wallet-balance-notifier",
+              "use-cases/blockchain-block-count-alert",
+              "use-cases/oracle-price-alert-notifications",
+              "use-cases/auto-top-up-wallet",
+              "use-cases/cryptocurrency-deposit-alerts",
+              "use-cases/blockchain-game-reward-payouts",
+              "use-cases/onboard-users-onchain-frontend",
+              "use-cases/automated-certificate-issuance"
+            ]
+          },
+          {
+            "group": "Concepts",
+            "pages": [
+              "concepts/supported-chains",
+              "concepts/yaml-workflow-basics",
+              "concepts/workflow-execution",
+              "concepts/actions",
+              "concepts/triggers",
+              "concepts/regex-usage",
+              "concepts/limits-and-quotas"
+            ]
+          },
+          {
+            "group": "Resources",
+            "pages": [
+              "support/faq",
+              "support/glossary",
+              "support/community-and-contact"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Architecture",
+        "groups": [
+          {
+            "group": "Architecture",
+            "pages": [
+              "architecture/system-overview",
+              "architecture/node-architecture",
+              "architecture/workflow-execution-flow",
+              "architecture/verifier-nodes",
+              "architecture/public-verifiability",
+              "architecture/security-model"
             ]
           }
         ]
@@ -66,7 +105,7 @@
         },
         {
           "anchor": "Community",
-          "href": "https://discord.com/invite/ZmQgZe45cy",
+          "href": "https://discord.com/invite/3hhm564TDq",
           "icon": "discord"
         }
       ]
@@ -80,7 +119,7 @@
     "links": [
       {
         "label": "Support",
-        "href": "mailto:connect@Kwala.network"
+        "href": "https://discord.gg/3hhm564TDq"
       }
     ],
     "primary": {
@@ -103,9 +142,9 @@
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/The_MAILabs",
-      "github": "https://github.com/Kwala",
-      "linkedin": "https://www.linkedin.com/company/mai-labs/"
+      "x": "https://x.com/KWALA_official",
+      "discord": "https://discord.gg/3hhm564TDq",
+      "linkedin": "https://www.linkedin.com/company/kwala-official/"
     }
   }
 }

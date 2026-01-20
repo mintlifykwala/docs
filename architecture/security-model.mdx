@@ -3,11 +3,7 @@ title: 'Security model'
 description: 'Understanding Kwala security model and best practices'
 ---
 
-Kwala follows a zero-trust, verifiable execution approach that builds security guarantees across its infrastructure. Every layer of the system implements specific security measures to protect user assets and ensure trustless execution.
-
-## Security by layer
-
-Kwala implements security measures at every architectural layer:
+Kwala follows a zero-trust, verifiable execution approach that builds security guarantees across its infrastructure. Every layer of the system implements specific security measures to protect workflows and ensure trustless execution.
 
 | Security layer | Measures |
 |----------------|----------|
@@ -40,16 +36,6 @@ Workflows execute identically across all nodes, producing consistent, verifiable
 ### Cryptographically signed actions
 
 Every action is signed and logged, creating an immutable audit trail traceable to the original user intent.
-
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   User Intent   │────▶│   Node Action   │────▶│   On-Chain Log  │
-│   (signed)      │     │   (signed)      │     │   (immutable)   │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-        │                       │                       │
-        └───────────────────────┴───────────────────────┘
-                    Cryptographic chain of custody
-```
 
 ### Immutable workflow history
 
@@ -92,20 +78,10 @@ All node-to-node communication uses mutual TLS (mTLS) with node-specific certifi
 
 Users maintain complete control over their security:
 
-<CardGroup cols={2}>
-  <Card title="Self-custody" icon="key">
-    Users hold their own private keys—Kwala never has access
-  </Card>
-  <Card title="Signed intents" icon="signature">
-    Every workflow requires explicit user signature
-  </Card>
-  <Card title="Non-repudiation" icon="shield">
-    Cryptographic proof of user authorization
-  </Card>
-  <Card title="Revocation" icon="ban">
-    Users can deactivate workflows at any time
-  </Card>
-</CardGroup>
+- **Self-custody**: Users hold their own private keys—Kwala never has access
+- **Signed intents**: Every workflow requires explicit user signature
+- **Non-repudiation**: Cryptographic proof of user authorization
+- **Revocation**: Users can deactivate workflows at any time
 
 ## Infrastructure security
 
@@ -125,12 +101,6 @@ The Kwala infrastructure implements enterprise-grade security controls:
 <CardGroup cols={2}>
   <Card title="Public verifiability" icon="eye" href="/architecture/public-verifiability">
     Learn about audit and verification
-  </Card>
-  <Card title="Verifier nodes" icon="shield-check" href="/architecture/verifier-nodes">
-    Understand the verification process
-  </Card>
-  <Card title="Node architecture" icon="server" href="/architecture/node-architecture">
-    Deep dive into node security
   </Card>
   <Card title="System overview" icon="sitemap" href="/architecture/system-overview">
     Review the complete architecture

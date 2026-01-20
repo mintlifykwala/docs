@@ -1,0 +1,183 @@
+---
+title: 'Real-time oracle price alerts'
+description: 'Build an automated workflow that monitors on-chain oracle prices and sends Telegram alerts when thresholds are met'
+---
+
+Tracking live on-chain asset prices such as SOL or ETH often means setting up backend services, cron jobs, or external price feeds. These systems require constant maintenance and integration, which can slow developers down when all they want is a simple, reliable automation.
+
+Kwala removes this complexity by letting you automate price-based triggers directly on-chain: no servers, no cron jobs, and no middleware.
+
+In this guide, we'll build a real-time SOL oracle price alert system that sends a Telegram notification whenever the price drops below a defined threshold, using Kwala's low-code automation workflows.
+
+## Objective
+
+We'll configure a Kwala workflow that continuously monitors the SOL price oracle on-chain. When the SOL price falls below $195, it automatically triggers a Telegram alert. This use case highlights how simple YAML configurations can connect on-chain oracle data with real-world notification systems.
+
+<iframe
+  width="560"
+  height="315"
+  src="https://www.youtube.com/embed/0ygVQ-yWidQ"
+  title="YouTube video player"
+  frameBorder="0"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+  allowFullScreen
+  style={{ width: '100%', borderRadius: '0.5rem' }}
+></iframe>
+
+## Prerequisites
+
+Before you begin, ensure you have:
+
+- Access to the [Kwala Dashboard](https://kwala.network/dashboard) to create and deploy workflows.
+- A Telegram bot created using [@BotFather](https://t.me/BotFather)
+    - Retrieve your bot token and verify it using API testing tools like Reqbin or Postman with a POST request.
+    - Once verified, your bot is ready to send automated notifications.
+
+<Note>
+This use case does not require deploying any Solidity smart contracts.
+</Note>
+
+## Workflow setup on Kwala
+
+Follow the steps below to create and deploy the workflow on Kwala.
+
+### Step 1: Create a new workflow
+
+1. Navigate to your Kwala Dashboard.
+2. Select Create Workflow.
+3. Enter a workflow name, for example: `sol_pricedrop1`.
+
+This name helps you identify the workflow in the dashboard and logs.
+
+### Step 2: Configure the trigger
+
+This workflow is price-based, meaning it activates when a specified oracle price condition is met.
+
+**Trigger configuration parameters:**
+
+- **Execute After:** oracle price (Activates when the SOL price reaches $195)
+- **Repeat Every:** oracle price (Re-triggers when the SOL price condition is met again)
+- **Expires In:** timestamp for expiry, for example `17-09-2025 16:00` IST
+- **Trigger Source Contract:** `0xD31a59c85aE9D8edEFeC411D448f90841571b89c`
+
+<Note>
+This is the smart contract address for the SOL price oracle, which Kwala automatically fetches and monitors.
+</Note>
+
+- **Trigger Source Configuration:**
+    - Target price: `$195`
+    - Target token: `Solana (SOL)`
+- **Recurring Source Configuration:**
+    - Target price: `$195`
+    - Target token: `Solana (SOL)`
+- **Trigger Chain ID:** `1` (Ethereum Mainnet)
+- **Trigger Price:** `$195`
+- **Action Status Notification POST URL:** Add the workflow's URL (already available in the placeholder)
+
+This setup ensures the workflow listens directly to the oracle price feed — without continuous polling or backend processes.
+
+### Step 3: Configure the action
+
+When the price condition is met, Kwala automatically sends a Telegram notification using your bot.
+
+**Action parameters:**
+
+- **Action Name:** `telegram_notifier1`
+- **Action Type:** `POST API CALL`
+- **API Endpoint:** `https://api.telegram.org/bot7754368882:AAHS4KbbOkl5rEHoBBIR8eljgwq2PARYLyY/sendMessage`
+- **API Payload (JSON):**
+
+```json
+{
+  "chat_id": 968602918,
+  "text": "Sol price has dropped to $195.0"
+}
+```
+
+- **Retries Until Success:** `5`
+- **Execution Mode:** `Sequential` (actions run one after another)
+
+The retry policy ensures reliable delivery such that if the Telegram API experiences a temporary issue, Kwala retries the request until it succeeds.
+
+Review all configurations carefully before proceeding. Once saved, the workflow is generated automatically.
+
+## Step 4: Add the YAML configuration
+
+After setting up the trigger and action, define your workflow using the YAML below.
+
+```yaml
+Name: sol_pricedrop1
+Trigger:
+  TriggerSourceContract: 0xD31a59c85aE9D8edEFeC411D448f90841571b89c
+  TriggerChainID: 1
+  TriggerEventName: NA
+  TriggerEventFilter: NA
+  TriggerSourceContractABI: NA
+  TriggerPrice: 195.0
+  RecurringSourceContract: 0xD31a59c85aE9D8edEFeC411D448f90841571b89c
+  RecurringChainID: 1
+  RecurringEventName: NA
+  RecurringEventFilter: NA
+  RecurringSourceContractABI: NA
+  RecurringPrice: 195.0
+  RepeatEvery: oracle_price
+  ExecuteAfter: oracle_price
+  ExpiresIn: 1758618000
+  Meta: NA
+  ActionStatusNotificationPOSTURL:
+  ActionStatusNotificationAPIKey: NA
+Actions:
+  - Name: telegram_notifier1
+    Type: post
+    APIEndpoint: https://api.telegram.org/bot7754368882:AAHS4KbbOkl5rEHoBBIR8eljgwq2PARYLyY/sendMessage
+    APIPayload:
+      chat_id: 968602918,
+      text: "Sol price has dropped to $195.0"
+    TargetContract: NA
+    TargetFunction: NA
+    TargetParams:
+      NA
+    ChainID: NA
+    EncodedABI: NA
+    Bytecode: NA
+    Metadata: NA
+    RetriesUntilSuccess: 5
+Execution:
+  Mode: sequential
+```
+
+## Step 5: Save and deploy the workflow
+
+1. Review all parameters carefully.
+2. Select **Save and Compile** to validate the YAML.
+3. Once compilation succeeds, select **Deploy**.
+4. Wait for the workflow status to change to **Claimed** in the dashboard.
+
+Your workflow is now live and actively monitoring the SOL oracle price.
+
+## Output
+
+When the SOL price reaches or drops below **$195**, your Telegram bot will automatically send:
+
+> Sol price has dropped to $195!
+
+This confirms that the workflow executed successfully and the automation is working as expected.
+
+## Conclusion
+
+In this guide, we built a real-time SOL price alert system using Kwala workflows.
+
+Without writing any backend code, we connected an on-chain oracle to Telegram notifications, enabling fully automated, event-based monitoring.
+
+This use case shows how Kwala bridges blockchain data and real-world systems, empowering developers to build powerful, low-code Web3 automations for trading, portfolio management, and beyond.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Monitor Your Workflows" icon="chart-line" href="/workflow-builder/monitor-workflow">
+    Learn how to track and analyze your workflow executions in real-time
+  </Card>
+  <Card title="Best Practices" icon="lightbulb" href="/concepts/best-practices">
+    Discover tips and patterns for building robust Web3 automations
+  </Card>
+</CardGroup>
