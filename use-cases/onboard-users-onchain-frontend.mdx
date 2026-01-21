@@ -1,0 +1,508 @@
+---
+title: "Onboard users on-chain"
+description: "Build a lightweight onboarding flow using frontend and smart contract and Kwala to write registration data on-chain and trigger instant Telegram confirmations, without running a dedicated event-listening server."
+---
+
+Onboarding users into a Web3 app often means writing data on-chain and then doing off-chain follow ups: welcome messages, analytics, or admin workflows. The usual approach, run a server that polls the chain, stores results, and sends notifications, adds operational overhead and maintenance.
+
+This guide shows a lightweight, production-minded pattern:
+
+- A frontend that writes registration data to a smart contract
+- A small optional backend helper to read records when needed
+- A Kwala workflow that listens for the on-chain `RecordSaved` event and sends instant Telegram confirmations
+
+Result: secure on-chain registration and immediate off-chain UX, without running a dedicated cron or relay server for the event to notification glue.
+
+Kwala provides YAML-driven workflow automation to connect on-chain triggers with off-chain actions (webhooks, bots, contract calls), so you can focus on product logic, not infra.
+
+## Objective
+
+Create an onboarding flow where:
+
+- **TRIGGER:** Kwala listens for `RecordSaved(address,string,string,string,uint256)` emitted by the `SaveData` smart contract when a user registers via the frontend.
+- **ACTION:** Kwala posts a personalized Telegram welcome message to the registered chat ID.
+
+This provides a real-time, auditable onboarding experience: the data is stored on-chain and users receive immediate confirmation through Telegram, all driven by a YAML workflow.
+
+<iframe
+  width="560"
+  height="315"
+  src="https://www.youtube.com/embed/ufqpyFHUoJY"
+  title="YouTube video player"
+  frameBorder="0"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+  allowFullScreen
+  style={{ width: '100%', borderRadius: '0.5rem' }}
+></iframe>
+
+
+## Prerequisites
+
+Before you begin, ensure you have:
+
+1. MetaMask (or compatible wallet) connected to the target RPC. This guide uses the Polygon Amoy testnet. 
+2. Telegram bot token and chat IDs (create via `@BotFather`)
+3. Kwala Dashboard access to create and deploy workflows: [https://kwala.network/dashboard](https://kwala.network/dashboard)
+4. Familiarity with Solidity and frontend tooling such as ethers.js, BrowserProvider, simple HTML/JS, or React
+
+
+## Step 1: Smart contract (SaveData.sol)
+
+Deploy the contract below using Remix or your preferred flow. Kwala uses the event ABI to listen for `RecordSaved`.
+
+<Tip>
+Contract address (example): `0x3e2f859DA20e1e74A5696Bf3246606218c246C9F`
+</Tip>
+
+```solidity SaveData.sol
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+contract SaveData {
+    struct Record {
+        string name;
+        string telegramId;
+        string wallet;
+        uint256 timestamp;
+    }
+
+    mapping(address => Record) public records;
+
+    event RecordSaved(
+        address indexed user,
+        string name,
+        string telegramId,
+        string wallet,
+        uint256 timestamp
+    );
+
+    function saveRecord(
+        string memory _name,
+        string memory _telegramId,
+        string memory _wallet
+    ) public {
+        records[msg.sender] = Record(_name, _telegramId, _wallet, block.timestamp);
+        emit RecordSaved(msg.sender, _name, _telegramId, _wallet, block.timestamp);
+    }
+
+    function getRecord(address _addr)
+        public
+        view
+        returns (string memory, string memory, string memory, uint256)
+    {
+        Record memory r = records[_addr];
+        return (r.name, r.telegramId, r.wallet, r.timestamp);
+    }
+}
+```
+
+<Info>
+Save the deployed contract address and ABI — Kwala uses the event ABI to detect `RecordSaved`.
+</Info>
+
+## Step 2: Frontend (simple onboarding UI)
+
+A lightweight HTML and ethers frontend collects name + Telegram chat ID and calls `saveRecord(...)`. Open this page in a browser with MetaMask installed.
+
+```html index.html
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Save to Blockchain - Demo</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 24px; max-width: 700px; margin: auto; }
+    input, button { padding: 8px; margin: 6px 0; width: 100%; box-sizing: border-box; }
+    label { font-weight: 600; margin-top: 12px; display: block; }
+    .row { display: flex; gap: 8px; }
+    .row > * { flex: 1; }
+    pre { background: #f4f4f4; padding: 12px; border-radius: 6px; overflow: auto; }
+    .small { font-size: 13px; color: #555; }
+  </style>
+</head>
+<body>
+  <center><h2>Kwala Registration</h2></center>
+
+  <div>
+    <button id="connectBtn">Connect MetaMask</button>
+    <div class="small" id="connectedInfo"></div>
+  </div>
+
+  <label for="name">Name</label>
+  <input id="name" placeholder="Your name" />
+
+  <div>
+    <button id="tgBotBtn">Click here to get your Telegram chat Id</button>
+  </div>
+
+  <label for="tg">Telegram Chat ID</label>
+  <input id="tg" placeholder="e.g. 123456789" />
+
+  <label for="wallet">Wallet address (optional — will also use connected address)</label>
+  <input id="wallet" placeholder="0x..." />
+
+  <div class="row">
+    <button id="saveBtn">Sign Up</button>
+    <button id="readBtn">Read My Record</button>
+  </div>
+
+  <p id="status" class="small"></p>
+  <h3>Latest Tx / Output</h3>
+  <pre id="output">No action yet.</pre>
+
+  <script>
+    const CONTRACT_ADDRESS = "0x3e2f859DA20e1e74A5696Bf3246606218c246C9F";
+    const CONTRACT_ABI = [{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"string","name":"name","type":"string"},{"indexed":false,"internalType":"string","name":"telegramId","type":"string"},{"indexed":false,"internalType":"string","name":"wallet","type":"string"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"RecordSaved","type":"event"},{"inputs":[{"internalType":"address","name":"_addr","type":"address"}],"name":"getRecord","outputs":[{"internalType":"string","name":"","type":"string"},{"internalType":"string","name":"","type":"string"},{"internalType":"string","name":"","type":"string"},{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"records","outputs":[{"internalType":"string","name":"name","type":"string"},{"internalType":"string","name":"telegramId","type":"string"},{"internalType":"string","name":"wallet","type":"string"},{"internalType":"uint256","name":"timestamp","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"string","name":"_name","type":"string"},{"internalType":"string","name":"_telegramId","type":"string"},{"internalType":"string","name":"_wallet","type":"string"}],"name":"saveRecord","outputs":[],"stateMutability":"nonpayable","type":"function"}];
+
+    const connectBtn = document.getElementById("connectBtn");
+    const connectedInfo = document.getElementById("connectedInfo");
+    const saveBtn = document.getElementById("saveBtn");
+    const readBtn = document.getElementById("readBtn");
+    const statusEl = document.getElementById("status");
+    const output = document.getElementById("output");
+
+    let provider, signer, userAddress, contract;
+
+    function setStatus(text) { statusEl.innerText = text; }
+    function appendOutput(text) { output.innerText = text; }
+
+    // CONNECT WALLET
+    connectBtn.onclick = async () => {
+      if (!window.ethereum) {
+        alert("MetaMask not found. Please install MetaMask extension.");
+        return;
+      }
+      try {
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        signer = provider.getSigner();
+        userAddress = await signer.getAddress();
+        connectedInfo.innerText = `Connected: ${userAddress} (Network: ${(await provider.getNetwork()).name})`;
+        contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+        setStatus("Ready. Enter data and click Save.");
+        appendOutput("Contract ready: " + CONTRACT_ADDRESS);
+      } catch (err) {
+        console.error(err);
+        setStatus("Error connecting: " + (err.message || err));
+      }
+    };
+
+    // SAVE RECORD
+    saveBtn.onclick = async () => {
+      try {
+        if (!signer) { setStatus("Please connect wallet first."); return; }
+        const name = document.getElementById("name").value.trim();
+        const tg = document.getElementById("tg").value.trim();
+        const walletField = document.getElementById("wallet").value.trim() || userAddress;
+        if (!name || !tg) { alert("Enter name and telegram ID"); return; }
+
+        setStatus("Preparing transaction...");
+        appendOutput("Preparing to send transaction...");
+
+        let contractWithSigner = contract.connect(signer);
+
+        let gasEstimate;
+        try { gasEstimate = await contractWithSigner.estimateGas.saveRecord(name, tg, walletField); }
+        catch(e) { gasEstimate = null; }
+
+        const tx = await contractWithSigner.saveRecord(name, tg, walletField, {
+          gasLimit: gasEstimate ? gasEstimate.mul(120).div(100) : undefined
+        });
+        setStatus("Transaction sent. Waiting confirmation...");
+        appendOutput("TX sent: " + tx.hash + "\nWaiting for confirmation...");
+
+        const receipt = await tx.wait();
+        setStatus("Transaction confirmed in block " + receipt.blockNumber);
+        appendOutput(`Transaction confirmed!\nHash: ${tx.hash}\nBlock: ${receipt.blockNumber}\nGas used: ${receipt.gasUsed.toString()}`);
+
+      } catch(err) {
+        console.error(err);
+        setStatus("Error: " + (err.message || err));
+        appendOutput("Error details: " + (err.data || err.message || JSON.stringify(err)));
+      }
+    };
+
+    readBtn.onclick = async () => {
+      try {
+        if (!provider) { setStatus("Connect wallet first."); return; }
+        if (!userAddress) { signer = provider.getSigner(); userAddress = await signer.getAddress(); }
+        const readProvider = new ethers.providers.Web3Provider(window.ethereum);
+        const readContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, readProvider);
+        setStatus("Reading record...");
+        const res = await readContract.getRecord(userAddress);
+        const [name, tg, wallet, ts] = res;
+        const timeStr = ts && ts.toNumber ? new Date(ts.toNumber() * 1000).toLocaleString() : "N/A";
+        appendOutput(`Record for ${userAddress}:\nName: ${name}\nTelegram: ${tg}\nWallet: ${wallet}\nSaved at: ${timeStr}`);
+        setStatus("Read success.");
+      } catch(err) {
+        console.error(err);
+        setStatus("Error reading: " + (err.message || err));
+      }
+    };
+
+    if(window.ethereum) {
+      window.ethereum.on("accountsChanged", (accounts) => {
+        userAddress = accounts[0] || null;
+        connectedInfo.innerText = userAddress ? "Connected: " + userAddress : "Not connected";
+      });
+      window.ethereum.on("chainChanged", (chainId) => {
+        setStatus("Network changed. Please reconnect if needed.");
+      });
+    }
+
+    document.getElementById("tgBotBtn").onclick = () => {
+      window.open("https://t.me/KwalaHelperTestBot?start=start", "_blank");
+    };
+  </script>
+</body>
+</html>
+```
+
+**Frontend usage:**
+
+1. Open the page in a browser with MetaMask
+2. Click **Connect MetaMask** and sign the request
+3. Fill **Name** and **Telegram Chat ID** (wallet optional)
+4. Click **Sign Up** — MetaMask will prompt and the frontend calls `saveRecord()`
+5. Once mined, `RecordSaved` is emitted
+
+## Telegram helper bot (get chat ID)
+
+You can provide a `tgBotBtn` that opens a bot which replies with the chat ID. Here's an example bot (Node.js) that replies with the user's chat ID when they click the `/start` deep link. Useful for users to capture their chat ID from the browser.
+
+```javascript telegram-bot.js
+const TelegramBot = require('node-telegram-bot-api');
+
+// Telegram bot token
+const BOT_TOKEN = '8470789989:AAGakdfUOTak81UpR90j8oayHCxjTyzzi28';
+
+const bot = new TelegramBot(BOT_TOKEN, { polling: true });
+
+bot.onText(/\/start/, (msg) => {
+  const chatId = msg.chat.id;
+  bot.sendMessage(chatId, `Welcome to Kwala.network and Here is your Chat ID: ${chatId}`);
+});
+
+console.log('Bot is running...');
+```
+
+<Warning>
+Keep bot tokens secret in production — use environment variables and secure hosting.
+</Warning>
+
+## Optional step 3: Small backend helper
+
+This optional Node/Express helper demonstrates reading stored records on-chain and sending Telegram messages in bulk. Kwala already handles immediate notifications via events, but you may want a backend for bulk messaging, admin flows, or periodic summaries.
+
+```javascript index.js
+const express = require('express');
+const axios = require('axios');
+const { ethers } = require('ethers');
+const app = express();
+
+app.use(express.json());
+
+// Telegram bot token
+const botToken = '8470789989:AAGakdfUOTak81UpR90j8oayHCxjTyzzi28';
+
+// Blockchain setup (ethers v5)
+const CONTRACT_ADDRESS = "0x3e2f859DA20e1e74A5696Bf3246606218c246C9F";
+const CONTRACT_ABI = [
+  {
+    "inputs": [{"internalType": "address", "name": "_addr", "type": "address"}],
+    "name": "getRecord",
+    "outputs": [
+      {"internalType": "string", "name": "", "type": "string"},
+      {"internalType": "string", "name": "", "type": "string"},
+      {"internalType": "string", "name": "", "type": "string"},
+      {"internalType": "uint256", "name": "", "type": "uint256"}
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+];
+
+// Connect to blockchain
+const provider = new ethers.providers.JsonRpcProvider("https://rpc-amoy.polygon.technology");
+const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+
+// Helper to send Telegram message
+async function sendTelegramMessage(chatId, text) {
+  try {
+    await axios.post(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      chat_id: chatId,
+      text
+    });
+    console.log(`Sent to ${chatId}`);
+  } catch (err) {
+    console.error(`Failed to send to ${chatId}:`, err.message);
+  }
+}
+
+// Example: list of users to send messages automatically
+// In real setup, you might store addresses somewhere or get from events
+const userAddresses = [
+  "0x4b0bf40d9E037AfB23a500bA0Ff4b558015D711F"
+];
+
+// Endpoint to send messages automatically
+app.post('/sendMessages', async (req, res) => {
+  try {
+    for (let addr of userAddresses) {
+      const [name, telegramId, wallet, ts] = await contract.getRecord(addr);
+
+      if (!telegramId || telegramId === "") {
+        console.log(`Skipping ${name} - no telegramId`);
+        continue;
+      }
+
+      const message = `Hi ${name}!\n\nYour registration was successful on Kwala.\nWallet: ${wallet}\nTime: ${new Date(ts.toNumber()*1000).toLocaleString()}`;
+      await sendTelegramMessage(telegramId, message);
+      await new Promise(r => setTimeout(r, 100)); // avoid Telegram rate limits
+    }
+
+    res.json({ status: 'Messages sent to all users in blockchain records' });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Start server
+app.listen(3000, () => console.log('Server running on port 3000'));
+```
+
+<Tip>
+Use environment variables for tokens and RPC endpoints in production.
+</Tip>
+
+## Step 4: Kwala workflow (event → Telegram)
+
+Create a Kwala workflow that listens for `RecordSaved` and posts a Telegram message. This is the core serverless glue — Kwala runs it for you.
+
+### Kwala dashboard steps
+
+1. Open: [https://kwala.network/dashboard](https://kwala.network/dashboard) → **Create New Workflow**
+2. **Name:** `New_User_Onboardingworkflow` (or any name you prefer)
+3. **Trigger:**
+   - **Execute After:** `immediate`
+   - **Repeat Every:** `event`
+   - **Recurring Source Contract:** `0x3e2f859DA20e1e74A5696Bf3246606218c246C9F`
+   - **Recurring Chain ID:** `80002` (Polygon Amoy)
+   - **Recurring Event Name:** `RecordSaved(address,string,string,string,uint256)`
+   - **Recurring Source Contract ABI:** paste the event ABI (Kwala can fetch/accept the ABI)
+   - **Action Status Notification POST URL:** 
+4. **Action:**
+   - **Action Name:** `Telegram_notificatier`
+   - **Type:** `POST API CALL`
+   - **API Endpoint:** `https://api.telegram.org/bot<YOUR_BOT_TOKEN>/sendMessage`
+   - **API Payload:**
+     ```json
+     {
+       "chat_id": "7118280412",
+       "text": "Welcome to Kwala! Create your automation workflows with Kwala Network"
+     }
+     ```
+   - **Retries Until Success:** `5`
+   - **Execution Mode:** `parallel` (or `sequential` — choose based on your need)
+5. Save and deploy. Kwala will return the workflow address and status.
+
+### YAML configuration
+
+```yaml workflow.yaml
+Name: New_User_Onboardingworkflo_711f
+Trigger:
+  TriggerSourceContract: NA
+  TriggerChainID: NA
+  TriggerEventName: NA
+  TriggerEventFilter: NA
+  TriggerSourceContractABI: NA
+  TriggerPrice: NA
+  RecurringSourceContract: 0x3e2f859DA20e1e74A5696Bf3246606218c246C9F
+  RecurringChainID: 80002
+  RecurringEventName: RecordSaved(address,string,string,string,uint256)
+  RecurringEventFilter: NA
+  RecurringSourceContractABI: W3siYW5vbnltb3VzIjpmYWxzZSwiaW5wdXRzIjpbeyJpbmRleGVkIjp0cnVlLCJpbnRlcm5hbFR5cGUiOiJhZGRyZXNzIiwibmFtZSI6InVzZXIiLCJ0eXBlIjoiYWRkcmVzcyJ9LHsiaW5kZXhlZCI6ZmFsc2UsImludGVybmFsVHlwZSI6InN0cmluZyIsIm5hbWUiOiJuYW1lIiwidHlwZSI6InN0cmluZyJ9LHsiaW5kZXhlZCI6ZmFsc2UsImludGVybmFsVHlwZSI6InN0cmluZyIsIm5hbWUiOiJ0ZWxlZ3JhbUlkIiwidHlwZSI6InN0cmluZyJ9LHsiaW5kZXhlZCI6ZmFsc2UsImludGVybmFsVHlwZSI6InN0cmluZyIsIm5hbWUiOiJ3YWxsZXQiLCJ0eXBlIjoic3RyaW5nIn0seyJpbmRleGVkIjpmYWxzZSwiaW50ZXJuYWxUeXBlIjoidWludDI1NiIsIm5hbWUiOiJ0aW1lc3RhbXAiLCJ0eXBlIjoidWludDI1NiJ9XSwibmFtZSI6IlJlY29yZFNhdmVkIiwidHlwZSI6ImV2ZW50In0seyJpbnB1dHMiOlt7ImludGVybmFsVHlwZSI6ImFkZHJlc3MiLCJuYW1lIjoiX2FkZHIiLCJ0eXBlIjoiYWRkcmVzcyJ9XSwibmFtZSI6ImdldFJlY29yZCIsIm91dHB1dHMiOlt7ImludGVybmFsVHlwZSI6InN0cmluZyIsIm5hbWUiOiIiLCJ0eXBlIjoic3RyaW5nIn0seyJpbnRlcm5hbFR5cGUiOiJzdHJpbmciLCJuYW1lIjoiIiwidHlwZSI6InN0cmluZyJ9LHsiaW50ZXJuYWxUeXBlIjoic3RyaW5nIiwibmFtZSI6IiIsInR5cGUiOiJzdHJpbmcifSx7ImludGVybmFsVHlwZSI6InVpbnQyNTYiLCJuYW1lIjoiIiwidHlwZSI6InVpbnQyNTYifV0sInN0YXRlTXV0YWJpbGl0eSI6InZpZXciLCJ0eXBlIjoiZnVuY3Rpb24ifSx7ImlucHV0cyI6W3siaW50ZXJuYWxUeXBlIjoiYWRkcmVzcyIsIm5hbWUiOiIiLCJ0eXBlIjoiYWRkcmVzcyJ9XSwibmFtZSI6InJlY29yZHMiLCJvdXRwdXRzIjpbeyJpbnRlcm5hbFR5cGUiOiJzdHJpbmciLCJuYW1lIjoibmFtZSIsInR5cGUiOiJzdHJpbmcifSx7ImludGVybmFsVHlwZSI6InN0cmluZyIsIm5hbWUiOiJ0ZWxlZ3JhbUlkIiwidHlwZSI6InN0cmluZyJ9LHsiaW50ZXJuYWxUeXBlIjoic3RyaW5nIiwibmFtZSI6IndhbGxldCIsInR5cGUiOiJzdHJpbmcifSx7ImludGVybmFsVHlwZSI6InVpbnQyNTYiLCJuYW1lIjoidGltZXN0YW1wIiwidHlwZSI6InVpbnQyNTYifV0sInN0YXRlTXV0YWJpbGl0eSI6InZpZXciLCJ0eXBlIjoiZnVuY3Rpb24ifSx7ImlucHV0cyI6W3siaW50ZXJuYWxUeXBlIjoic3RyaW5nIiwibmFtZSI6Il9uYW1lIiwidHlwZSI6InN0cmluZyJ9LHsiaW50ZXJuYWxUeXBlIjoic3RyaW5nIiwibmFtZSI6Il90ZWxlZ3JhbUlkIiwidHlwZSI6InN0cmluZyJ9LHsiaW50ZXJuYWxUeXBlIjoic3RyaW5nIiwibmFtZSI6Il93YWxsZXQiLCJ0eXBlIjoic3RyaW5nIn1dLCJuYW1lIjoic2F2ZVJlY29yZCIsIm91dHB1dHMiOltdLCJzdGF0ZU11dGFiaWxpdHkiOiJub25wYXlhYmxlIiwidHlwZSI6ImZ1bmN0aW9uIn1d
+  RecurringPrice: NA
+  RepeatEvery: event
+  ExecuteAfter: immediate
+  ExpiresIn: 1761296400
+  Meta: NA
+  ActionStatusNotificationPOSTURL: 
+  ActionStatusNotificationAPIKey: NA
+Actions:
+  - Name: Telegram_notificatier
+    Type: post
+    APIEndpoint: https://api.telegram.org/bot7754368882:AAHS4KbbOkl5rEHoBBIR8eljgwq2PARYLyY/sendMessage
+    APIPayload:
+      chat_id: '7118280412'
+      text: Welcome to Kwala! Create your automation workflows with Kwala Network
+    TargetContract: NA
+    TargetFunction: NA
+    TargetParams: 
+    ChainID: NA
+    EncodedABI: NA
+    Bytecode: NA
+    Metadata: NA
+    RetriesUntilSuccess: 5
+Execution:
+  Mode: parallel
+```
+
+## Deploy and test
+
+1. Deploy `SaveData` or use the provided address: `0x3e2f859DA20e1e74A5696Bf3246606218c246C9F`
+2. Serve the frontend and connect MetaMask. Fill name and Telegram chat ID and select **Sign Up**
+3. Once `saveRecord` is mined, the contract emits `RecordSaved`
+4. Kwala detects the event and posts to the configured Telegram chat ID
+5. Optionally use the backend `/sendMessages` endpoint to read stored records and send messages in bulk
+
+
+## Monitor and debug
+
+<CardGroup cols={2}>
+  <Card title="Kwala Dashboard Logs" icon="chart-line">
+    View events processed, API calls, payloads, and retry counts in the Kwala Dashboard → Workflow Logs
+  </Card>
+  <Card title="Contract Explorer" icon="magnifying-glass">
+    Verify `RecordSaved` events and transaction receipts on Amoy Polygonscan
+  </Card>
+</CardGroup>
+
+<Tip>
+**Debug checklist:**
+- Validate your bot token and chat ID via Postman/ReqBin before wiring into Kwala
+- Check bot token validity and chat ID correctness if messages don't arrive
+- Review Kwala logs for HTTP errors and retry traces
+</Tip>
+
+## Conclusion
+
+You now have a full onboarding pattern that is:
+
+- **Secure and auditable:** Records are stored on-chain
+- **Real-time and user-friendly:** Kwala sends instant Telegram confirmations after the `RecordSaved` event
+- **Low-operational overhead:** No polling servers required for event to notification glue
+
+This pattern is extendable in that you can swap Telegram for Discord, email, or custom webhooks; or add a backend for analytics or bulk messaging. Kwala lets you plug in actions quickly without rebuilding infrastructure.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Monitor Your Workflow"
+    icon="chart-mixed"
+    href="/workflow-builder/monitor-workflow"
+  >
+    Track execution history, debug issues, and optimize your automation
+  </Card>
+  <Card
+    title="Best Practices"
+    icon="lightbulb"
+    href="/concepts/best-practices"
+  >
+    Learn optimization strategies and production patterns
+  </Card>
+</CardGroup>

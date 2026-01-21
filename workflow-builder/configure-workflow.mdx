@@ -29,7 +29,7 @@ Triggers determine when your workflow activates. In the Workflow Builder, you'll
 
 The required fields for trigger configuration are **Execute after**, **Repeat after**, and **Expires in**.
 
-### Execute after
+**Execute after**
 
 Defines when the workflow should start executing. Choose from the following options:
 
@@ -47,11 +47,11 @@ For example, if you select **Oracle price** as a trigger, the workflow builder d
   <img src="/images/workflow-builder/configure-workflow/oracle-price-trigger.PNG" alt="Oracle price trigger source configuration" />
 </Frame>
 
-### Repeat after
+**Repeat after**
 
 Determines if and when the workflow should repeat. Choose from the following options:
 
-- **Time interval**: Workflow repeats at regular intervals (for example, every hour, daily)
+- **Time interval**: Workflow repeats at regular intervals. For example, every hour or daily
 - **Oracle price**: Workflow repeats when price conditions are met again
 - **Event**: Workflow repeats each time the specified event occurs
 - **N/A**: Workflow executes only once and does not repeat
@@ -64,28 +64,32 @@ For example, if you select **Event** as the **Repeat after** trigger, the builde
   <img src="/images/workflow-builder/configure-workflow/trigger-config-repeat-after-event.PNG" alt="Recurring source configuration for event-based repeat" />
 </Frame>
 
-- **Recurring Source Contract**: The smart contract address to monitor for recurring events (for example, `0x49e833337ece7afe375e44f4e3e8481029218e5c`)
-- **Recurring Chain ID**: The blockchain network where the contract is deployed (for example, `1` for Ethereum mainnet)
+- **Recurring Source Contract**: The smart contract address to monitor for recurring events. For example, `0x49e833337ece7afe375e44f4e3e8481029218e5c`.
+- **Recurring Chain ID**: The blockchain network where the contract is deployed, such as `1` for Ethereum mainnet.
 - **Smart Contract (Optional)**: Paste Solidity contract code or upload a `.sol` file to automatically extract the ABI
-- **Recurring Source Contract ABI**: The contract's ABI for parsing events. This is auto-populated if you upload a contract file
-- **Recurring Event Name**: Select the event to listen for from the dropdown (for example, `Transfer(address,address,uint256)`)
-- **Recurring Event Filter**: Filter criteria for the event. Use `NA` if no filter is needed
+- **Recurring Source Contract ABI**: The contract's ABI for parsing events. This is auto-populated if the contract is verified on the blockchain or if you upload a contract file.
+- **Recurring Event Name**: Select the event to listen for from the dropdown. For example, `Transfer(address,address,uint256)`.
+- **Recurring Event Filter**: Filter criteria for the event. Use `NA` if no filter is needed.
 
-### Expires in
+<Tip>
+  To find oracle contract addresses for different price feeds, visit the [Chainlink Data Feeds](https://data.chain.link/feeds) directory.
+</Tip>
+
+**Expires in**
 
 Sets when the trigger expires. Use the calendar icon to select the expiry date and time. The Workflow Builder automatically converts this into a Unix timestamp.
 
 <Frame>
-  <img src="/images/workflow-builder/configure-workflow/date-picker.PNG" alt="Expires in calendar picker" />
+  <img src="/images/workflow-builder/configure-workflow/calendar-date-picker.PNG" alt="Expires in calendar picker" />
 </Frame>
 
 ### Optional trigger fields
 
-#### Meta
+**Meta**
 
 The **Meta** field is where you include additional metadata for your trigger. Use this field to store custom information that may be useful for tracking or debugging your workflow.
 
-#### Notification settings
+**Notification settings**
 
 You can configure notifications to receive updates about your workflow's execution status by providing:
 
@@ -110,7 +114,7 @@ Every action requires the following fields:
 
 The workflow builder prompts you to fill out additional required fields depending on the action type you select.
 
-### POST API call
+**POST API call**
 
 Use the **POST** action type to send HTTP requests to external APIs, webhooks, or notification services.
 
@@ -120,26 +124,28 @@ Use the **POST** action type to send HTTP requests to external APIs, webhooks, o
 
 Required fields for POST actions:
 
-- **API Endpoint**: The URL to send the request to (for example, `https://dev-api.kalp.network/webhook`)
-- **API Payload (JSON)**: The JSON data to include in the request body.
-- **Retries Until Success**: Number of retry attempts if the request fails
+- **API Endpoint**: The URL to send the request to. For example, `https://api.telegram.org/bot7754368882:AAHS4KbbOkl5rEHoBBIR8eljgwq2PARYLyY/sendMessage`
+- **API Payload (JSON)**: The JSON data to include in the request body. You can pass both fixed values and event parameters in a POST action. 
+- **Retries Until Success**: Number of retry attempts if the request fails.
 
-#### Example POST configuration
+When adding target parameters for your action, you can use the event parameters from your trigger. Use `re.event(0)`, `re.event(1)`, `re.event(2)`, or any other index to reference values from the triggering event.
+
+**Example POST configuration**
+
+The following example shows a POST action where both fixed values and event parameters can be used when calling web2 APIs.
 
 ```yaml
-- Name: notification_action
-  Type: post
-  APIEndpoint: https://dev-api.kalp.network/webhook
-  APIPayload: 
-  {
-    "message": "Transfer detected",
-    "token": "ETH",
-    "threshold": 5
-  }
-  RetriesUntilSuccess: 5
+    - Name: notification_action
+    Type: post
+    APIEndpoint: https://dev-api.kalp.network/webhook
+    APIPayload:
+      message: Transfer detected      # fixed value
+      token: ETH            # fixed value
+      amount: re.event(2)    # event parameter
+    RetriesUntilSuccess: 5
 ```
 
-### Call smart contract function
+**Call smart contract function**
 
 Use the **CALL** action type to interact with an existing smart contract by calling one of its functions.
 
@@ -149,29 +155,27 @@ Use the **CALL** action type to interact with an existing smart contract by call
 
 Required fields for CALL actions:
 
-- **Target Contract**: The address of the smart contract to interact with (for example, `0x65b2b850fee0e0c13d956ab5...`)
-- **Target Function**: The function signature to call (for example, `function updateNFT(string memory userId, uint256 points)`)
+- **Target Contract**: The address of the smart contract to interact with. For example, `0x65b2b850fee0e0c13d956ab5...`
+- **Target Function**: The function signature to call. For example, `function updateNFT(string memory userId, uint256 points)`
 - **Chain ID**: The blockchain network where the contract is deployed. Select from the dropdown
-- **Target Parameters (one per line)**: The parameters to pass to the function. Enter each parameter on a separate line. You can use `re.event(0)`, `re.event(1)`, etc. to reference values from the triggering event
+- **Target Parameters**: The parameters to pass to the function. You can use fixed values or reference event data dynamically with re.event(0), re.event(1), etc. Enter each parameter on a separate line. 
 - **Retries Until Success**: Number of retry attempts if the call fails
 
-#### Example CALL configuration
+**Example CALL configuration**
 
 ```yaml
-- Name: transfer_funds
-  Type: call
-  TargetContract: 0x0f51bb10119727a7e5ea3538074fb341f56b09ad
-  TargetFunction: function transfer(address recipient,uint256 amount)
-  TargetParameters:
-    - 0x49e833337ece7afe375e44f4e3e8481029218e5c
-    - 100
-  ChainID: 1
-  RetriesUntilSuccess: 5
+  - Name: transfer_funds
+    Type: call
+    TargetContract: 0x0f51bb10119727a7e5ea3538074fb341f56b09ad
+    TargetFunction: function transfer(address recipient, uint256 amount)
+    TargetParameters:
+      - re.event(0)    # dynamic - recipient address from triggering event
+      - 100            # fixed  - transfer amount
+    ChainID: 1
+    RetriesUntilSuccess: 5
 ```
 
-When adding target parameters for your action, you can use the event parameters from your trigger. Use `re.event(0)`, `re.event(1)`, `re.event(2)`, or any other index to reference values from the triggering event.
-
-### Deploy smart contract
+**Deploy smart contract**
 
 Use the **Deploy** action type to deploy a new smart contract to a blockchain network.
 
@@ -194,7 +198,7 @@ Select **Add Action** to include additional actions in your workflow. You can ad
 Select **Next** when you've finished configuring all actions.
 
 <Info>
-  For more detailed information about action types and advanced parameters, see [Working with actions](/concepts/work-with-actions).
+  For more detailed information about action types and advanced parameters, see [Working with actions](/concepts/actions).
 </Info>
 
 ## Step 3: Configure execution mode
@@ -229,13 +233,13 @@ The Workflow Builder generates a complete YAML automation script and opens it in
   <Card title="Deploy workflow" icon="rocket" href="/workflow-builder/deploy-workflow">
     Deploy your workflow to the network
   </Card>
-  <Card title="Working with triggers" icon="bolt" href="/concepts/work-with-triggers">
+  <Card title="Working with triggers" icon="bolt" href="/concepts/triggers">
     Learn more about trigger types
   </Card>
-  <Card title="Working with actions" icon="wand-magic-sparkles" href="/concepts/work-with-actions">
+  <Card title="Working with actions" icon="wand-magic-sparkles" href="/concepts/actions">
     Explore action configuration options
   </Card>
-  <Card title="Workflow templates" icon="copy" href="/concepts/using-workflow-templates">
+  <Card title="Workflow templates" icon="copy" href="/concepts/workflow-templates">
     Use pre-built workflow templates
   </Card>
 </CardGroup>
