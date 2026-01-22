@@ -60,6 +60,8 @@
               "concepts/workflow-execution",
               "concepts/actions",
               "concepts/triggers",
+              "concepts/address-tracking",
+              "concepts/functions",
               "concepts/regex-usage",
               "concepts/limits-and-quotas"
             ]

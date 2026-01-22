@@ -1,0 +1,525 @@
+---
+title: 'Address Tracking'
+description: 'Learn how to monitor on-chain addresses and trigger workflows when activity is detected'
+---
+
+Address tracking is a trigger mechanism that monitors a specific on-chain address, such as a smart contract or wallet, and activates your workflow whenever activity involving that address is detected. Unlike event-based triggers that require you to specify exact event names, address tracking acts as a broad listener that fires on any on-chain interaction with the tracked address.
+
+When you enable address tracking, the Kwala engine monitors:
+
+| Component | Configuration Field |
+|-----------|---------------------|
+| **Which address?** | `TriggerSourceContract` (one-time) or `RecurringSourceContract` (recurring) |
+| **On which network?** | `TriggerChainID` or `RecurringChainID` |
+
+**What counts as activity**
+
+Address tracking detects several types of on-chain activity:
+
+**Transactions involving the address**
+- Any transaction where the tracked address is the **receiver** (`to == trackedAddress`) — includes contract calls and direct transfers
+- Transactions where the tracked address is the **sender** (`from == trackedAddress`) — captures outbound activity
+
+**Logs and events emitted by the contract**
+- Any event emitted by the tracked contract, even without filtering by a specific event name
+- Essentially "any event emitted by this contract"
+
+**State and balance changes** (less common)
+- Native token balance changes
+- Token balance changes for the address
+
+<Tip>
+Think of address tracking as a catch-all trigger: "Whenever anything happens on-chain involving this address, activate the workflow."
+</Tip>
+
+## Address tracking vs event triggers
+
+| Aspect | Event Trigger | Address Tracking |
+|--------|---------------|------------------|
+| **Specificity** | Requires `EventName` and optional ABI | No `EventName` needed |
+| **Scope** | Specific event only | Any activity for the address |
+| **Use case** | Known, well-defined events | Unknown events, general monitoring |
+| **Configuration** | `TriggerEventName: Transfer(...)` | `ExecuteAfter: address_tracking` |
+
+Use **event triggers** when you know the exact event you need to monitor. Use **address tracking** when you want to capture all interactions with an address, regardless of the specific event type.
+
+## Configuration scenarios
+
+Address tracking can be combined with different `ExecuteAfter` and `RepeatEvery` values to create various monitoring patterns:
+
+| ExecuteAfter | RepeatEvery | Meaning |
+|--------------|-------------|---------|
+| `address_tracking` | `address_tracking` | One-time + recurring address tracking (most common) |
+| `address_tracking` | `NA` | One-time address tracking only |
+| `address_tracking` | `event` | One-time address tracking + recurring event listening |
+| `address_tracking` | `timestamp` | One-time address tracking + recurring schedule |
+| `address_tracking` | `oraclePrice` | One-time address tracking + recurring oracle price checks |
+| `event` | `address_tracking` | One-time event + recurring address tracking |
+| `timestamp` | `address_tracking` | One-time schedule + recurring address tracking |
+| `oraclePrice` | `address_tracking` | One-time oracle price + recurring address tracking |
+
+**One-time + recurring address tracking**
+
+The most common pattern triggers once when address activity is detected and continues monitoring:
+
+```yaml
+ExecuteAfter: address_tracking
+RepeatEvery: address_tracking
+```
+
+**Behavior:**
+- First match fires a one-time run using `Trigger` fields
+- Recurring checks keep firing future runs using `Recurring` fields
+
+## Runtime payload
+
+When address tracking triggers your workflow, it passes a **transaction receipt** as input. This receipt contains details about the transaction that activated the trigger.
+
+**Key fields in the receipt**
+
+| Field | Description |
+|-------|-------------|
+| `from` | Transaction sender (who initiated/signed the tx) |
+| `to` | Contract/EOA being called or sent to (empty for contract deployments) |
+| `contractAddress` | Set only for contract deployments; otherwise `null` |
+| `transactionHash` | Unique identifier for the transaction |
+| `chainId` | Network identifier |
+| `blockNumber` | Block where the transaction was included |
+| `logs` | Array of events emitted during the transaction |
+
+**Example receipt payload**
+
+The following example shows the standard receipt format returned by address tracking:
+
+```json
+{
+  "to": "",
+  "from": "0x37D041281eBf650330336526297b343bC455F68C",
+  "contractAddress": "0xAbCdEf0123456789aBCdef0123456789abCDef01",
+  "transactionIndex": 2,
+  "gasUsed": { "_hex": "0x2dc6c0", "_isBigNumber": true },
+  "logsBloom": "0x...",
+  "blockHash": "0xdef...",
+  "transactionHash": "0x9a2f...c41e",
+  "logs": [],
+  "blockNumber": 31945000,
+  "confirmations": 50,
+  "cumulativeGasUsed": { "_hex": "0x2dc6c0", "_isBigNumber": true },
+  "effectiveGasPrice": { "_hex": "0x06fc23ac3f", "_isBigNumber": true },
+  "status": 1,
+  "type": 2,
+  "byzantium": true,
+  "chainId": "0x13882"
+}
+```
+
+<Note>
+When `to` is empty and `contractAddress` is set, this indicates a contract deployment transaction.
+</Note>
+
+**Commonly used fields**
+
+Most users forward these fields to their notification or automation endpoints:
+
+- `transactionHash`: Verify the activity on a block explorer
+- `chainId`: Identify the network
+- `blockNumber`: Reference the specific block
+- `from` / `to`: Identify the parties involved in the transaction
+- `logs[]`: Decode emitted events for advanced use cases
+
+## Use receipt data in actions
+
+Use the `re.event()` function to access receipt data in your workflow actions. The recommended approach is to send the raw receipt to your backend for parsing:
+
+```yaml
+Actions:
+  - Name: NotifyDynamic
+    Type: post
+    APIEndpoint: https://your-api.example.com/webhook
+    APIPayload:
+      tracker: "Address Tracking"
+      mode: "dynamic"
+      rawReceipt: re.event(0)
+    RetriesUntilSuccess: 5
+```
+
+<Tip>
+The `re.event(0)` function returns the full transaction receipt. For maximum flexibility, send the raw receipt to your backend and parse it there.
+</Tip>
+
+Your receiving backend can then extract `transactionHash`, `chainId`, `blockNumber`, `from`, `to`, and `logs`, then enrich notifications with explorer links and decoded details.
+
+## Parse receipt data
+
+For reliable parsing of address tracking receipt data, send the raw JSON to your Web2 backend or a smart contract for processing.
+
+**Recommended parsing format (Go)**
+
+The following Go structs can be used to parse the receipt JSON in your Web2 service:
+
+```go
+type BigNumber struct {
+    Hex         string `json:"_hex"`
+    IsBigNumber bool   `json:"_isBigNumber"`
+}
+
+type Receipt struct {
+    To                string     `json:"to"`
+    From              string     `json:"from"`
+    ContractAddress   *string    `json:"contractAddress"`
+    TransactionIndex  uint       `json:"transactionIndex"`
+    GasUsed           BigNumber  `json:"gasUsed"`
+    LogsBloom         string     `json:"logsBloom"`
+    BlockHash         string     `json:"blockHash"`
+    TransactionHash   string     `json:"transactionHash"`
+    Logs              []Log      `json:"logs"`
+    BlockNumber       uint64     `json:"blockNumber"`
+    Confirmations     uint64     `json:"confirmations"`
+    CumulativeGasUsed BigNumber  `json:"cumulativeGasUsed"`
+    EffectiveGasPrice BigNumber  `json:"effectiveGasPrice"`
+    Status            uint       `json:"status"`
+    Type              uint       `json:"type"`
+    Byzantium         bool       `json:"byzantium"`
+    ChainID           string     `json:"chainId"`
+}
+
+type Log struct {
+    TransactionIndex uint     `json:"transactionIndex"`
+    BlockNumber      uint64   `json:"blockNumber"`
+    TransactionHash  string   `json:"transactionHash"`
+    Address          string   `json:"address"`
+    Topics           []string `json:"topics"`
+    Data             string   `json:"data"`
+    LogIndex         uint     `json:"logIndex"`
+    BlockHash        string   `json:"blockHash"`
+}
+```
+
+**Common usage after parsing**
+
+After parsing the receipt, users typically use:
+
+| Field | Usage |
+|-------|-------|
+| `receipt.TransactionHash` | Build explorer link, verify activity |
+| `receipt.ChainID` | Identify the network |
+| `receipt.ContractAddress` | Identify the contract involved (if present) |
+| `receipt.Logs` | Inspect emitted events |
+| `log.Address` | Which contract emitted the log |
+| `log.Topics[]` | Event signatures + indexed parameters |
+| `log.Data` | Non-indexed event data |
+
+## Example receipts
+
+**EOA to contract transfer**
+
+The following example shows a receipt when an EOA transfers ERC-20 tokens to a contract (e.g., a staking contract):
+
+```json
+{
+  "to": "0x53b6462b067419e92c31abff8ea849c06cea6d40",
+  "from": "0x18fcd17b107348bd54c05da39cf53621b892bcac",
+  "contractAddress": null,
+  "transactionIndex": 0,
+  "gasUsed": { "_hex": "0x5208", "_isBigNumber": true },
+  "blockHash": "0xb924bea3d8711878cf19a6f47970640727c801e16a866d2d388dbac20121f817",
+  "transactionHash": "0xe96777ab7dad67479d9f6b64305266a4ca61833e01c5a50d4d49e15a374b0be2",
+  "logs": [
+    {
+      "transactionIndex": 0,
+      "blockNumber": 31939718,
+      "transactionHash": "0xe96777ab7dad67479d9f6b64305266a4ca61833e01c5a50d4d49e15a374b0be2",
+      "address": "0x35aE84d69fbb55Dac834d956a042758F02fD3CFc",
+      "topics": [
+        "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+        "0x00000000000000000000000018fcd17b107348bd54c05da39cf53621b892bcac",
+        "0x00000000000000000000000053b6462b067419e92c31abff8ea849c06cea6d40"
+      ],
+      "data": "0x0000000000000000000000000000000000000000000000000de0b6b3a7640000",
+      "logIndex": 0,
+      "blockHash": "0xb924bea3d8711878cf19a6f47970640727c801e16a866d2d388dbac20121f817"
+    }
+  ],
+  "blockNumber": 31939718,
+  "confirmations": 120,
+  "status": 1,
+  "type": 2,
+  "byzantium": true,
+  "chainId": "0x13882"
+}
+```
+
+**Understanding the log:**
+- `topics[0]` = ERC-20 Transfer event signature
+- `topics[1]` = `from` address (EOA)
+- `topics[2]` = `to` address (contract)
+- `data` = transfer amount (here `0x0de0b6b3a7640000` = 1e18, or 1 token with 18 decimals)
+
+**DEX swap with multiple logs**
+
+The following example shows a receipt from a DEX swap where multiple contracts emit logs:
+
+```json
+{
+  "to": "0x1111111254eeb25477b68fb85ed929f73a960582",
+  "from": "0x18fcd17b107348bd54c05da39cf53621b892bcac",
+  "contractAddress": null,
+  "transactionIndex": 5,
+  "gasUsed": { "_hex": "0x01c9c380", "_isBigNumber": true },
+  "blockHash": "0xabc...",
+  "transactionHash": "0x7b1d0b6f6d2c9d0fb3c4aa9c0c1f8a2b3a0d9e5b7d3a1c8f2e1a9d8c7b6a5f4e",
+  "logs": [
+    {
+      "blockNumber": 31940111,
+      "transactionHash": "0x7b1d0b6f6d2c9d0fb3c4aa9c0c1f8a2b3a0d9e5b7d3a1c8f2e1a9d8c7b6a5f4e",
+      "address": "0x35aE84d69fbb55Dac834d956a042758F02fD3CFc",
+      "topics": [
+        "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+        "0x00000000000000000000000018fcd17b107348bd54c05da39cf53621b892bcac",
+        "0x0000000000000000000000009b8a7c6d5e4f32100123456789abcdeffedcba98"
+      ],
+      "data": "0x0000000000000000000000000000000000000000000000000000000002faf080",
+      "logIndex": 12
+    },
+    {
+      "blockNumber": 31940111,
+      "transactionHash": "0x7b1d0b6f6d2c9d0fb3c4aa9c0c1f8a2b3a0d9e5b7d3a1c8f2e1a9d8c7b6a5f4e",
+      "address": "0x7cEb23fD6bC0adD59E62ac25578270cFf1b9f619",
+      "topics": [
+        "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+        "0x0000000000000000000000009b8a7c6d5e4f32100123456789abcdeffedcba98",
+        "0x00000000000000000000000018fcd17b107348bd54c05da39cf53621b892bcac"
+      ],
+      "data": "0x0000000000000000000000000000000000000000000000000058d15e17628000",
+      "logIndex": 13
+    },
+    {
+      "blockNumber": 31940111,
+      "transactionHash": "0x7b1d0b6f6d2c9d0fb3c4aa9c0c1f8a2b3a0d9e5b7d3a1c8f2e1a9d8c7b6a5f4e",
+      "address": "0x9b8a7c6d5e4f32100123456789abcdeffedcba98",
+      "topics": [
+        "0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822",
+        "0x0000000000000000000000001111111254eeb25477b68fb85ed929f73a960582",
+        "0x00000000000000000000000018fcd17b107348bd54c05da39cf53621b892bcac"
+      ],
+      "data": "0x...",
+      "logIndex": 14
+    }
+  ],
+  "blockNumber": 31940111,
+  "confirmations": 120,
+  "status": 1,
+  "type": 2,
+  "byzantium": true,
+  "chainId": "0x13882"
+}
+```
+
+**What's happening in the logs:**
+- **Log #1**: Transfer (EOA → Pool) — amount = `0x2faf080` (50 × 10^6)
+- **Log #2**: Transfer (Pool → EOA) — amount = `0x58d15e17628000` (~0.025 × 10^18)
+- **Log #3**: Swap event emitted by the pool contract
+
+<Note>
+Many RPCs return `contractAddress` as `null`, `""`, or `0x000...000` for non-deployment transactions.
+</Note>
+
+## Complete workflow example
+
+The following example shows a complete address tracking workflow with both static and dynamic actions:
+
+```yaml
+Name: address_tracking_flow1
+
+Trigger:
+  # One-time address tracking source
+  TriggerSourceContract: 0x18fcd17b107348bd54c05da39cf53621b892bcac
+  TriggerChainID: 80002
+  TriggerEventName: NA
+  TriggerEventFilter: NA
+  TriggerSourceContractABI: NA
+
+  # Recurring address tracking source
+  RecurringSourceContract: 0x18fcd17b107348bd54c05da39cf53621b892bcac
+  RecurringChainID: 80002
+  RecurringEventName: NA
+  RecurringEventFilter: NA
+  RecurringSourceContractABI: NA
+
+  # Address tracking configuration
+  ExecuteAfter: address_tracking
+  RepeatEvery: address_tracking
+  ExpiresIn: 1881016603
+
+Actions:
+  # Static action (same payload every time)
+  - Name: NotifyStatic
+    Type: post
+    APIEndpoint: https://your-api.example.com/webhook
+    APIPayload:
+      tracker: "Address Tracking"
+      mode: "static"
+      message: "Address tracking triggered"
+    RetriesUntilSuccess: 5
+
+  # Dynamic action (payload includes receipt data)
+  - Name: NotifyDynamic
+    Type: post
+    APIEndpoint: https://your-api.example.com/webhook
+    APIPayload:
+      tracker: "Address Tracking"
+      mode: "dynamic"
+      rawReceipt: re.event(0)
+    RetriesUntilSuccess: 5
+
+Execution:
+  Mode: parallel
+```
+
+## Real-world use cases
+
+**Security and risk monitoring**
+
+**Treasury / Multisig movement alerts**
+
+Monitor treasury funds for any transaction, regardless of the specific event type:
+
+- **Goal**: Instant alert when treasury funds move
+- **Config**: `ExecuteAfter: address_tracking` + `RepeatEvery: address_tracking`
+- **Why address tracking**: You don't need to know the exact event; any interaction matters
+- **Actions**: Static alert message + dynamic payload with `txHash`, `chainId`, `from`/`to`
+
+**Hot wallet monitoring**
+
+Monitor operational wallets for abnormal activity patterns:
+
+- **Goal**: Detect unusual transaction patterns (too many txs, suspicious activity)
+- **Config**: `ExecuteAfter: address_tracking` + `RepeatEvery: address_tracking`
+- **Action**: Push webhook to internal monitoring system
+
+**Contract activity monitoring**
+
+**Detect unknown function calls**
+
+Flag any interaction with a contract even when the ABI or events are unknown:
+
+- **Goal**: Monitor contracts with unknown or changing ABIs (e.g., proxy-upgradeable)
+- **Config**: `ExecuteAfter: address_tracking` + `RepeatEvery: address_tracking`
+- **Dynamic payload**: `txHash` + `sourceContract` + `chainId` — your Web2 service can decode input data later
+
+**Watch for first interaction ("go-live" watch)**
+
+Detect when a newly deployed contract receives its first real usage:
+
+- **Goal**: Know when a fresh deployment becomes active
+- **Config**: `ExecuteAfter: address_tracking` + `RepeatEvery: address_tracking`
+- **Behavior**: Fires immediately once active and continues monitoring
+
+**Notifications and customer updates**
+
+**Deposit received notification**
+
+Notify customers when their deposit address receives funds:
+
+- **Goal**: Alert users when deposits arrive
+- **Config**: `ExecuteAfter: address_tracking` + `RepeatEvery: address_tracking`
+- **Actions**: Static "Deposit detected" message + dynamic `txHash` for explorer verification
+
+**Payment contract status updates**
+
+Update order/payment status in your Web2 backend when a payment contract is interacted with:
+
+- **Goal**: Sync on-chain payment activity to off-chain order system
+- **Config**: `ExecuteAfter: address_tracking` + `RepeatEvery: address_tracking`
+- **Action**: POST to order service → mark "Paid / Pending / Failed" based on tx details
+
+**Customer-facing tracker links**
+
+Send users a real transaction hash and chain ID so they can track progress:
+
+- **Goal**: Provide "View on Explorer" links to customers
+- **Config**: `ExecuteAfter: address_tracking` + `RepeatEvery: address_tracking`
+- **Dynamic action**: Include `txHash` + `chainId` — these two unlock explorer links
+
+**Trading and strategy automation**
+
+**Whale address tracking**
+
+Track whale wallets and trigger analytics/strategy pipelines on movement:
+
+- **Goal**: React to whale movements for trading signals
+- **Config**: `ExecuteAfter: address_tracking` + `RepeatEvery: address_tracking`
+- **Action**: POST to strategy service → it decides buy/sell/do-nothing
+- **Why address tracking**: You don't need the event name; you just need to know "whale moved"
+
+**Start strategy on activity, then run price checks**
+
+Activate a strategy on first contract activity, then continue with price monitoring:
+
+- **Goal**: Arm a strategy when contract becomes active
+- **Config**: `ExecuteAfter: address_tracking` + `RepeatEvery: oraclePrice`
+- **Actions**: First run initializes strategy; recurring runs check price and execute trades
+
+**Reactive risk-off automation**
+
+Trigger hedging workflows when suspicious activity is detected:
+
+- **Goal**: Automatic risk mitigation on unusual contract activity
+- **Config**: `ExecuteAfter: address_tracking` + `RepeatEvery: address_tracking`
+- **Action**: Webhook to trading bot service with `txHash` for verification
+
+**Cross-chain and Web2 integrations**
+
+**On-chain activity → Web2 ticket creation**
+
+Create internal tickets and alerts when contract activity is detected:
+
+- **Goal**: Open Jira tickets, notify Slack/Teams, log incidents
+- **Config**: `ExecuteAfter: address_tracking` + `RepeatEvery: address_tracking`
+- **Actions**: POST to notification service, ticketing service, and logging service
+- **Dynamic payload**: `txHash`, `sourceContract`, `chainId`
+
+**On-chain activity → Database/CRM updates**
+
+Update user state in your database or CRM when an address is interacted with:
+
+- **Goal**: Sync on-chain activity to user profiles (e.g., "subscription activated")
+- **Config**: `ExecuteAfter: address_tracking` + `RepeatEvery: address_tracking`
+- **Action**: Webhook to backend → backend maps tx to user and updates records
+
+**Cross-chain orchestration**
+
+Trigger actions on chain Y (or Web2) when contract A on chain X sees activity:
+
+- **Goal**: Coordinate cross-chain workflows
+- **Config**: `ExecuteAfter: address_tracking` + `RepeatEvery: address_tracking`
+- **Action**: POST to orchestrator → orchestrator triggers chain-Y actions
+
+## Testing address tracking
+
+To test your address tracking workflow:
+
+1. **Deploy or pick a contract address** on chain `80002` (Polygon Amoy) or your target network
+2. **Trigger on-chain activity** — any call or transaction involving that address
+3. **Confirm your notification endpoint receives**:
+   - **NotifyStatic**: Fixed message every time
+   - **NotifyDynamic**: `txHash`/`blockNumber` populated from `re.event(0)`
+
+Verify the received data against a block explorer to ensure accuracy.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Triggers" icon="clock" href="/concepts/triggers">
+    Learn about all trigger types
+  </Card>
+  <Card title="Kwala Functions" icon="function" href="/concepts/functions">
+    Create custom on-chain logic
+  </Card>
+  <Card title="Actions" icon="bolt" href="/concepts/actions">
+    Configure workflow actions
+  </Card>
+  <Card title="YAML Basics" icon="code" href="/concepts/yaml-workflow-basics">
+    Master Kwala's YAML syntax
+  </Card>
+</CardGroup>
