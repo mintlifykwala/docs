@@ -3,36 +3,36 @@ title: 'Address Tracking'
 description: 'Learn how to monitor on-chain addresses and trigger workflows when activity is detected'
 ---
 
-Address tracking is a trigger mechanism that monitors a specific on-chain address, such as a smart contract or wallet, and activates your workflow whenever activity involving that address is detected. Unlike event-based triggers that require you to specify exact event names, address tracking acts as a broad listener that fires on any on-chain interaction with the tracked address.
+Address tracking is a trigger mechanism that monitors a specific on-chain address, such as a smart contract or wallet addresses, and activates your workflow whenever activity involving that address is detected. Unlike event-based triggers that require you to specify exact event names, address tracking acts as a broad listener that fires on any on-chain interaction with the tracked address.
 
-When you enable address tracking, the Kwala engine monitors:
+When you enable address tracking, the Kwala engine monitors activity based on two key configuration fields:
 
-| Component | Configuration Field |
-|-----------|---------------------|
-| **Which address?** | `TriggerSourceContract` (one-time) or `RecurringSourceContract` (recurring) |
-| **On which network?** | `TriggerChainID` or `RecurringChainID` |
+- **Which address?** -`TriggerSourceContract` (one-time) or `RecurringSourceContract` (recurring)
+- **On which network?** - `TriggerChainID` or `RecurringChainID` 
 
-**What counts as activity**
+## What activities does address tracking detect?
 
-Address tracking detects several types of on-chain activity:
+Address tracking detects several types of on-chain activity.
 
 **Transactions involving the address**
-- Any transaction where the tracked address is the **receiver** (`to == trackedAddress`) — includes contract calls and direct transfers
-- Transactions where the tracked address is the **sender** (`from == trackedAddress`) — captures outbound activity
+
+Address tracking captures any transaction where the tracked address is the receiver (`to == trackedAddress`), including contract calls and direct transfers. It also detects transactions where the tracked address is the sender (`from == trackedAddress`), capturing all outbound activity.
 
 **Logs and events emitted by the contract**
-- Any event emitted by the tracked contract, even without filtering by a specific event name
-- Essentially "any event emitted by this contract"
 
-**State and balance changes** (less common)
-- Native token balance changes
-- Token balance changes for the address
+The tracker listens for any event emitted by the tracked contract, even without filtering by a specific event name. This essentially acts as a catch-all for any event emitted by this contract."
+
+**State and balance changes**
+
+Although less common, address tracking can also detect native token balance changes and token balance changes for the address.
 
 <Tip>
-Think of address tracking as a catch-all trigger: "Whenever anything happens on-chain involving this address, activate the workflow."
+Think of address tracking as a broad catch-all trigger: Whenever anything happens on-chain involving this address, activate the workflow.
 </Tip>
 
 ## Address tracking vs event triggers
+
+Kwala supports monitoring on-chain activity using event triggers and address tracking. Event triggers are more precise as they listen for specific contract events, while address tracking provides broader coverage by capturing all activity involving an address. The following table highlights the key differences:
 
 | Aspect | Event Trigger | Address Tracking |
 |--------|---------------|------------------|
@@ -41,7 +41,7 @@ Think of address tracking as a catch-all trigger: "Whenever anything happens on-
 | **Use case** | Known, well-defined events | Unknown events, general monitoring |
 | **Configuration** | `TriggerEventName: Transfer(...)` | `ExecuteAfter: address_tracking` |
 
-Use **event triggers** when you know the exact event you need to monitor. Use **address tracking** when you want to capture all interactions with an address, regardless of the specific event type.
+Choose event triggers when you know the exact event to monitor, and address tracking when you need to capture all interactions with an address regardless of event type.
 
 ## Configuration scenarios
 
@@ -49,37 +49,33 @@ Address tracking can be combined with different `ExecuteAfter` and `RepeatEvery`
 
 | ExecuteAfter | RepeatEvery | Meaning |
 |--------------|-------------|---------|
-| `address_tracking` | `address_tracking` | One-time + recurring address tracking (most common) |
+| `address_tracking` | `address_tracking` | One-time tracking then recurring address tracking |
 | `address_tracking` | `NA` | One-time address tracking only |
-| `address_tracking` | `event` | One-time address tracking + recurring event listening |
-| `address_tracking` | `timestamp` | One-time address tracking + recurring schedule |
-| `address_tracking` | `oraclePrice` | One-time address tracking + recurring oracle price checks |
-| `event` | `address_tracking` | One-time event + recurring address tracking |
-| `timestamp` | `address_tracking` | One-time schedule + recurring address tracking |
-| `oraclePrice` | `address_tracking` | One-time oracle price + recurring address tracking |
+| `address_tracking` | `event` | One-time address tracking and recurring event listening |
+| `address_tracking` | `timestamp` | One-time address tracking and recurring schedule |
+| `address_tracking` | `oraclePrice` | One-time address tracking and recurring oracle price checks |
+| `event` | `address_tracking` | One-time event tracking and recurring address tracking |
+| `timestamp` | `address_tracking` | One-time schedule and recurring address tracking |
+| `oraclePrice` | `address_tracking` | One-time oracle price and recurring address tracking |
 
-**One-time + recurring address tracking**
+**One-time then recurring address tracking**
 
-The most common pattern triggers once when address activity is detected and continues monitoring:
+The most common address tracking pattern is triggering a workflow once when address activity is detected then continue monitoring subsequent activities.
 
 ```yaml
 ExecuteAfter: address_tracking
 RepeatEvery: address_tracking
 ```
 
-**Behavior:**
-- First match fires a one-time run using `Trigger` fields
-- Recurring checks keep firing future runs using `Recurring` fields
+The first match fires a one-time run using the `Trigger` fields, while subsequent activity continues to trigger runs using the `Recurring` fields.
 
-## Runtime payload
+## Address tracking runtime payload
 
-When address tracking triggers your workflow, it passes a **transaction receipt** as input. This receipt contains details about the transaction that activated the trigger.
-
-**Key fields in the receipt**
+When address tracking triggers your workflow, it passes a **transaction receipt** as input. This receipt contains details about the transaction that activated the trigger. A receipt contains the following key fields:
 
 | Field | Description |
 |-------|-------------|
-| `from` | Transaction sender (who initiated/signed the tx) |
+| `from` | Transaction sender (who initiated or signed the transaction) |
 | `to` | Contract/EOA being called or sent to (empty for contract deployments) |
 | `contractAddress` | Set only for contract deployments; otherwise `null` |
 | `transactionHash` | Unique identifier for the transaction |
@@ -119,17 +115,17 @@ When `to` is empty and `contractAddress` is set, this indicates a contract deplo
 
 **Commonly used fields**
 
-Most users forward these fields to their notification or automation endpoints:
+The following fields are commonly forwarded to notification or automation endpoints:
 
 - `transactionHash`: Verify the activity on a block explorer
 - `chainId`: Identify the network
 - `blockNumber`: Reference the specific block
-- `from` / `to`: Identify the parties involved in the transaction
+- `from` or `to`: Identify the parties involved in the transaction
 - `logs[]`: Decode emitted events for advanced use cases
 
-## Use receipt data in actions
+## Using receipt data in dynamic actions
 
-Use the `re.event()` function to access receipt data in your workflow actions. The recommended approach is to send the raw receipt to your backend for parsing:
+Dynamic actions can extract values from the runtime receipt using the `re.event(index)` function, which maps to specific fields in Kwala's runtime payload. While you can reference individual fields by index, the most reliable approach is to send the entire receipt to your backend for parsing.
 
 ```yaml
 Actions:
@@ -149,9 +145,9 @@ The `re.event(0)` function returns the full transaction receipt. For maximum fle
 
 Your receiving backend can then extract `transactionHash`, `chainId`, `blockNumber`, `from`, `to`, and `logs`, then enrich notifications with explorer links and decoded details.
 
-## Parse receipt data
+### Parse receipt data
 
-For reliable parsing of address tracking receipt data, send the raw JSON to your Web2 backend or a smart contract for processing.
+The receipt payload contains fields like `from`, `to`, `logs`, `chainId`, and `topics` that you can use in your downstream processing. For reliable parsing, send the raw receipt JSON to a smart contract or Web2 backend rather than extracting fields directly in the workflow.
 
 **Recommended parsing format (Go)**
 
@@ -195,25 +191,23 @@ type Log struct {
 }
 ```
 
-**Common usage after parsing**
+**Common field usage**
 
-After parsing the receipt, users typically use:
+The following parsed fields can be used for downstream processing:
 
-| Field | Usage |
-|-------|-------|
-| `receipt.TransactionHash` | Build explorer link, verify activity |
-| `receipt.ChainID` | Identify the network |
-| `receipt.ContractAddress` | Identify the contract involved (if present) |
-| `receipt.Logs` | Inspect emitted events |
-| `log.Address` | Which contract emitted the log |
-| `log.Topics[]` | Event signatures + indexed parameters |
-| `log.Data` | Non-indexed event data |
+- `receipt.TransactionHash` — Build explorer links and verify activity
+- `receipt.ChainID` — Identify the network
+- `receipt.ContractAddress` — Identify the contract involved (if present)
+- `receipt.Logs` — Inspect emitted events
+    - `log.Address` — Determine which contract emitted the log
+    - `log.Topics[]` — Access event signatures and indexed parameters
+    - `log.Data` — Access non-indexed event data
 
 ## Example receipts
 
 **EOA to contract transfer**
 
-The following example shows a receipt when an EOA transfers ERC-20 tokens to a contract (e.g., a staking contract):
+The following example shows a receipt when a user wallet transfers ERC-20 tokens to a staking contract
 
 ```json
 {
@@ -249,7 +243,8 @@ The following example shows a receipt when an EOA transfers ERC-20 tokens to a c
 }
 ```
 
-**Understanding the log:**
+In this receipt, the `contractAddress` is `null` or `0x000...` because this is not a contract deployment. The logs capture a standard ERC-20 Transfer event:
+
 - `topics[0]` = ERC-20 Transfer event signature
 - `topics[1]` = `from` address (EOA)
 - `topics[2]` = `to` address (contract)
@@ -258,6 +253,10 @@ The following example shows a receipt when an EOA transfers ERC-20 tokens to a c
 **DEX swap with multiple logs**
 
 The following example shows a receipt from a DEX swap where multiple contracts emit logs:
+
+**DEX swap with multiple logs**
+
+In a DEX swap, multiple contracts emit logs during a single transaction. Token contracts emit `Transfer` events as assets move between addresses, while the pool contract emits a `Swap` event. The `to` field points to the DEX router contract, and the `logs` array captures all emitted events:
 
 ```json
 {
@@ -315,21 +314,25 @@ The following example shows a receipt from a DEX swap where multiple contracts e
 }
 ```
 
-**What's happening in the logs:**
-- **Log #1**: Transfer (EOA → Pool) — amount = `0x2faf080` (50 × 10^6)
-- **Log #2**: Transfer (Pool → EOA) — amount = `0x58d15e17628000` (~0.025 × 10^18)
-- **Log #3**: Swap event emitted by the pool contract
+The three logs trace the swap lifecycle: the user sends tokens to the pool (Log #1), receives different tokens back (Log #2), and the pool records the swap (Log #3):
+
+- **Log #1**: `Transfer` — User → Pool, amount = `0x2faf080` (50 × 10⁶)
+- **Log #2**: `Transfer` — Pool → User, amount = `0x58d15e17628000` (~0.025 × 10¹⁸)
+- **Log #3**: `Swap` — Emitted by the pool contract
 
 <Note>
-Many RPCs return `contractAddress` as `null`, `""`, or `0x000...000` for non-deployment transactions.
+Many RPCs return `contractAddress` as `null`, `""`, or `0x000...000` for non-deployment transactions where no contract is created.
 </Note>
 
-## Complete workflow example
+## Example workflows
 
-The following example shows a complete address tracking workflow with both static and dynamic actions:
+The following example shows a complete address tracking workflow that demonstrates both static and dynamic notification patterns. This workflow monitors an address on Polygon Amoy (chain ID `80002`) and fires two actions whenever activity is detected:
+
+- **NotifyStatic**: Sends the same fixed message every time, useful for simple alerts
+- **NotifyDynamic**: Sends transaction details extracted from the runtime payload using `re.event(index)`, where the index maps to specific fields from the activity event
 
 ```yaml
-Name: address_tracking_flow1
+Name: address_tracking_flow
 
 Trigger:
   # One-time address tracking source
@@ -376,136 +379,75 @@ Execution:
   Mode: parallel
 ```
 
-## Real-world use cases
-
-**Security and risk monitoring**
-
-**Treasury / Multisig movement alerts**
-
-Monitor treasury funds for any transaction, regardless of the specific event type:
-
-- **Goal**: Instant alert when treasury funds move
-- **Config**: `ExecuteAfter: address_tracking` + `RepeatEvery: address_tracking`
-- **Why address tracking**: You don't need to know the exact event; any interaction matters
-- **Actions**: Static alert message + dynamic payload with `txHash`, `chainId`, `from`/`to`
-
-**Hot wallet monitoring**
-
-Monitor operational wallets for abnormal activity patterns:
-
-- **Goal**: Detect unusual transaction patterns (too many txs, suspicious activity)
-- **Config**: `ExecuteAfter: address_tracking` + `RepeatEvery: address_tracking`
-- **Action**: Push webhook to internal monitoring system
-
-**Contract activity monitoring**
-
-**Detect unknown function calls**
-
-Flag any interaction with a contract even when the ABI or events are unknown:
-
-- **Goal**: Monitor contracts with unknown or changing ABIs (e.g., proxy-upgradeable)
-- **Config**: `ExecuteAfter: address_tracking` + `RepeatEvery: address_tracking`
-- **Dynamic payload**: `txHash` + `sourceContract` + `chainId` — your Web2 service can decode input data later
-
-**Watch for first interaction ("go-live" watch)**
-
-Detect when a newly deployed contract receives its first real usage:
-
-- **Goal**: Know when a fresh deployment becomes active
-- **Config**: `ExecuteAfter: address_tracking` + `RepeatEvery: address_tracking`
-- **Behavior**: Fires immediately once active and continues monitoring
-
-**Notifications and customer updates**
-
-**Deposit received notification**
-
-Notify customers when their deposit address receives funds:
-
-- **Goal**: Alert users when deposits arrive
-- **Config**: `ExecuteAfter: address_tracking` + `RepeatEvery: address_tracking`
-- **Actions**: Static "Deposit detected" message + dynamic `txHash` for explorer verification
-
-**Payment contract status updates**
-
-Update order/payment status in your Web2 backend when a payment contract is interacted with:
-
-- **Goal**: Sync on-chain payment activity to off-chain order system
-- **Config**: `ExecuteAfter: address_tracking` + `RepeatEvery: address_tracking`
-- **Action**: POST to order service → mark "Paid / Pending / Failed" based on tx details
-
-**Customer-facing tracker links**
-
-Send users a real transaction hash and chain ID so they can track progress:
-
-- **Goal**: Provide "View on Explorer" links to customers
-- **Config**: `ExecuteAfter: address_tracking` + `RepeatEvery: address_tracking`
-- **Dynamic action**: Include `txHash` + `chainId` — these two unlock explorer links
-
-**Trading and strategy automation**
-
-**Whale address tracking**
-
-Track whale wallets and trigger analytics/strategy pipelines on movement:
-
-- **Goal**: React to whale movements for trading signals
-- **Config**: `ExecuteAfter: address_tracking` + `RepeatEvery: address_tracking`
-- **Action**: POST to strategy service → it decides buy/sell/do-nothing
-- **Why address tracking**: You don't need the event name; you just need to know "whale moved"
-
-**Start strategy on activity, then run price checks**
-
-Activate a strategy on first contract activity, then continue with price monitoring:
-
-- **Goal**: Arm a strategy when contract becomes active
-- **Config**: `ExecuteAfter: address_tracking` + `RepeatEvery: oraclePrice`
-- **Actions**: First run initializes strategy; recurring runs check price and execute trades
-
-**Reactive risk-off automation**
-
-Trigger hedging workflows when suspicious activity is detected:
-
-- **Goal**: Automatic risk mitigation on unusual contract activity
-- **Config**: `ExecuteAfter: address_tracking` + `RepeatEvery: address_tracking`
-- **Action**: Webhook to trading bot service with `txHash` for verification
-
-**Cross-chain and Web2 integrations**
-
-**On-chain activity → Web2 ticket creation**
-
-Create internal tickets and alerts when contract activity is detected:
-
-- **Goal**: Open Jira tickets, notify Slack/Teams, log incidents
-- **Config**: `ExecuteAfter: address_tracking` + `RepeatEvery: address_tracking`
-- **Actions**: POST to notification service, ticketing service, and logging service
-- **Dynamic payload**: `txHash`, `sourceContract`, `chainId`
-
-**On-chain activity → Database/CRM updates**
-
-Update user state in your database or CRM when an address is interacted with:
-
-- **Goal**: Sync on-chain activity to user profiles (e.g., "subscription activated")
-- **Config**: `ExecuteAfter: address_tracking` + `RepeatEvery: address_tracking`
-- **Action**: Webhook to backend → backend maps tx to user and updates records
-
-**Cross-chain orchestration**
-
-Trigger actions on chain Y (or Web2) when contract A on chain X sees activity:
-
-- **Goal**: Coordinate cross-chain workflows
-- **Config**: `ExecuteAfter: address_tracking` + `RepeatEvery: address_tracking`
-- **Action**: POST to orchestrator → orchestrator triggers chain-Y actions
-
-## Testing address tracking
+### Testing address tracking
 
 To test your address tracking workflow:
 
-1. **Deploy or pick a contract address** on chain `80002` (Polygon Amoy) or your target network
-2. **Trigger on-chain activity** — any call or transaction involving that address
-3. **Confirm your notification endpoint receives**:
-   - **NotifyStatic**: Fixed message every time
-   - **NotifyDynamic**: `txHash`/`blockNumber` populated from `re.event(0)`
+<Steps>
+  <Step title="Deploy or pick a contract address">
+    Use an existing contract address on chain `80002` (Polygon Amoy) or deploy a new one. The example workflow uses `0x18fcd17b107348bd54c05da39cf53621b892bcac`.
+  </Step>
+  <Step title="Trigger on-chain activity">
+    Initiate any call or transaction involving that address — this could be a token transfer, a contract function call, or any other on-chain interaction.
+  </Step>
+  <Step title="Confirm your notification endpoint receives the payloads">
+    Your webhook should receive two payloads:
+    - **NotifyStatic**: A fixed message (`"Address tracking triggered"`) sent every time
+    - **NotifyDynamic**: Transaction details like `txHash` and `blockNumber` populated from `re.event(index)`, where the index corresponds to the position of the value in the activity event data
+  </Step>
+  <Step title="Verify against a block explorer">
+    Cross-reference the `txHash` and `blockNumber` values from the dynamic payload against [PolygonScan Amoy](https://amoy.polygonscan.com/) or your target chain's explorer to confirm accuracy.
+  </Step>
+</Steps>
 
-Verify the received data against a block explorer to ensure accuracy.
+## Real-world use cases
+
+The following examples demonstrate how address tracking solves common blockchain monitoring challenges where you need to capture activities involving an address, not just specific events.
+
+### Treasury and multisig movement alerts
+
+DAOs and organizations managing on-chain treasuries need instant visibility when funds move, regardless of how the transaction was initiated.
+
+**The challenge**: Treasury wallets can be accessed through various methods, including direct transfers, multisig executions, delegate calls, or contract interactions. Each method emits different events (or sometimes no events at all), making it impractical to configure individual event triggers for every possible scenario. A Gnosis Safe execution emits different logs than a simple EOA transfer, and proxy contracts add another layer of complexity.
+
+**The solution**: Address tracking monitors the treasury address for any on-chain activity, ensuring you're notified whether funds move after a simple transfer, a Gnosis Safe execution, or any other mechanism. 
+
+To configure this workflow, set `ExecuteAfter: address_tracking` and `RepeatEvery: address_tracking` to continuously monitor the address for all activity. The goal is to enable instant alerts when treasury funds move or any transaction associated with the treasury wallet or contract. 
+
+**Actions**:
+- **Static**: Send a fixed alert message like `"Treasury activity detected"` to your security channel
+- **Dynamic** (using `re.event(0)`): Extract `from`, `to`, `value` (if available), and `txHash` from the receipt for detailed logging
+
+With this setup, you receive immediate alerts for all treasury movements regardless of transaction type. The full transaction receipt provides audit trails for compliance, and you never need to maintain a list of event signatures as your treasury interactions evolve.
+
+### Deposit notifications for payment platforms
+
+Exchanges, payment processors, and DeFi protocols need to notify users when deposits arrive at their assigned addresses.
+
+**The challenge**: Users can deposit various token types (native tokens, ERC-20s, NFTs) using different methods. Tracking specific `Transfer` events requires knowing every token contract your users might deposit, which is impractical at scale. 
+
+**The solution**: Address tracking monitors each user's deposit address and fires when any incoming transaction is detected. The goal is to notify customers when their deposit address is touched by an incoming transfer or interaction. Your backend receives the full receipt and can parse the token type, amount, and sender.
+
+Set `ExecuteAfter: address_tracking` and `RepeatEvery: address_tracking` to continuously monitor the deposit address.
+
+**Actions**:
+- **Static**: Send a fixed notification like `"Deposit detected"` to trigger user alerts
+- **Dynamic**: Extract `txHash` so customers can verify on explorer, `chainId`, and `sourceContract` from the receipt
+
+This approach lets you support any token type without configuration changes. Users get transaction hashes for explorer verification, and your backend can identify the network and contract involved in the deposit.
+
+### Whale wallet tracking for trading signals
+
+Trading desks and analytics platforms monitor high-value wallets ("whales") to detect market-moving activity before it impacts prices.
+
+**The challenge**: Whale wallets interact with dozens of protocols including DEXs, lending platforms, bridges, and more. Each protocol has different event signatures, and new DeFi protocols launch constantly. Maintaining event triggers for every possible interaction is unsustainable. By the time you've configured triggers for one protocol, others have launched.
+
+**The solution**: Address tracking monitors the whale's wallet address and fires on any outbound or inbound activity. The goal is to track a whale wallet or contract and trigger your analytics or strategy pipeline on movement. You don't need the event name; you just need to know "whale moved." To do this, set `ExecuteAfter: address_tracking` and `RepeatEvery: address_tracking` to continuously monitor whale activity.
+
+**Actions**:
+- **Dynamic** (using `re.event(0)`): POST the dynamic event to your strategy service, which decides whether to buy, sell, or do nothing based on the transaction context
+
+This gives you coverage across all protocols without maintaining event lists. Your trading desk receives real-time signals when whale wallets move, and your analysis pipeline gets the full transaction context to decode interactions and execute trading decisions.
 
 ## Next steps
 
