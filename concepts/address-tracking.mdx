@@ -1,9 +1,9 @@
 ---
-title: 'Address Tracking'
+title: 'Address tracking'
 description: 'Learn how to monitor on-chain addresses and trigger workflows when activity is detected'
 ---
 
-Address tracking is a trigger mechanism that monitors a specific on-chain address, such as a smart contract or wallet addresses, and activates your workflow whenever activity involving that address is detected. Unlike event-based triggers that require you to specify exact event names, address tracking acts as a broad listener that fires on any on-chain interaction with the tracked address.
+Address tracking is a trigger mechanism that monitors a specific on-chain address, such as a smart contract or wallet address, and activates your workflow whenever activity involving that address is detected. Unlike event-based triggers that require you to specify exact event names, address tracking acts as a broad listener that fires on any on-chain interaction with the tracked address.
 
 When you enable address tracking, the Kwala engine monitors activity based on two key configuration fields:
 
@@ -388,7 +388,7 @@ To test your address tracking workflow:
     Use an existing contract address on chain `80002` (Polygon Amoy) or deploy a new one. The example workflow uses `0x18fcd17b107348bd54c05da39cf53621b892bcac`.
   </Step>
   <Step title="Trigger on-chain activity">
-    Initiate any call or transaction involving that address — this could be a token transfer, a contract function call, or any other on-chain interaction.
+    Initiate any call or transaction involving that address. This could be a token transfer, a contract function call, or any other on-chain interaction.
   </Step>
   <Step title="Confirm your notification endpoint receives the payloads">
     Your webhook should receive two payloads:
