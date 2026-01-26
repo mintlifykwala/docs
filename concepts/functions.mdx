@@ -30,13 +30,14 @@ Kwala functions follow these steps that create a fully event-driven automation p
   <Step title="Trigger workflows">
     Other workflows can listen to these emitted events and react accordingly.
   </Step>
+  <Step title="Execute actions">
+    Triggered workflows execute external actions such as API calls or smart contract interactions.
+  </Step>
 </Steps>
 
 ## Defining a Kwala function
 
-A Kwala function is deployed using a deploy action with a contract that contains your custom logic.
-
-The following example deploys a Kwala function that will be activated immediately after deployment:
+To bring your custom logic on-chain, you define a Kwala function within a workflow configuration. The function is deployed using a `deploy` action. The following example deploys a Kwala function that will be activated immediately after deployment:
 
 ```yaml
 Name: deploycontract-kalp-qa-02
@@ -49,32 +50,59 @@ Actions:
     RetriesUntilSuccess: 5
 ```
 
-**Required fields for Kwala function deployment:**
+This configuration deploys a Kwala function to the blockchain and activates it immediately. Here's what each field does:
 
-| Field | Description |
-|-------|-------------|
-| **Name** | Unique identifier for the deployment |
-| **ExecuteAfter** | When to execute (`immediate` or event-based) |
-| **Actions** | Array of actions to perform |
+- **Name**: A unique identifier for this workflow (`deploycontract-kalp-qa-02`)
+- **ExecuteAfter**: Set to `immediate`, meaning the deployment runs as soon as the workflow is submitted
+- **Actions**: Contains the deployment action with the following properties:
+  - **Name**: Identifies this specific action (`DeployContract`)
+  - **Type**: Set to `deploy` to indicate a contract deployment
+  - **ChainID**: The target blockchain network (`1905` for Kalp Chain)
+  - **EncodedGoContract**: Your Go contract logic, Base64-encoded
+  - **RetriesUntilSuccess**: Number of retry attempts if deployment fails (`5`)
 
-**Required fields for the deploy action:**
+The following example shows the Go contract that would be Base64-encoded and included in the `EncodedGoContract` field. The Kwala function logic is written in Go and packaged into your workflow. This logic executes on-chain and handles three core responsibilities - parsing input data, applying conditional logic, and emitting events.
 
-| Field | Description |
-|-------|-------------|
-| **Name** | Unique identifier for this action |
-| **Type** | Must be `deploy` |
-| **ChainID** | Target blockchain network ID |
-| **EncodedGoContract** | Base64-encoded Go contract containing your logic |
+```go
+type ERC20Transfer struct {
+    From   string  `json:"from"`
+    To     string  `json:"to"`
+    Amount float64 `json:"amount"`
+}
 
-**Optional fields:**
+type EventData struct {
+    From     string  `json:"from"`
+    To       string  `json:"to"`
+    Amount   float64 `json:"amount"`
+    Category string  `json:"category"`
+}
 
-| Field | Description | Default |
-|-------|-------------|---------|
-| **RetriesUntilSuccess** | Number of retry attempts on failure | 0 |
+func ComputeEngine(payload string) error {
+    var data ERC20Transfer
+    if err := json.Unmarshal([]byte(payload), &data); err != nil {
+        return err
+    }
 
-## Understand the ComputeEngine
+    // Emit event only for high-value transfers
+    if data.Amount >= 100000 {
+        eventData := EventData{
+            From:     data.From,
+            To:       data.To,
+            Amount:   data.Amount,
+            Category: "HIGH_VALUE_TRANSFER",
+        }
 
-Kwala function logic is written in Go and packaged into your workflow. This logic executes on-chain and handles three core responsibilities: parsing input data, applying conditional logic, and emitting events.
+        eventPayload, _ := json.Marshal(eventData)
+        EmitEvent("TokenTransferEvaluated", eventPayload)
+    }
+
+    return nil
+}
+```
+
+This contract defines two structs (`ERC20Transfer` for input and `EventData` for output), then implements `ComputeEngine` to parse incoming transfer data, check if the amount exceeds 100,000 tokens, and emit a categorized event for high-value transfers.
+
+## Anatomy of a Kwala function
 
 **The entry point**
 
@@ -88,7 +116,7 @@ This function is invoked each time the compute engine runs. The `payload` parame
 
 **Custom input structures**
 
-Define custom Go structs to parse the incoming JSON payload. Your struct can include any fields, as long as the incoming JSON matches the structure you define.
+You can define custom data structures to parse the incoming JSON payload. Your structure can include any fields, as long as the incoming JSON matches the schema you define
 
 <Note>
 If [address tracking](/concepts/address-tracking) is used, the input is provided as a string containing the transaction receipt. Otherwise, you can define your own custom structures.
@@ -116,9 +144,7 @@ This structure expects JSON input like:
 
 **Custom output (event) structures**
 
-You have full control over the structure of emitted events. Define which fields the event contains, their order, and how downstream listeners access them.
-
-The following example defines an output structure that enriches the transfer data with a category:
+The structure of emitted events is entirely controlled by your Kwala function. In the example above, the event structure is:
 
 ```go
 type EventData struct {
@@ -129,7 +155,7 @@ type EventData struct {
 }
 ```
 
-This structure can be freely modified or replaced based on your requirements.
+This structure defines what fields the event contains, the order of those fields, and how listeners can access them. You can modify or replace this structure based on your requirements.
 
 **Using different structures**
 
@@ -143,17 +169,16 @@ type PaymentEvent struct {
 }
 ```
 
-Listeners would then subscribe to the event and access values using positional references:
+Listeners would then subscribe to the event `TriggerEventName: PaymentStatus(transaction_id string, amount number,
+status string)` and access values using positional references:
 
 - `re.event(0)` → `transaction_id`
 - `re.event(1)` → `amount`
 - `re.event(2)` → `status`
 
-## Apply conditions and rules
+## Applying conditions and rules
 
-Your Kwala function can apply any deterministic logic to evaluate and classify input data.
-
-The following example evaluates the amount of tokens transferred and classifies the transaction based on a threshold:
+Your Kwala function can apply any deterministic logic to evaluate and classify input data. The following example evaluates the amount of tokens transferred and classifies the transaction based on a threshold:
 
 ```go
 var transferCategory string
@@ -165,37 +190,23 @@ if data.Amount >= 100000 {
 }
 ```
 
-This demonstrates:
-
-- **Conditional execution** based on input values
-- **Multiple decision paths** for different scenarios
-- **Default handling** for values that don't match specific conditions
-
-<Tip>
-Kwala functions support any deterministic logic—the same input always produces the same output. This guarantees auditability and verifiability of your on-chain decisions.
-</Tip>
+This example demonstrates how Kwala functions support conditional execution based on input values, allowing you to define multiple decision paths for different scenarios while providing default handling for values that don't match specific conditions
 
 ## Emit blockchain events
 
-Once your function processes the input and applies its logic, emit events using the `EmitEvent` function:
+Once your function processes the input and applies its logic, you can use the `EmitEvent` function to emit events.
 
 ```go
 EmitEvent("TokenTransferEvaluated", eventPayload)
 ```
 
-Emitted events are:
+Emitted events are recorded permanently on-chain, populated with your processed data, and available for other workflows to consume.
 
-- Recorded permanently on-chain
-- Populated with your processed data
-- Available for other workflows to consume
-
-The event schema for the example above would be:
+The event schema, which represents the computational transformations for the example above would be:
 
 ```
 TokenTransferEvaluated(from, to, amount, category)
 ```
-
-## Complete Kwala function example
 
 The following example shows a complete Kwala function that processes ERC-20 transfers and emits categorized events:
 
@@ -248,50 +259,35 @@ RepeatEvery: event
 ExecuteAfter: event
 ```
 
-**Required fields for event triggers:**
+The example trigger contains the following fields:
 
-| Field | Description |
-|-------|-------------|
-| **TriggerEventName** | Event signature with parameter names and types |
-| **RepeatEvery** | When to repeat (`event` for every occurrence) |
-| **ExecuteAfter** | When to execute after the event |
+- **TriggerEventName**: Event signature with parameter names and types
+- **RepeatEvery**: When to repeat (`event` for every occurrence)
+- **ExecuteAfter**: When to execute after the event
+
 
 ## Use event data in actions
 
-Event fields can be referenced positionally using the `re.event()` function in your workflow actions.
+You can use the `re.event()` function to reference event fields positionally in your workflow actions.
 
 For the `TokenTransferEvaluated(from, to, amount, category)` event:
 
-| Reference | Value |
-|-----------|-------|
-| `re.event(0)` | `from` address |
-| `re.event(1)` | `to` address |
-| `re.event(2)` | `amount` |
-| `re.event(3)` | `category` |
+- `re.event(0)` → `from` address
+- `re.event(1)` → `to` address
+- `re.event(2)` → `amount`
+- `re.event(3)` → `category`
 
-The following example uses event data to construct a notification message:
+The following example constructs a notification message using event data:
 
 ```yaml
 text: re.event(3) transfer of re.event(2) tokens from re.event(0) to re.event(1)
 ```
 
-This allows dynamic data to be injected into external actions such as API calls or smart contract interactions.
-
-## End-to-end flow
-
-Once deployed, the entire Kwala function pipeline runs automatically without manual intervention:
-
-1. **Input received**: The function receives blockchain data
-2. **Input parsed**: Structured input is deserialized and validated
-3. **Logic evaluated**: Your conditions and rules are applied
-4. **Output derived**: Results are generated based on your logic
-5. **Events emitted**: Custom events are recorded on-chain
-6. **Workflows triggered**: Listening workflows activate automatically
-7. **Actions executed**: External actions run using the event data
+This lets you inject dynamic data into external actions such as API calls or smart contract interactions.
 
 ## What Kwala functions enable
 
-With Kwala functions, you can build:
+Once deployed, the entire Kwala function pipeline runs automatically without manual intervention. With Kwala functions, you can build:
 
 - **On-chain decision logic** that applies custom business rules to blockchain data
 - **Event-driven automation** that triggers workflows from computed events
@@ -299,11 +295,7 @@ With Kwala functions, you can build:
 - **Connected workflows** that chain together through emitted events
 - **Blockchain-to-external integrations** that bridge on-chain activity with external systems
 
-All computation remains:
-
-- **Deterministic**: Identical inputs always yield identical outputs
-- **Auditable**: Every event is permanently recorded on-chain
-- **Verifiable**: Results can be independently validated by anyone
+Because Kwala functions execute on-chain, all computation is deterministic (identical inputs always produce identical outputs), auditable (every event is permanently recorded), and verifiable (anyone can independently validate the results).
 
 ## Complete end-to-end workflow configuration
 
