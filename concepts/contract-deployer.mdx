@@ -1,0 +1,60 @@
+---
+title: 'Contract deployer'
+description: 'Deploy smart contracts across multiple chains from a single automated workflow'
+---
+
+Kwala lets you deploy smart contracts to any supported chain from a single workflow. Provide the compiled bytecode, constructor parameters, and target chain, and Kwala handles the deployment.
+
+## Deploy action
+
+Use the deploy action type to deploy a new smart contract to a blockchain network. You can also use deploy actions to deploy [Kwala Functions](/concepts/functions), which enable custom on-chain decision logic.
+
+The following example deploys an NFT contract to Ethereum mainnet with constructor parameters for name, symbol, and initial supply:
+
+```yaml
+actions:
+  - name: "Deploy NFT Contract"
+    type: "deploy"
+    bytecode: "0x60806040523480156200001157600080fd5b50..."
+    encodedABI: "0x..."
+    initializationArgs:
+      - "MyNFT"
+      - "NFT"
+      - "1000"
+    chainID: 1
+    metadata: "NFT deployment on Ethereum mainnet"
+    retriesUntilSuccess: 3
+```
+
+## Required fields
+
+| Field | Description |
+|-------|-------------|
+| **name** | Unique identifier for this action |
+| **type** | Must be `"deploy"` |
+| **bytecode** | The compiled contract bytecode (hex string) |
+| **encodedABI** | ABI-encoded constructor parameters |
+| **initializationArgs** | Array of constructor arguments |
+| **chainID** | Target blockchain network ID |
+
+## Optional fields
+
+| Field | Description | Default |
+|-------|-------------|---------|
+| **metadata** | Additional information about the deployment | - |
+| **retriesUntilSuccess** | Number of retry attempts on failure | 0 |
+
+## Using the workflow builder
+
+You can also deploy contracts using the visual workflow builder. Upload your `.sol` file or paste Solidity code directly, and the bytecode and ABI are auto-populated. See [Configure a workflow](/workflow-builder/configure-workflow) for step-by-step instructions.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Deploy actions reference" icon="rocket" href="/concepts/actions#deploy-actions">
+    Full deploy action field reference
+  </Card>
+  <Card title="Kwala Functions" icon="code" href="/concepts/functions">
+    Deploy custom on-chain decision logic
+  </Card>
+</CardGroup>
