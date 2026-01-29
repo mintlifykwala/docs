@@ -303,44 +303,42 @@ This section presents a complete end-to-end configuration using three workflows.
 
 **Workflow 1: Kwala function deployment**
 
-This workflow deploys the Kwala function logic onto the Kalp Chain. The Go contract maps recipient addresses to human-readable names and emits `Transfer` events.
+This workflow deploys the Kwala function logic onto the Kalp Chain. The Go contract evaluates token transfers and emits `TokenTransferEvaluated` events for high-value transactions.
 
 **Go contract logic (decoded):**
 
 ```go
-type AddressTracking struct {
-    From string `json:"from"`
-    To   string `json:"to"`
+type ERC20Transfer struct {
+    From   string  `json:"from"`
+    To     string  `json:"to"`
+    Amount float64 `json:"amount"`
 }
 
 type EventData struct {
-    From         string `json:"from"`
-    To           string `json:"to"`
-    ReceiverName string `json:"receiver_name"`
+    From     string  `json:"from"`
+    To       string  `json:"to"`
+    Amount   float64 `json:"amount"`
+    Category string  `json:"category"`
 }
 
 func ComputeEngine(payload string) error {
-    var data AddressTracking
+    var data ERC20Transfer
     if err := json.Unmarshal([]byte(payload), &data); err != nil {
         return err
     }
 
-    var name string
-    if data.To == "0x284c3e3217c38026cf909424df23e5a6ad9f1e5d" {
-        name = "Saharsh"
-    } else if data.To == "0x6cd5851c9c6f98bfe40febdeb63e95e9a0677a19" {
-        name = "Mudit"
-    } else {
-        name = "Unknown"
-    }
+    // Emit event only for high-value transfers
+    if data.Amount >= 100000 {
+        eventData := EventData{
+            From:     data.From,
+            To:       data.To,
+            Amount:   data.Amount,
+            Category: "HIGH_VALUE_TRANSFER",
+        }
 
-    eventdata := EventData{
-        From:         data.From,
-        To:           data.To,
-        ReceiverName: name,
+        eventPayload, _ := json.Marshal(eventData)
+        EmitEvent("TokenTransferEvaluated", eventPayload)
     }
-    eventPayload, _ := json.Marshal(eventdata)
-    EmitEvent("Transfer", eventPayload)
 
     return nil
 }
@@ -405,7 +403,7 @@ Execution:
 
 **Workflow 3: Event listener and external notification**
 
-This workflow listens to the `Transfer` event emitted by the Kwala function and executes an external action (Telegram notification) using the enriched event data.
+This workflow listens to the `TokenTransferEvaluated` event emitted by the Kwala function and executes an external action (Telegram notification) using the enriched event data.
 
 **YAML 3: Event listener workflow**
 
@@ -414,10 +412,10 @@ Name: event_listen_deploy_kalp_01
 Trigger:
   TriggerSourceContract: 7e63825c387746eaa1d2b4151e84580ccc4cf3de
   TriggerChainID: 1905
-  TriggerEventName: Transfer(from string, to string, receiver_name string)
+  TriggerEventName: TokenTransferEvaluated(from string, to string, amount number, category string)
   RecurringSourceContract: 7e63825c387746eaa1d2b4151e84580ccc4cf3de
   RecurringChainID: 1905
-  RecurringEventName: Transfer(from string, to string, receiver_name string)
+  RecurringEventName: TokenTransferEvaluated(from string, to string, amount number, category string)
   RepeatEvery: event
   ExecuteAfter: event
   ExpiresIn: 1765558800
@@ -427,7 +425,7 @@ Actions:
     APIEndpoint: https://api.telegram.org/bot<your-bot-token>/sendMessage
     APIPayload:
       chat_id: '<your-chat-id>'
-      text: token transferred to re.event(2) and from re.event(0) to re.event(1)
+      text: re.event(3) transfer of re.event(2) tokens from re.event(0) to re.event(1)
     RetriesUntilSuccess: 5
 Execution:
   Mode: parallel
@@ -446,10 +444,10 @@ Execution:
     When activity is detected, Workflow 2 calls the deployed Kwala function with the transaction data.
   </Step>
   <Step title="Emit enriched event">
-    The Kwala function processes the data, maps the recipient address to a name, and emits a `Transfer` event.
+    The Kwala function processes the data, evaluates the transfer amount, and emits a `TokenTransferEvaluated` event for high-value transfers.
   </Step>
   <Step title="Trigger notification">
-    Workflow 3 listens for the `Transfer` event and sends a Telegram notification with the enriched data (including the receiver's name).
+    Workflow 3 listens for the `TokenTransferEvaluated` event and sends a Telegram notification with the enriched data (including the transfer category).
   </Step>
 </Steps>
 
