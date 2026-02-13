@@ -3,40 +3,9 @@ title: 'Transaction manager'
 description: 'Execute, retry and finalize transactions with strong guarantees'
 ---
 
-Kwala manages the full transaction lifecycle when your workflow calls a smart contract function. It handles gas estimation, submission, retries, and confirmation so your transactions land on-chain reliably.
+Kwala manages the full transaction lifecycle when your workflow calls a smart contract function. It handles all calls, submission, retries, and confirmation so your transactions land on-chain reliably. Kwala provides strong guarantees that your transactions will finalize through:
 
-## Calling smart contract functions
-
-Use the `call` action type to interact with deployed smart contracts.
-
-```yaml
-actions:
-  - Name: transfer_funds
-    Type: call
-    TargetContract: 0x0f51bb10119727a7e5ea3538074fb341f56b09ad
-    TargetFunction: function transfer(address recipient, uint256 amount)
-    TargetParams:
-      - re.event(0)    # recipient address from triggering event
-      - 100            # transfer amount
-    ChainID: 1
-    RetriesUntilSuccess: 5
-```
-
-### Configuration fields
-
-| Field | Required | Description |
-|-------|----------|-------------|
-| **TargetContract** | Required | Address of the smart contract to interact with |
-| **TargetFunction** | Required | Function signature to call (e.g., `function transfer(address, uint256)`) |
-| **TargetParams** | Required | Parameters to pass to the function |
-| **ChainID** | Required | Blockchain network where the contract is deployed |
-| **RetriesUntilSuccess** | Optional | Number of retry attempts if the call fails (default: 0) |
-
-## Transaction finalization guarantees
-
-Kwala provides strong guarantees that your transactions will finalize:
-
-### Automatic retries
+## Automatic retries
 
 The `RetriesUntilSuccess` field ensures critical operations complete even when network conditions cause temporary failures.
 
@@ -57,7 +26,7 @@ actions:
 - A delay is applied between retries
 - Total attempts = 1 (initial) + RetriesUntilSuccess
 
-### Using dynamic parameters
+## Using dynamic parameters
 
 Reference event data in your transaction parameters using `re.event()`:
 
@@ -71,7 +40,7 @@ This enables workflows where the triggering event determines transaction details
 
 ## Use cases
 
-See the transaction manager in action:
+The following use cases demonstrate Kwala's transaction manager in action:
 
 <CardGroup cols={2}>
   <Card title="Auto top-up wallet" icon="wallet" href="/use-cases/auto-top-up-wallet">

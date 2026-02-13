@@ -3,9 +3,7 @@ title: 'API integrations'
 description: 'Call any Web2 API directly from your blockchain workflows'
 ---
 
-Kwala lets you call REST APIs, trigger webhooks, and invoke cloud functions directly from your workflows. Combine on-chain triggers with off-chain actions to connect blockchain events to external services.
-
-## What you can do
+Kwala lets you call REST APIs, trigger webhooks, and invoke cloud functions directly from your workflows. You can also combine on-chain triggers with off-chain actions to connect blockchain events to external services though:
 
 - **REST APIs**: Call any HTTP endpoint with custom payloads
 - **Webhooks**: Trigger external services when blockchain events occur
@@ -42,7 +40,7 @@ Actions:
 
 ### Telegram notifications
 
-Send messages to Telegram chats or channels. This example is from the [Telegram notification automation](/use-cases/telegram-notification-automation) use case:
+You can use Kwala to send messages to Telegram chats or channels. The [Telegram notification automation](/use-cases/telegram-notification-automation) use case shows this integration in detail:
 
 ```yaml
 Actions:
@@ -57,7 +55,7 @@ Actions:
 
 ### Discord webhooks
 
-Post messages to Discord channels. This example is from the [Cryptocurrency deposit alerts](/use-cases/cryptocurrency-deposit-alerts) use case:
+Kwala supports Discord webhooks that enable sending messages to Discord channels. The following example from the [Cryptocurrency deposit alerts](/use-cases/cryptocurrency-deposit-alerts) use case demonstrates it:
 
 ```yaml
 Actions:
@@ -71,7 +69,7 @@ Actions:
 
 ### Custom webhooks
 
-Trigger any webhook endpoint with dynamic event data:
+The following example shows how you can trigger any webhook endpoint with dynamic event data:
 
 ```yaml
 Actions:
@@ -85,10 +83,7 @@ Actions:
       amount: "re.event(2)"
     RetriesUntilSuccess: 5
 ```
-
-## Using dynamic data
-
-Include blockchain data in your API payloads using the `re.event()` syntax:
+To include blockchain data in your API payloads, use the `re.event()` syntax:
 
 ```yaml
 APIPayload:
@@ -97,13 +92,11 @@ APIPayload:
   amount: "re.event(2)"    # Third event parameter
 ```
 
-The index maps to the position of values in the event data. For address tracking workflows, `re.event(0)` returns the full transaction receipt which you can parse in your backend.
-
-For more details on dynamic data extraction, see [Functions](/concepts/functions).
+The index maps to the position of values in the event data. For address tracking workflows, `re.event(0)` returns the full transaction receipt which you can parse in your backend. For more details on dynamic data extraction, see [Functions](/concepts/functions).
 
 ## Use cases
 
-See API integrations in action:
+The following use case demonstrate API integrations in action:
 
 <CardGroup cols={2}>
   <Card title="Telegram notification automation" icon="paper-plane" href="/use-cases/telegram-notification-automation">

@@ -1,11 +1,9 @@
 ---
-title: 'Price triggers'
-description: 'Run actions automatically when tokens cross price thresholds, on any supported oracle'
+title: 'Token price triggers'
+description: 'Run actions automatically when token price prices hit specific thresholds'
 ---
 
-Kwala monitors oracle price feeds and triggers your workflows when token prices cross specified thresholds. Define your price conditions in YAML and Kwala executes your actions automatically.
-
-## What you can do
+Kwala monitors oracle price feeds and triggers workflows when token prices meet specified thresholds. These triggers let you define price conditions in YAML and Kwala will automatically execute your actions when the conditions are met. Price triggers are key to automations such as:
 
 - **Price alerts**: Get notified when tokens hit target prices
 - **Auto-rebalancing**: Adjust portfolio allocations based on price movements
@@ -14,7 +12,7 @@ Kwala monitors oracle price feeds and triggers your workflows when token prices 
 
 ## How it works
 
-Price triggers monitor oracle price feeds and execute your workflow when conditions are met:
+Token price triggers monitor oracle price feeds and execute your workflow when conditions are met:
 
 1. Kwala monitors the specified oracle feed for your target asset
 2. When the price crosses your threshold, the workflow triggers
@@ -22,7 +20,7 @@ Price triggers monitor oracle price feeds and execute your workflow when conditi
 
 ## Use cases
 
-See price triggers in action:
+The following use cases have token price triggers in their workflows:
 
 <CardGroup cols={2}>
   <Card title="Oracle price alert notifications" icon="chart-line" href="/use-cases/oracle-price-alert-notifications">
