@@ -54,47 +54,18 @@ You don't need any ETH, MATIC, or other native tokens. If your chosen network is
     After you sign:
     - Kwala checks your signature and deploys the Smart Wallet contract
     - Your new Smart Wallet address appears on screen
-    - 0.001 Kwala Credits is deducted from your balance
-    - Kwala pays all network fees
+    - 0.001 Kwala Credits are deducted from your balance
+    - Kwala pays the network fees
   </Step>
   <Step title="Same address on every chain">
     Your Smart Wallet gets the **same address on all supported networks**. One address works everywhere.
   </Step>
   <Step title="You own it">
-    Your Smart Wallet is:
+    Your smart wallet is:
     - **Non-custodial**: Only you control it
     - **Tied to your MetaMask account**: Your connected wallet is the owner
   </Step>
 </Steps>
-
-## How smart wallets work in workflows
-
-When a workflow runs through your Smart Wallet, here's what happens:
-
-### The flow
-
-1. You approve the workflow (give permission)
-2. You sign when needed
-3. Kwala sends the transaction to the network
-4. The blockchain runs it from your Smart Wallet
-
-### What to know
-
-- **Gas is covered**: Transaction fees can be sometimes sponsored.
-- **Limited access**: Kwala can only do what you've approved
-
-### Whitelisting your smart wallet
-
-When you need to whitelist your Smart Wallet in a target dApp contract, use these values:
-
-| Property | Value |
-|----------|-------|
-| `msg.sender` | Your Smart Wallet address |
-| `tx.origin` | Kwala's bundler wallet address |
-
-<Tip>
-Your personal wallet never sends the transaction. This keeps your main wallet safe from exposure.
-</Tip>
 
 ## Limitations
 
