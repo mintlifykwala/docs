@@ -1,0 +1,129 @@
+---
+title: "Smart wallets"
+description: "Learn about Kwala Smart Wallets for secure, gasless automated workflow execution"
+---
+
+A Kwala Smart Wallet is a **wallet powered by a smart contract** that you fully own and control. It acts as the signer for all automated actions. When Kwala performs an automated 
+action, it's executed from the smart wallet’s address. Think of a smart wallet as a separate account that handles all your automated tasks. When Kwala runs your workflows, it uses this wallet to sign and send transactions, not your personal Kwala wallet.
+
+Smart wallets provide: 
+
+- ** A clear audit trail**: All workflow executions are recorded on-chain and therefore, verfiable.
+- ** Gasless execution**: You don't need tokens for gas when executing workflows.
+- ** Isolation from Externally Owned Wallets (EOA)**: Your personal wallet remains safe as it's separate from automation
+
+<Note>
+When you create a Smart Wallet, Kwala is automatically set up as the operator. This lets Kwala run workflows on your behalf.
+</Note>
+
+<Info>
+Kwala does not control your Smart Wallet. You remain the owner. Kwala can only execute actions permitted by your workflow approvals.
+</Info>
+
+## Why use a smart wallet?
+
+Kwala handles automated, repeatable tasks on the blockchain. A Smart Wallet makes this safer and easier by offering the following:
+
+- **Privacy**: Your personal wallet address isn't exposed to workflow execution.
+- **Separation**: Keep your personal activity apart from automation
+- **Free gas**: Kwala pays for transaction fees
+
+Your **Smart Wallet serves as a gateway for your automation**.
+
+## How to create a smart wallet
+
+To create a smart wallet, you need the following:
+
+- A fixed one-time creation fee of **0.001 Kwala Credits**
+- A connected **MetaMask wallet**
+- A **blockchain network** selected in the Kwala dashboard
+
+<Info>
+You don't need any ETH, MATIC, or other native tokens. If your chosen network isn't in MetaMask, add it manually. Go to MetaMask's Custom Network settings and enter the RPC URL, chain ID, and currency symbol.
+</Info>
+
+<Steps>
+  <Step title="Select a network">
+    Open the Kwala dashboard and select the blockchain where you want your Smart Wallet.
+  </Step>
+  <Step title="Sign to confirm ownership">
+    MetaMask will pop up and ask you to sign a message.
+    
+    This signature:
+    - Proves you own the wallet
+    - Does **not** send a transaction
+    - Does **not** cost any gas
+  </Step>
+  <Step title="Wallet gets created">
+    After you sign:
+    - Kwala checks your signature and deploys the Smart Wallet contract
+    - Your new Smart Wallet address appears on screen
+    - 0.001 Kwala Credits is deducted from your balance
+    - Kwala pays all network fees
+  </Step>
+  <Step title="Same address on every chain">
+    Your Smart Wallet gets the **same address on all supported networks**. One address works everywhere.
+  </Step>
+  <Step title="You own it">
+    Your Smart Wallet is:
+    - **Non-custodial**: Only you control it
+    - **Tied to your MetaMask account**: Your connected wallet is the owner
+  </Step>
+</Steps>
+
+## How smart wallets work in workflows
+
+When a workflow runs through your Smart Wallet, here's what happens:
+
+### The flow
+
+1. You approve the workflow (give permission)
+2. You sign when needed
+3. Kwala sends the transaction to the network
+4. The blockchain runs it from your Smart Wallet
+
+### What to know
+
+- **Gas is covered**: Transaction fees can be sometimes sponsored.
+- **Limited access**: Kwala can only do what you've approved
+
+### Whitelisting your smart wallet
+
+When you need to whitelist your Smart Wallet in a target dApp contract, use these values:
+
+| Property | Value |
+|----------|-------|
+| `msg.sender` | Your Smart Wallet address |
+| `tx.origin` | Kwala's bundler wallet address |
+
+<Tip>
+Your personal wallet never sends the transaction. This keeps your main wallet safe from exposure.
+</Tip>
+
+## Limitations
+
+Some apps and contracts only work with regular wallets (EOAs). Here are common issues:
+
+- **Apps that require direct sending**: Some dApps need you to send transactions straight from MetaMask. These won't work with Smart Wallets.
+- **Contracts that check the sender**: With a Smart Wallet, the contract sees the wallet contract as `msg.sender`, not your personal address. Some contracts don't handle this well.
+- **Login systems that only accept regular signatures**: Some "Sign-in with Ethereum" features don't support signatures from smart contracts.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="MetaMask popup doesn't show">
+    - Make sure MetaMask is installed and unlocked
+    - Check if your browser is blocking popups
+    - Refresh the page and try again
+  </Accordion>
+  <Accordion title="You declined the signature">
+    No problem. Click **Create Smart Wallet** again and sign the request.
+  </Accordion>
+  <Accordion title="Wallet didn't appear after signing">
+    - Wait a few seconds and refresh the page
+    - The network might be busy—try again shortly
+  </Accordion>
+  <Accordion title="A dApp doesn't work with your Smart Wallet">
+    That dApp probably needs a regular wallet. Use your MetaMask directly for it.
+  </Accordion>
+</AccordionGroup>
