@@ -1,0 +1,119 @@
+---
+title: 'API integrations'
+description: 'Call any Web2 API directly from your blockchain workflows'
+---
+
+Kwala lets you call REST APIs, trigger webhooks, and invoke cloud functions directly from your workflows. You can also combine on-chain triggers with off-chain actions to connect blockchain events to external services though:
+
+- **REST APIs**: Call any HTTP endpoint with custom payloads
+- **Webhooks**: Trigger external services when blockchain events occur
+- **Database queries**: Connect to external data sources
+- **Cloud functions**: Invoke serverless functions on AWS, GCP, or Azure
+- **External services**: Integrate with any service exposing an API
+
+## Configuration
+
+API actions use `Type: post` to make HTTP requests:
+
+```yaml
+Actions:
+  - Name: Send_notification
+    Type: post
+    APIEndpoint: https://api.example.com/notify
+    APIPayload:
+      message: "Workflow executed successfully"
+    RetriesUntilSuccess: 5
+```
+
+## Configuration fields
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| **Name** | Required | Unique identifier for this action |
+| **Type** | Required | Set to `post` for HTTP requests |
+| **APIEndpoint** | Required | The URL to send the request to |
+| **APIPayload** | Optional | JSON payload for the request body |
+| **Metadata** | Optional | Description of the API call |
+| **RetriesUntilSuccess** | Optional | Retry attempts on failure |
+
+## Common integrations
+
+### Telegram notifications
+
+You can use Kwala to send messages to Telegram chats or channels. The [Telegram notification automation](/use-cases/telegram-notification-automation) use case shows this integration in detail:
+
+```yaml
+Actions:
+  - Name: Telegram_notification
+    Type: post
+    APIEndpoint: https://api.telegram.org/bot<BOT_TOKEN>/sendMessage
+    APIPayload:
+      chat_id: YOUR_CHAT_ID
+      text: "Hi! You have a new notification."
+    RetriesUntilSuccess: 5
+```
+
+### Discord webhooks
+
+Kwala supports Discord webhooks that enable sending messages to Discord channels. The following example from the [Cryptocurrency deposit alerts](/use-cases/cryptocurrency-deposit-alerts) use case demonstrates it:
+
+```yaml
+Actions:
+  - Name: discord_call
+    Type: post
+    APIEndpoint: https://discord.com/api/webhooks/<WEBHOOK_ID>/<WEBHOOK_TOKEN>
+    APIPayload:
+      content: "USDC Received on USDC Treasury Vault Smart Contract"
+    RetriesUntilSuccess: 5
+```
+
+### Custom webhooks
+
+The following example shows how you can trigger any webhook endpoint with dynamic event data:
+
+```yaml
+Actions:
+  - Name: Trigger_webhook
+    Type: post
+    APIEndpoint: https://your-service.com/webhook
+    APIPayload:
+      event: "transfer"
+      from: "re.event(0)"
+      to: "re.event(1)"
+      amount: "re.event(2)"
+    RetriesUntilSuccess: 5
+```
+To include blockchain data in your API payloads, use the `re.event()` syntax:
+
+```yaml
+APIPayload:
+  sender: "re.event(0)"    # First event parameter
+  receiver: "re.event(1)"  # Second event parameter
+  amount: "re.event(2)"    # Third event parameter
+```
+
+The index maps to the position of values in the event data. For address tracking workflows, `re.event(0)` returns the full transaction receipt which you can parse in your backend. For more details on dynamic data extraction, see [Functions](/concepts/functions).
+
+## Use cases
+
+The following use case demonstrate API integrations in action:
+
+<CardGroup cols={2}>
+  <Card title="Telegram notification automation" icon="paper-plane" href="/use-cases/telegram-notification-automation">
+    Send automated Telegram alerts
+  </Card>
+  <Card title="Cryptocurrency deposit alerts" icon="discord" href="/use-cases/cryptocurrency-deposit-alerts">
+    Post Discord notifications on deposits
+  </Card>
+</CardGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="API actions" icon="code" href="/concepts/actions#api-actions">
+    Full API action reference
+  </Card>
+  <Card title="System overview" icon="sitemap" href="/architecture/system-overview">
+    Understand the platform architecture
+  </Card>
+</CardGroup>

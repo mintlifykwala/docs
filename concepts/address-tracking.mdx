@@ -43,24 +43,7 @@ Kwala supports monitoring on-chain activity using event triggers and address tra
 
 Choose event triggers when you know the exact event to monitor, and address tracking when you need to capture all interactions with an address regardless of event type.
 
-## Configuration scenarios
-
-Address tracking can be combined with different `ExecuteAfter` and `RepeatEvery` values to create various monitoring patterns:
-
-| ExecuteAfter | RepeatEvery | Meaning |
-|--------------|-------------|---------|
-| `address_tracking` | `address_tracking` | One-time tracking then recurring address tracking |
-| `address_tracking` | `NA` | One-time address tracking only |
-| `address_tracking` | `event` | One-time address tracking and recurring event listening |
-| `address_tracking` | `timestamp` | One-time address tracking and recurring schedule |
-| `address_tracking` | `oraclePrice` | One-time address tracking and recurring oracle price checks |
-| `event` | `address_tracking` | One-time event tracking and recurring address tracking |
-| `timestamp` | `address_tracking` | One-time schedule and recurring address tracking |
-| `oraclePrice` | `address_tracking` | One-time oracle price and recurring address tracking |
-
-**One-time then recurring address tracking**
-
-The most common address tracking pattern is triggering a workflow once when address activity is detected then continue monitoring subsequent activities.
+Address tracking can be combined with different `ExecuteAfter` and `RepeatEvery` values to create various monitoring patterns. The most common address tracking pattern is triggering a workflow once when address activity is detected then continue monitoring subsequent activities.
 
 ```yaml
 ExecuteAfter: address_tracking
@@ -402,41 +385,9 @@ To test your address tracking workflow:
 
 ## Real-world use cases
 
-The following examples demonstrate how address tracking solves common blockchain monitoring challenges where you need to capture activities involving an address, not just specific events.
+The following example demonstrate how address tracking solves common blockchain monitoring challenges where you need to capture activities involving an address, not just specific events.
 
-### Treasury and multisig movement alerts
-
-DAOs and organizations managing on-chain treasuries need instant visibility when funds move, regardless of how the transaction was initiated.
-
-**The challenge**: Treasury wallets can be accessed through various methods, including direct transfers, multisig executions, delegate calls, or contract interactions. Each method emits different events (or sometimes no events at all), making it impractical to configure individual event triggers for every possible scenario. A Gnosis Safe execution emits different logs than a simple EOA transfer, and proxy contracts add another layer of complexity.
-
-**The solution**: Address tracking monitors the treasury address for any on-chain activity, ensuring you're notified whether funds move after a simple transfer, a Gnosis Safe execution, or any other mechanism. 
-
-To configure this workflow, set `ExecuteAfter: address_tracking` and `RepeatEvery: address_tracking` to continuously monitor the address for all activity. The goal is to enable instant alerts when treasury funds move or any transaction associated with the treasury wallet or contract. 
-
-**Actions**:
-- **Static**: Send a fixed alert message like `"Treasury activity detected"` to your security channel
-- **Dynamic** (using `re.event(0)`): Extract `from`, `to`, `value` (if available), and `txHash` from the receipt for detailed logging
-
-With this setup, you receive immediate alerts for all treasury movements regardless of transaction type. The full transaction receipt provides audit trails for compliance, and you never need to maintain a list of event signatures as your treasury interactions evolve.
-
-### Deposit notifications for payment platforms
-
-Exchanges, payment processors, and DeFi protocols need to notify users when deposits arrive at their assigned addresses.
-
-**The challenge**: Users can deposit various token types (native tokens, ERC-20s, NFTs) using different methods. Tracking specific `Transfer` events requires knowing every token contract your users might deposit, which is impractical at scale. 
-
-**The solution**: Address tracking monitors each user's deposit address and fires when any incoming transaction is detected. The goal is to notify customers when their deposit address is touched by an incoming transfer or interaction. Your backend receives the full receipt and can parse the token type, amount, and sender.
-
-Set `ExecuteAfter: address_tracking` and `RepeatEvery: address_tracking` to continuously monitor the deposit address.
-
-**Actions**:
-- **Static**: Send a fixed notification like `"Deposit detected"` to trigger user alerts
-- **Dynamic**: Extract `txHash` so customers can verify on explorer, `chainId`, and `sourceContract` from the receipt
-
-This approach lets you support any token type without configuration changes. Users get transaction hashes for explorer verification, and your backend can identify the network and contract involved in the deposit.
-
-### Whale wallet tracking for trading signals
+### Whale wallet tracking
 
 Trading desks and analytics platforms monitor high-value wallets ("whales") to detect market-moving activity before it impacts prices.
 
@@ -448,6 +399,10 @@ Trading desks and analytics platforms monitor high-value wallets ("whales") to d
 - **Dynamic** (using `re.event(0)`): POST the dynamic event to your strategy service, which decides whether to buy, sell, or do nothing based on the transaction context
 
 This gives you coverage across all protocols without maintaining event lists. Your trading desk receives real-time signals when whale wallets move, and your analysis pipeline gets the full transaction context to decode interactions and execute trading decisions.
+
+### Treasury wallet monitoring
+
+Address tracking is ideal for treasury wallets where funds can move through various methods: direct transfers, multisig executions, delegate calls, or contract interactions. Instead of configuring triggers for each scenario, you can use address tracking to monitor the treasury address directly and receive alerts whenever any on-chain activity occurs.
 
 ## Next steps
 
