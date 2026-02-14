@@ -55,11 +55,23 @@
           {
             "group": "Concepts",
             "pages": [
-              "concepts/supported-chains",
               "concepts/yaml-workflow-basics",
               "concepts/workflow-execution",
-              "concepts/actions",
               "concepts/triggers",
+              "concepts/event-listeners",
+              "concepts/price-triggers",
+              "concepts/actions",
+              "concepts/contract-deployer",
+              "concepts/api-integrations",
+              "concepts/transaction-manager",
+              "concepts/functions",
+              "concepts/address-tracking"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "concepts/supported-chains",
               "concepts/regex-usage",
               "concepts/limits-and-quotas"
             ]

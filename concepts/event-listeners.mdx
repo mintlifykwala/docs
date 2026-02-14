@@ -1,0 +1,91 @@
+---
+title: 'Event listeners'
+description: 'Continuously run blockchain event listeners on every supported chain'
+---
+
+Kwala runs event listeners continuously on all supported chains. It monitors smart contract events and triggers your workflows the moment a matching event is emitted.
+
+## Basic event trigger
+
+The following example demonstrates a basic event-based trigger that monitors a smart contract on Ethereum mainnet for `Transfer` events. Whenever tokens are transferred from the specified contract, this trigger will activate the workflow.
+
+```yaml
+trigger:
+  triggerChainID: 1
+  triggerSourceContract: "0x742d35Cc6e9A5f1e7A0e6FD4C8b2Bc3F5d9E1234"
+  triggerSourceContractABI: '[{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Transfer","type":"event"}]'
+  triggerEventName: "Transfer"
+```
+
+## Filtered event trigger
+
+You can add filters to specify which events trigger your workflow. For example, the  following configuration only activates when transfers come from a specific address and exceed 1 token in value:
+
+```yaml
+trigger:
+  triggerChainID: 1
+  triggerSourceContract: "0x742d35Cc6e9A5f1e7A0e6FD4C8b2Bc3F5d9E1234"
+  triggerSourceContractABI: '[...]'
+  triggerEventName: "Transfer"
+  triggerEventFilter:
+    from: "0xSpecificAddress..."
+    value: ">1000000000000000000"  # Greater than 1 token
+```
+
+Some common filter operators include:
+
+- Exact match: `"0xAddress..."`
+- Greater than: `">value"`
+- Less than: `"<value"`
+- Range: `">=value,<=value"`
+- Multiple values: `["value1", "value2"]`
+
+## Accessing event data
+
+When event listeners subscribe to your event, they can access event data using the `re.event()` syntax:
+
+```yaml
+APIPayload:
+  sender: "re.event(0)"    # First event parameter
+  amount: "re.event(1)"    # Second event parameter
+```
+
+The index maps to the position of values in the event signature. For example, with `LowPolBalance(address,uint256)`, `re.event(0)` returns the address and `re.event(1)` returns the uint256 value.
+
+## Listening to Kwala Function events
+
+Workflows can also listen to events emitted by [Kwala Functions](/concepts/functions), enabling you to chain workflows together through computed events.
+
+```yaml
+TriggerEventName: TokenTransferEvaluated(from string, to string, amount number, category string)
+RepeatEvery: event
+ExecuteAfter: event
+```
+
+This allows you to build event-driven pipelines where one function's output triggers another workflow. For example, a function that categorizes transfers can emit events that trigger notifications or further on-chain actions.
+
+For more details, see [Listen to Kwala function events](/concepts/functions#listen-to-kwala-function-events).
+
+## Use cases
+
+The following use cases show event listeners in action as part of theiw workflows:
+
+<CardGroup cols={2}>
+  <Card title="Cryptocurrency deposit alerts" icon="bell" href="/use-cases/cryptocurrency-deposit-alerts">
+    Get notified when deposits arrive
+  </Card>
+  <Card title="Low balance notifier" icon="wallet" href="/use-cases/low-wallet-balance-notifier">
+    Alert when wallet balance drops
+  </Card>
+</CardGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Event-based triggers" icon="bolt" href="/concepts/triggers#event-based-triggers">
+    Detailed trigger configuration reference
+  </Card>
+  <Card title="Address tracking" icon="magnifying-glass" href="/concepts/address-tracking">
+    Monitor wallet addresses for activity
+  </Card>
+</CardGroup>

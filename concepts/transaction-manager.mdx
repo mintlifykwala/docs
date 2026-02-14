@@ -1,0 +1,63 @@
+---
+title: 'Transaction manager'
+description: 'Execute, retry and finalize transactions with strong guarantees'
+---
+
+Kwala manages the full transaction lifecycle when your workflow calls a smart contract function. It handles all calls, submission, retries, and confirmation so your transactions land on-chain reliably. Kwala provides strong guarantees that your transactions will finalize through:
+
+## Automatic retries
+
+The `RetriesUntilSuccess` field ensures critical operations complete even when network conditions cause temporary failures.
+
+```yaml
+actions:
+  - Name: critical_transfer
+    Type: call
+    TargetContract: 0x65b2b850fee0e0c13d956ab5...
+    TargetFunction: function execute(address to)
+    TargetParams:
+      - 0x742d35Cc6e9A5f1e7A0e6FD4C8b2Bc3F5d9E1234
+    ChainID: 80002
+    RetriesUntilSuccess: 5
+```
+
+**Retry behavior:**
+- Retries happen automatically on failure
+- A delay is applied between retries
+- Total attempts = 1 (initial) + RetriesUntilSuccess
+
+## Using dynamic parameters
+
+Reference event data in your transaction parameters using `re.event()`:
+
+```yaml
+TargetParams:
+  - re.event(0)    # first parameter from triggering event
+  - re.event(1)    # second parameter
+```
+
+This enables workflows where the triggering event determines transaction details.
+
+## Use cases
+
+The following use cases demonstrate Kwala's transaction manager in action:
+
+<CardGroup cols={2}>
+  <Card title="Auto top-up wallet" icon="wallet" href="/use-cases/auto-top-up-wallet">
+    Automatically fund wallets when balance is low
+  </Card>
+  <Card title="Game reward payouts" icon="gamepad" href="/use-cases/blockchain-game-reward-payouts">
+    Call payout functions on game contracts
+  </Card>
+</CardGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Actions" icon="bolt" href="/concepts/actions">
+    Learn about all available workflow actions
+  </Card>
+  <Card title="Configure workflow" icon="gear" href="/workflow-builder/configure-workflow">
+    Set up contract calls in the workflow builder
+  </Card>
+</CardGroup>
