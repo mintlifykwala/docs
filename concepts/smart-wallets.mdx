@@ -3,8 +3,8 @@ title: "Smart wallets"
 description: "Learn about Kwala smart wallets for secure, gasless automated workflow execution"
 ---
 
-A Kwala smart wallet is a **wallet powered by a smart contract** that you fully own and control. It acts as the signer for all automated actions. When Kwala performs an automated 
-action, it's executed from the smart wallet’s address. Think of a smart wallet as a separate account that handles all your automated tasks. When Kwala runs your workflows, it uses this wallet to sign and send transactions, not your personal Kwala wallet.
+A Kwala smart wallet is a **wallet powered by a smart contract** that you fully own and control. It is an ERC-4337 compatible smart wallet and acts as the signer for all automated actions. When Kwala performs an automated 
+action, it's executed from the smart wallet’s address. Think of a smart wallet as a separate account that handles all your automated tasks. When Kwala runs your workflows, it uses this wallet to sign and send transactions, not your personal metamask EOA wallet.
 
 Smart wallets provide: 
 
@@ -13,15 +13,15 @@ Smart wallets provide:
 - **Isolation from Externally Owned Wallets (EOA)**: Your personal wallet remains safe as it's separate from automation
 
 <Note>
-When you create a smart wallet, Kwala is automatically set up as the operator. Kwala does not control your smart wallet. You remain the owner, and Kwala runs workflows on your behalf. Kwala can only execute actions permitted by your workflow approvals.
+When you create a smart wallet, Kwala is automatically set up as the operator. Kwala does not control your smart wallet. You remain the owner, and Kwala runs workflows on your behalf. Your EOA wallet is the admin of smart wallet and you have complete control to manage workflow execution through Kwala at any time. Kwala can only execute actions permitted by your workflow approvals.
 </Note>
 
 ## Why use a smart wallet?
 
 Kwala handles automated, repeatable tasks on the blockchain. A smart wallet makes this safer and easier by offering the following:
 
-- **Privacy**: Your personal wallet address isn't exposed to workflow execution.
-- **Separation**: Keep your personal activity apart from automation
+- **Privacy**: Your private key of EOA wallet isn't exposed to Kwala platform.
+- **Separation**: Keep your personal activity from EOA wallet separate from automation
 - **Free gas**: Kwala pays for transaction fees
 
 Your smart wallet serves as a gateway for your automation.
