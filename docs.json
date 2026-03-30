@@ -65,7 +65,8 @@
               "concepts/api-integrations",
               "concepts/transaction-manager",
               "concepts/functions",
-              "concepts/address-tracking"
+              "concepts/address-tracking",
+              "concepts/smart-wallets"
             ]
           },
           {
