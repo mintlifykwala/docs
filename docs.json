@@ -2,20 +2,20 @@
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
   "name": "Kwala Documentation",
-
   "integrations": {
     "clarity": {
       "projectId": "sphk44m9ez"
+    },
+    "googleAnalytics": {
+      "measurementId": "G-5QTK1QEYEP"
     }
   },
-
   "colors": {
     "primary": "#6300ff",
     "light": "#8a4dff",
     "dark": "#4700b7"
   },
   "favicon": "/logo/kwala-icon.png",
-  
   "navigation": {
     "tabs": [
       {
@@ -23,7 +23,9 @@
         "groups": [
           {
             "group": "Overview",
-            "pages": ["index"]
+            "pages": [
+              "index"
+            ]
           },
           {
             "group": "Getting started",
@@ -130,12 +132,10 @@
       ]
     }
   },
-
   "logo": {
     "light": "/logo/kwala-logo-dark.svg",
     "dark": "/logo/kwala-logo-white.png"
   },
-
   "navbar": {
     "links": [
       {
@@ -149,7 +149,6 @@
       "href": "https://Kwala.network/dashboard"
     }
   },
-
   "contextual": {
     "options": [
       "copy",
@@ -162,7 +161,6 @@
       "vscode"
     ]
   },
-
   "footer": {
     "socials": {
       "x": "https://x.com/KWALA_official",
@@ -171,4 +169,3 @@
     }
   }
 }
- 
