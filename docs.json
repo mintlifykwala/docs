@@ -2,21 +2,20 @@
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
   "name": "Kwala Documentation",
+
+  "integrations": {
+    "clarity": {
+      "projectId": "sphk44m9ez"
+    }
+  },
+
   "colors": {
     "primary": "#6300ff",
     "light": "#8a4dff",
     "dark": "#4700b7"
   },
   "favicon": "/logo/kwala-icon.png",
-  "head": [
-    {
-      "tag": "script",
-      "attrs": {
-        "type": "text/javascript"
-      },
-      "content": "(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src=\"https://www.clarity.ms/tag/\"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window, document, \"clarity\", \"script\", \"sphk44m9ez\");"
-    }
-  ],
+  
   "navigation": {
     "tabs": [
       {
@@ -24,9 +23,7 @@
         "groups": [
           {
             "group": "Overview",
-            "pages": [
-              "index"
-            ]
+            "pages": ["index"]
           },
           {
             "group": "Getting started",
@@ -133,10 +130,12 @@
       ]
     }
   },
+
   "logo": {
     "light": "/logo/kwala-logo-dark.svg",
     "dark": "/logo/kwala-logo-white.png"
   },
+
   "navbar": {
     "links": [
       {
@@ -150,6 +149,7 @@
       "href": "https://Kwala.network/dashboard"
     }
   },
+
   "contextual": {
     "options": [
       "copy",
@@ -162,6 +162,7 @@
       "vscode"
     ]
   },
+
   "footer": {
     "socials": {
       "x": "https://x.com/KWALA_official",
@@ -170,3 +171,4 @@
     }
   }
 }
+ 
