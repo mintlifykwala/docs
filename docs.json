@@ -8,6 +8,14 @@
     "dark": "#4700b7"
   },
   "favicon": "/logo/kwala-icon.png",
+  "head": [
+    {
+      "tag": "script",
+      "attrs": {
+        "src": "https://www.clarity.ms/tag/sphk44m9ez"
+      }
+    }
+  ],
   "navigation": {
     "tabs": [
       {
@@ -143,15 +151,15 @@
   },
   "contextual": {
     "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "mcp",
+      "cursor",
+      "vscode"
+    ]
   },
   "footer": {
     "socials": {
@@ -159,14 +167,5 @@
       "discord": "https://discord.gg/3hhm564TDq",
       "linkedin": "https://www.linkedin.com/company/kwala-official/"
     }
-  },
-  "head": [
-    {
-      "tag": "script",
-      "attrs": {
-        "type": "text/javascript",
-        "src": "https://www.clarity.ms/tag/sphk44m9ez"
-      }
-    }
-  ]
+  }
 }
