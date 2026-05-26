@@ -3,7 +3,7 @@ title: 'Deploy workflow'
 description: 'Deploy your workflow to the Kwala network'
 ---
 
-After creating and configuring your workflow, you need to compile, validate, and deploy it to the Kwala network. This guide walks you through ensuring your workflow runs correctly and deploying it onchain for execution.
+After creating and configuring your workflow, you need to compile, validate, and deploy it to the Kwala network. Deployment now automatically activates the workflow, so no separate activation step is required.
 
 ## Prerequisites
 
@@ -52,15 +52,13 @@ After approving the transaction, your workflow is saved and ready for deployment
 
 Once your workflow is saved, select **Deploy** to submit it to the Kwala network.
 
-After deployment, your workflow is live on the network and will begin monitoring for trigger conditions.
+After deployment, your workflow is live on the network and is automatically activated. It will begin monitoring for trigger conditions and will execute when trigger conditions are met.
 
 <Warning>
   Once your workflow is deployed and the transaction is confirmed, you can no longer edit or compile it. You may see messages like **"Editing is disabled"** or **"Cannot compile, workflow is pending, deployed, or claimed state"**. To make changes, you'll need to create a new workflow.
 </Warning>
 
 ## Activate your workflow
-
-Once you've deployed your workflow, you need to activate it to start execution and enable trigger monitoring. When you select **Activate**, your wallet window pops up. Approve the transaction to confirm activation. Once the transaction is confirmed, your workflow begins monitoring for trigger conditions and will execute when those conditions are met.
 
 After activating your workflow, you can check the **Console Logs** for status updates. You'll see messages such as:
 
@@ -74,7 +72,7 @@ After activating your workflow, you can check the **Console Logs** for status up
 </Frame>
 
 <Info>
-  You may notice some deduction in Kwala credits associated with deploying and activating your workflow onchain. These credits cover the cost of registering your workflow and enabling trigger monitoring on the network.
+  You may notice some deduction in Kwala credits associated with deploying your workflow onchain. These credits cover the cost of registering your workflow and enabling trigger monitoring on the network.
 </Info>
 
 ## Next steps
