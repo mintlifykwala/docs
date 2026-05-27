@@ -1,43 +1,92 @@
 ---
-title: 'Token price triggers'
-description: 'Run actions automatically when token price prices hit specific thresholds'
+title: 'Token Price Triggers'
+description: 'Run actions automatically when token prices reach specified thresholds.'
 ---
 
-Kwala monitors oracle price feeds and triggers workflows when token prices meet specified thresholds. These triggers let you define price conditions in YAML and Kwala will automatically execute your actions when the conditions are met. Price triggers are key to automations such as:
+Kwala monitors supported token price feeds and triggers workflows when configured price conditions are met.
 
-- **Price alerts**: Get notified when tokens hit target prices
-- **Auto-rebalancing**: Adjust portfolio allocations based on price movements
-- **Stop-loss protection**: Automatically exit positions when prices drop below thresholds
-- **DeFi automation**: Execute swaps, transfers, or contract calls at specific price points
+When defining a token price trigger:
 
-## How it works
+* Users specify a **Token** and **Target Price** in the workflow
+* Kwala computes a **price range** around the live token price using the token’s configured price range percentage
+* The workflow triggers when the configured target price falls within that range during evaluation
 
-Token price triggers monitor oracle price feeds and execute your workflow when conditions are met:
+Common use cases include:
 
-1. Kwala monitors the specified oracle feed for your target asset
-2. When the price crosses your threshold, the workflow triggers
-3. Your configured actions execute automatically
+* Price alerts
+* Auto-rebalancing
+* Stop-loss protection
+* DeFi automation
 
-## Use cases
+## How It Works
 
-The following use cases have token price triggers in their workflows:
+Token price triggers are evaluated at the configured heartbeat interval for each supported token.
 
-<CardGroup cols={2}>
-  <Card title="Oracle price alert notifications" icon="chart-line" href="/use-cases/oracle-price-alert-notifications">
-    Get notified when prices hit your targets
-  </Card>
-  <Card title="Auto top-up wallet" icon="wallet" href="/use-cases/auto-top-up-wallet">
-    Automated DeFi strategy with balance monitoring
-  </Card>
-</CardGroup>
+During each evaluation:
 
-## Next steps
+1. Kwala fetches the latest token price
+2. Computes the valid price range using the token’s configured percentage
+3. Checks whether the configured target price falls within that range
+4. Triggers the workflow if matched
 
-<CardGroup cols={2}>
-  <Card title="Triggers" icon="bolt" href="/concepts/triggers">
-    Learn about all trigger types
-  </Card>
-  <Card title="Actions" icon="play" href="/concepts/actions">
-    Configure workflow actions
-  </Card>
-</CardGroup>
+Token prices are evaluated at every heartbeat interval for as long as the workflow remains active.
+
+## Price Range Evaluation
+
+Exact price matches are not required. Kwala uses a predefined price range percentage for each token to evaluate trigger condition.
+
+### Example
+
+Assume:
+
+* Target Price mentioned in Kwala workflow = `100.2`
+* Current Token Price = `100`
+* Price Range Percentage = `0.5%`
+
+Computed range:
+
+* Lower Bound = `99.5`
+* Upper Bound = `100.5`
+
+Since `100.2` falls within `99.5` – `100.5`, the workflow is triggered.
+
+## Heartbeat Interval
+
+Heartbeat interval defines how frequently Kwala evaluates the latest price for a token.
+
+This means workflows are **not triggered in real time** when the market price changes. 
+Instead, trigger conditions are evaluated during the next heartbeat check for that token.
+
+## Supported Tokens
+
+| Token | Price Range Percentage | Heartbeat Interval |
+| :--- | :--- | :--- |
+| BTC | 0.5% | 20 minutes |
+| ETH | 0.5% | 10 minutes |
+| BNB | 1% | 1 minute |
+| POL | 0.2 | 3 minutes |
+| AVAX | 0.1 | 1 minute |
+| DOT | 0.25% | 30 seconds |
+| ALGO | 1 | 24 hours |
+| APE | 0.2 | 20 minutes |
+| PEPE | 0.5 | 24 hours |
+| AUSD | 0.5 | 24 hours |
+| UNI | 0.25 | 1 minute |
+| CELO | 0.5 | 4 minutes |
+| Aave | 0.45 | 25 seconds |
+| SHIB | 0.5 | 24 hours |
+| Steller | 0.2 | 10 minutes |
+| uHBAR | 0.5 | 24 hours |
+| cbLTC | 0.3 | 15 minutes |
+| Link | 0.35 | 30 seconds |
+| SUI | 0.5 | 24 hours |
+| APT | 0.5 | 24 hours |
+| ARB | 0.5 | 24 hours |
+| OP | 0.2 | 30 minutes |
+| TRX | 0.2 | 10 minutes |
+| DOGE | 0.25 | 40 seconds |
+| ADA | 0.25 | 1 minute |
+| 1INCH | 0.25 | 1 minute |
+| XRP | 0.25 | 1 minute |
+| XMR | 0.2 | 20 minutes |
+| SOL | 2.0% | 20 seconds |
