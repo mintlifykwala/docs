@@ -5,7 +5,7 @@ description: 'Run actions automatically when token prices reach specified thresh
 
 Kwala monitors supported token price feeds and triggers workflows when configured price conditions are met.
 
-When configuring a token price trigger:
+When defining a token price trigger:
 
 * Users specify a **Token** and **Target Price** in the workflow
 * Kwala computes a **price range** around the live token price using the token’s configured price range percentage
@@ -33,7 +33,7 @@ Token prices are evaluated at every heartbeat interval for as long as the workfl
 
 ## Price Range Evaluation
 
-Exact price matches are not required. Kwala uses a configurable price range percentage for each token to evaluate trigger condition.
+Exact price matches are not required. Kwala uses a predefined price range percentage for each token to evaluate trigger condition.
 
 ### Example
 
@@ -71,7 +71,6 @@ Instead, trigger conditions are evaluated during the next heartbeat check for th
 | APE | 0.2 | 20 minutes |
 | PEPE | 0.5 | 24 hours |
 | AUSD | 0.5 | 24 hours |
-| BAL | 0.5 | ?? |
 | UNI | 0.25 | 1 minute |
 | CELO | 0.5 | 4 minutes |
 | Aave | 0.45 | 25 seconds |
