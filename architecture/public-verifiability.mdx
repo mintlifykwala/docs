@@ -3,7 +3,7 @@ title: 'Public verifiability'
 description: 'Understanding public verifiability in Kwala'
 ---
 
-Public verifiability is a core principle of the Kwala network. All core activity logs and proofs are stored immutably on the Kalp Chain, which enables complete transparency and auditability of workflow executions.
+Public verifiability is a core principle of the Kwala network. All core activity logs and proofs are stored immutably on Kwala's decentralized ledger, which enables complete transparency and auditability of workflow executions.
 
 Kwala ensures that every workflow execution can be independently verified by anyone. This transparency creates trust without requiring users to rely on any single party, including Kwala itself.
 
@@ -18,7 +18,7 @@ Kwala ensures that every workflow execution can be independently verified by any
 
 ## Intent hashing
 
-When a user submits a workflow, the complete YAML definition is cryptographically hashed and stored on Kalp Chain alongside the user's signature.
+When a user submits a workflow, the complete YAML definition is cryptographically hashed and stored on Kwala's decentralized ledger alongside the user's signature.
 
 This creates a non-repudiable record that:
 
@@ -28,7 +28,7 @@ This creates a non-repudiable record that:
 
 ## Execution logs
 
-All workflow executions generate detailed logs stored in Merkle-tree-based structures on Kalp Chain. The logged data includes:
+All workflow executions generate detailed logs stored in Merkle-tree-based structures on Kwala's decentralized ledger. The logged data includes:
 
 | Data type | Description |
 |-----------|-------------|
@@ -41,7 +41,7 @@ All workflow executions generate detailed logs stored in Merkle-tree-based struc
 
 ## Verifier reports
 
-Verifier nodes submit reports to Kalp Chain that attest to execution correctness. The reports can be zero-knowledge prrofs that verify execution without revealing sensitive data or full logs to validate workflow computation.
+Verifier nodes submit reports to Kwala's decentralized ledger that attest to execution correctness. The reports can be zero-knowledge prrofs that verify execution without revealing sensitive data or full logs to validate workflow computation.
 
 Each verifier report includes:
 
@@ -53,11 +53,11 @@ Each verifier report includes:
 
 ## Auditability
 
-Any third party or regulator can replay and verify historical workflow executions using the public records on Kalp Chain. The audit process is as follows:
+Any third party or regulator can replay and verify historical workflow executions using the public records on Kwala's decentralized ledger. The audit process is as follows:
 
 <Steps>
   <Step title="Retrieve intent">
-    Fetch the original workflow definition and user signature from Kalp Chain using the intent hash.
+    Fetch the original workflow definition and user signature from Kwala's decentralized ledger using the intent hash.
   </Step>
   
   <Step title="Retrieve execution logs">
@@ -104,7 +104,7 @@ The audit data can be used in several scenarios, including:
 
 ## Accessing verification data
 
-You can access verification data by using the Kwala explorer or directly accessing the Kalp chain.
+You can access verification data by using the Kwala explorer or by querying the ledger directly.
 
 **Kwala Explorer**
 
@@ -115,9 +115,9 @@ The [Kwala Explorer](https://kwala-explorer.lovable.app/) provides a user-friend
 - Verify specific transactions
 - Download audit reports
 
-**Kalp Chain**
+**Querying the ledger directly**
 
-Developers can query Kalp Chain directly to:
+Developers can query Kwala's decentralized ledger directly to:
 
 - Retrieve raw execution proofs
 - Verify Merkle proofs programmatically

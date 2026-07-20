@@ -5,7 +5,7 @@ description: 'Understanding Kwala node architecture and security model'
 
 Kwala nodes are the backbone of the automation execution engine. Each node runs independently, but under permissioned access control, with security and auditability enforced at multiple layers.
 
-Kwala nodes form a distributed network responsible for monitoring triggers, executing workflows, and generating verifiable proofs. While nodes operate independently, they follow strict governance policies enforced through the Kalp Network.
+Kwala nodes form a distributed network responsible for monitoring triggers, executing workflows, and generating verifiable proofs. While nodes operate independently, they follow strict governance policies enforced through Kwala's decentralized infrastructure.
 
 ## Node security
 
@@ -13,7 +13,7 @@ Kwala implements multiple security layers to ensure trustless execution and prot
 
 ### Permissioned participation
 
-Every node operator is vetted and must register via the Kalp Governance Layer. This ensures:
+Every node operator is vetted and must register via the Kwala governance layer. This ensures:
 
 - Known and accountable node operators
 - Compliance with network policies
@@ -53,7 +53,7 @@ Nodes follow a structured process to claim and execute workflows securely.
 
 <Steps>
   <Step title="Workflow claiming">
-    Nodes claim workflows from the Kalp Chain based on scheduling triggers. The claiming process ensures fair distribution and prevents duplicate execution.
+    Nodes claim workflows from Kwala's decentralized ledger based on scheduling triggers. The claiming process ensures fair distribution and prevents duplicate execution.
   </Step>
   
   <Step title="Intent verification">
@@ -103,13 +103,13 @@ Creates cryptographic proofs of execution:
 
 - Records all inputs, outputs, and state transitions
 - Generates verifiable execution traces
-- Submits proofs to Kalp Chain for verification
+- Submits proofs to Kwala's decentralized ledger for verification
 
 ## Node requirements
 
 | Requirement | Specification |
 |-------------|---------------|
-| **Registration** | Governance approval via Kalp Network |
+| **Registration** | Governance approval via the Kwala governance layer |
 | **Infrastructure** | Cloud or dedicated hardware with KMS access |
 | **Connectivity** | Reliable network with low latency to supported chains |
 | **Uptime** | 99.9% availability SLA |
