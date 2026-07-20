@@ -3,7 +3,7 @@ title: 'System overview'
 description: 'Overview of the Kwala system architecture'
 ---
 
-Kwala is a verifiable, event-driven Web3 workflow automation platform that enables developers to build backend-less decentralized applications through declarative YAML-based workflow definitions. The platform provides a permissioned, decentralized infrastructure powered by Kalp Network, delivering cryptographically verifiable execution, regulatory compliance, and deterministic automation for production environments.
+Kwala is a verifiable, event-driven Web3 workflow automation platform that enables developers to build backend-less decentralized applications through declarative YAML-based workflow definitions. The platform provides a permissioned, decentralized infrastructure delivering cryptographically verifiable execution, regulatory compliance, and deterministic automation for production environments.
 
 ## Kwala Architecture
 
@@ -75,10 +75,10 @@ This enables workflows that combine on-chain and off-chain actions. By providing
 
 Kwala ensures that every workflow execution is cryptographically verifiable through an independent verification layer that separates execution from validation. The verification model consists of two distinct node types:
 
-- **Execution nodes**: Monitor triggers, process workflows, and execute actions across blockchain networks. They generate cryptographic execution proofs containing all inputs, outputs, and state transitions, which are submitted to Kalp Chain.
+- **Execution nodes**: Monitor triggers, process workflows, and execute actions across blockchain networks. They generate cryptographic execution proofs containing all inputs, outputs, and state transitions, which are submitted to Kwala's decentralized ledger.
 - **Verifier nodes**: Operate independently from executors, acting as auditors that re-compute workflow logic and validate execution correctness. They ensure every execution adheres strictly to the user's signed intent and defined workflow logic.
 
-All verification activity is permanently recorded on Kalp Chain for complete transparency and auditability. This includes intent hashes (cryptographic hashes of user-signed workflow definitions), execution logs (detailed records of every action), verifier reports (independent attestations or disputes), and Merkle proofs (cryptographic links between execution logs and on-chain records).
+All verification activity is permanently recorded on Kwala's decentralized ledger for complete transparency and auditability. This includes intent hashes (cryptographic hashes of user-signed workflow definitions), execution logs (detailed records of every action), verifier reports (independent attestations or disputes), and Merkle proofs (cryptographic links between execution logs and on-chain records).
 
 This public record enables any third party—regulators, auditors, or users—to independently verify workflow executions without trusting intermediaries.
 
@@ -90,7 +90,7 @@ All Kwala nodes are permissioned and operate within a governed set of policies b
 
 **Verifiable automation**
 
-All workflow executions are traceable to a user-signed intent, and logs are publicly auditable on Kalp Chain. Every action taken by the network can be cryptographically verified against the original workflow definition.
+All workflow executions are traceable to a user-signed intent, and logs are publicly auditable on Kwala's decentralized ledger. Every action taken by the network can be cryptographically verified against the original workflow definition.
 
 **KMS-backed signing**
 
