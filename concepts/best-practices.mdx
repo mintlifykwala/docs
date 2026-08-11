@@ -13,7 +13,7 @@ Always validate your YAML for proper indentation and formatting before deploying
 - Check for inconsistent list formatting
 - Validate your workflow using the **Compile** button before saving
 - Check the **Validation** pane for real-time syntax and schema validation
-- Review **Console Logs** for detailed error messages
+- Review **Logs** for detailed error messages
 
 ## Test before deployment
 
@@ -65,8 +65,8 @@ Never hardcode API secrets, private keys, or sensitive credentials in your workf
 
 - Use secure webhook endpoints that handle authentication server-side
 - Avoid including API keys directly in workflow payloads
-- Use the **Action Status Notification API Key** field for authenticated callbacks
 - Keep notification endpoints behind authentication layers
+{/*- Use the **Action Status Notification API Key** field for authenticated callbacks*/}
 
 <Warning>
   Workflow definitions are stored on-chain and are publicly visible. Never include private keys, API secrets, or sensitive credentials in your YAML.

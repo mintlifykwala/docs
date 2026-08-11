@@ -26,12 +26,12 @@ Configuring a workflow involves three steps:
 Triggers determine when your workflow activates. In the Workflow Builder, you'll configure execution settings that control trigger behavior.
 
 <Frame>
-  <img src="/images/workflow-builder/configure-workflow/configure-triggers.PNG" alt="Trigger configuration settings" />
+  <img src="/images/workflow-builder/configure-workflow/configure-triggers-new.png" alt="Trigger configuration settings" />
 </Frame>
 
 ### Required trigger fields
 
-The required fields for trigger configuration are **Execute after**, **Repeat after**, and **Expires in**.
+The required fields for trigger configuration are **Execute after**, **Repeat every**, and **Expires in**.
 
 **Execute after**
 
@@ -48,10 +48,10 @@ When you add trigger options, the **Workflow Builder** automatically adds additi
 For example, if you select **Oracle price** as a trigger, the workflow builder displays a **Trigger Source Configuration** where you specify the target price and select a token from the dropdown, as shown:
 
 <Frame>
-  <img src="/images/workflow-builder/configure-workflow/oracle-price-trigger.PNG" alt="Oracle price trigger source configuration" />
+  <img src="/images/workflow-builder/configure-workflow/oracle-price-trigger-new.png" alt="Oracle price trigger source configuration" />
 </Frame>
 
-**Repeat after**
+**Repeat every**
 
 Determines if and when the workflow should repeat. Choose from the following options:
 
@@ -60,15 +60,15 @@ Determines if and when the workflow should repeat. Choose from the following opt
 - **Event**: Workflow repeats each time the specified event occurs
 - **N/A**: Workflow executes only once and does not repeat
 
-Similar to the **Execute after** trigger, selecting a **Repeat after** trigger displays additional configuration fields. 
+Similar to the **Execute after** trigger, selecting a **Repeat every** trigger displays additional configuration fields. 
 
-For example, if you select **Event** as the **Repeat after** trigger, the builder displays a **Recurring Source Configuration** as shown:
+For example, if you select **Event** as the **Repeat every** trigger, the builder displays a Recurring Source Configuration as shown:
 
 <Frame>
-  <img src="/images/workflow-builder/configure-workflow/trigger-config-repeat-after-event.PNG" alt="Recurring source configuration for event-based repeat" />
+  <img src="/images/workflow-builder/configure-workflow/trigger-config-repeat-after-event-new.png" alt="Recurring source configuration for event-based repeat" />
 </Frame>
 
-- **Recurring Source Contract**: The smart contract address to monitor for recurring events. For example, `0x49e833337ece7afe375e44f4e3e8481029218e5c`.
+- **Recurring Contract**: The smart contract address to monitor for recurring events. For example, `0x49e833337ece7afe375e44f4e3e8481029218e5c`.
 - **Recurring Chain ID**: The blockchain network where the contract is deployed, such as `1` for Ethereum mainnet.
 - **Smart Contract (Optional)**: Paste Solidity contract code or upload a `.sol` file to automatically extract the ABI
 - **Recurring Source Contract ABI**: The contract's ABI for parsing events. This is auto-populated if the contract is verified on the blockchain or if you upload a contract file.
@@ -84,9 +84,10 @@ For example, if you select **Event** as the **Repeat after** trigger, the builde
 Sets when the trigger expires. Use the calendar icon to select the expiry date and time. The Workflow Builder automatically converts this into a Unix timestamp.
 
 <Frame>
-  <img src="/images/workflow-builder/configure-workflow/calendar-date-picker.PNG" alt="Expires in calendar picker" />
+  <img src="/images/workflow-builder/configure-workflow/calendar-date-picker-new.png" alt="Expires in calendar picker" />
 </Frame>
 
+{/*
 ### Optional trigger fields
 
 **Meta**
@@ -99,6 +100,7 @@ You can configure notifications to receive updates about your workflow's executi
 
 - **Action Status Notification POST URL**: The webhook endpoint where Kwala sends execution status updates
 - **Action Status Notification API Key**: API key for authenticating with your notification endpoint
+*/}
 
 Once you've configured your workflow triggers, Select **Next** to continue to action configuration.
 
@@ -123,13 +125,13 @@ The workflow builder prompts you to fill out additional required fields dependin
 Use the **POST** action type to send HTTP requests to external APIs, webhooks, or notification services.
 
 <Frame>
-  <img src="/images/workflow-builder/configure-workflow/configure-actions.PNG" alt="Action configuration settings" />
+  <img src="/images/workflow-builder/configure-workflow/configure-actions-new.png" alt="Action configuration settings" />
 </Frame>
 
 Required fields for POST actions:
 
-- **API Endpoint**: The URL to send the request to. For example, `https://api.telegram.org/bot7754368882:AAHS4KbbOkl5rEHoBBIR8eljgwq2PARYLyY/sendMessage`
-- **API Payload (JSON)**: The JSON data to include in the request body. You can pass both fixed values and event parameters in a POST action. 
+- **Webhook URL**: The URL to send the request to. For example, `https://api.telegram.org/bot7754368882:AAHS4KbbOkl5rEHoBBIR8eljgwq2PARYLyY/sendMessage`
+- **API Payload**: The JSON data to include in the request body. You can pass both fixed values and event parameters in a POST action. 
 - **Retries Until Success**: Number of retry attempts if the request fails.
 
 When adding target parameters for your action, you can use the event parameters from your trigger. Use `re.event(0)`, `re.event(1)`, `re.event(2)`, or any other index to reference values from the triggering event.
@@ -149,23 +151,23 @@ The following example shows a POST action where both fixed values and event para
     RetriesUntilSuccess: 5
 ```
 
-**Call smart contract function**
+**Web3 smart contract function**
 
-Use the **CALL** action type to interact with an existing smart contract by calling one of its functions.
+Use the **Web3 Call** action type to interact with an existing smart contract by calling one of its functions.
 
 <Frame>
-  <img src="/images/workflow-builder/configure-workflow/configure-call-actions.PNG" alt="CALL action configuration" />
+  <img src="/images/workflow-builder/configure-workflow/configure-call-actions-new.png" alt="CALL action configuration" />
 </Frame>
 
-Required fields for CALL actions:
+Required fields for Web3 Call actions:
 
 - **Target Contract**: The address of the smart contract to interact with. For example, `0x65b2b850fee0e0c13d956ab5...`
-- **Target Function**: The function signature to call. For example, `function updateNFT(string memory userId, uint256 points)`
+- **Function**: The function signature to call. For example, `function updateNFT(string memory userId, uint256 points)`
 - **Chain ID**: The blockchain network where the contract is deployed. Select from the dropdown
-- **Target Parameters**: The parameters to pass to the function. You can use fixed values or reference event data dynamically with re.event(0), re.event(1), etc. Enter each parameter on a separate line. 
+- **Params**: The parameters to pass to the function. You can use fixed values or reference event data dynamically with re.event(0), re.event(1), etc. Enter each parameter on a separate line. 
 - **Retries Until Success**: Number of retry attempts if the call fails
 
-**Example CALL configuration**
+**Example Web3 Call configuration**
 
 ```yaml
   - Name: transfer_funds
@@ -184,7 +186,7 @@ Required fields for CALL actions:
 Use the **Deploy** action type to deploy a new smart contract to a blockchain network.
 
 <Frame>
-  <img src="/images/workflow-builder/configure-workflow/configure-deploy-action.PNG" alt="Deploy action configuration" />
+  <img src="/images/workflow-builder/configure-workflow/configure-deploy-action-new.png" alt="Deploy action configuration" />
 </Frame>
 
 Required fields for Deploy actions:
@@ -213,7 +215,7 @@ Choose how your actions should be processed using the **Execution Mode** dropdow
 - **Parallel**: All actions execute simultaneously. Use this when actions are independent of each other and speed matters.
 
 <Frame>
-  <img src="/images/workflow-builder/configure-workflow/configure-execution-mode.PNG" alt="Execution mode selection" />
+  <img src="/images/workflow-builder/configure-workflow/configure-execution-mode-new.png" alt="Execution mode selection" />
 </Frame>
 
 After selecting your execution mode, the builder displays a **Workflow Summary** that shows an overview of the configuration. The summary includes:
