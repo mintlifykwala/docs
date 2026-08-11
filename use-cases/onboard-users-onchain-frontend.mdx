@@ -3,6 +3,10 @@ title: "Onboard users on-chain"
 description: "Build a lightweight onboarding flow using frontend and smart contract and Kwala to write registration data on-chain and trigger instant Telegram confirmations, without running a dedicated event-listening server."
 ---
 
+<Warning>
+  **Deprecated networks.** Kwala no longer supports the following chains: Avalanche Fuji Testnet, Polygon Testnet, Ethereum Testnet and Mainnet, OP Sepolia Testnet, Base Sepolia Testnet, BNB Testnet, and Celo Sepolia Testnet.
+</Warning>
+
 Onboarding users into a Web3 app often means writing data on-chain and then doing off-chain follow ups: welcome messages, analytics, or admin workflows. The usual approach, run a server that polls the chain, stores results, and sends notifications, adds operational overhead and maintenance.
 
 This guide shows a lightweight, production-minded pattern:
