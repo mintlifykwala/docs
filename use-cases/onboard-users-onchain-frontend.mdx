@@ -2,11 +2,6 @@
 title: "Onboard users on-chain"
 description: "Build a lightweight onboarding flow using frontend and smart contract and Kwala to write registration data on-chain and trigger instant Telegram confirmations, without running a dedicated event-listening server."
 ---
-
-<Warning>
-  **Deprecated networks.** Kwala no longer supports the following chains: Avalanche Fuji Testnet, Polygon Testnet, Ethereum Testnet and Mainnet, OP Sepolia Testnet, Base Sepolia Testnet, BNB Testnet, and Celo Sepolia Testnet.
-</Warning>
-
 Onboarding users into a Web3 app often means writing data on-chain and then doing off-chain follow ups: welcome messages, analytics, or admin workflows. The usual approach, run a server that polls the chain, stores results, and sends notifications, adds operational overhead and maintenance.
 
 This guide shows a lightweight, production-minded pattern:
@@ -44,7 +39,7 @@ This provides a real-time, auditable onboarding experience: the data is stored o
 
 Before you begin, ensure you have:
 
-1. MetaMask (or compatible wallet) connected to the target RPC. This guide uses the Polygon Amoy testnet. 
+1. MetaMask (or compatible wallet) connected to the target RPC. This guide uses the Polygon mainnet. 
 2. Telegram bot token and chat IDs (create via `@BotFather`)
 3. Kwala Dashboard access to create and deploy workflows: [https://kwala.network/dashboard](https://kwala.network/dashboard)
 4. Familiarity with Solidity and frontend tooling such as ethers.js, BrowserProvider, simple HTML/JS, or React
@@ -328,7 +323,7 @@ const CONTRACT_ABI = [
 ];
 
 // Connect to blockchain
-const provider = new ethers.providers.JsonRpcProvider("https://rpc-amoy.polygon.technology");
+const provider = new ethers.providers.JsonRpcProvider("https://rpc.polygon.technology");
 const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
 
 // Helper to send Telegram message
@@ -394,7 +389,7 @@ Create a Kwala workflow that listens for `RecordSaved` and posts a Telegram mess
    - **Execute After:** `immediate`
    - **Repeat Every:** `event`
    - **Recurring Source Contract:** `0x3e2f859DA20e1e74A5696Bf3246606218c246C9F`
-   - **Recurring Chain ID:** `80002` (Polygon Amoy)
+   - **Recurring Chain ID:** `137` (Polygon)
    - **Recurring Event Name:** `RecordSaved(address,string,string,string,uint256)`
    - **Recurring Source Contract ABI:** paste the event ABI (Kwala can fetch/accept the ABI)
    - **Action Status Notification POST URL:** 
@@ -425,7 +420,7 @@ Trigger:
   TriggerSourceContractABI: NA
   TriggerPrice: NA
   RecurringSourceContract: 0x3e2f859DA20e1e74A5696Bf3246606218c246C9F
-  RecurringChainID: 80002
+  RecurringChainID: 137
   RecurringEventName: RecordSaved(address,string,string,string,uint256)
   RecurringEventFilter: NA
   RecurringSourceContractABI: W3siYW5vbnltb3VzIjpmYWxzZSwiaW5wdXRzIjpbeyJpbmRleGVkIjp0cnVlLCJpbnRlcm5hbFR5cGUiOiJhZGRyZXNzIiwibmFtZSI6InVzZXIiLCJ0eXBlIjoiYWRkcmVzcyJ9LHsiaW5kZXhlZCI6ZmFsc2UsImludGVybmFsVHlwZSI6InN0cmluZyIsIm5hbWUiOiJuYW1lIiwidHlwZSI6InN0cmluZyJ9LHsiaW5kZXhlZCI6ZmFsc2UsImludGVybmFsVHlwZSI6InN0cmluZyIsIm5hbWUiOiJ0ZWxlZ3JhbUlkIiwidHlwZSI6InN0cmluZyJ9LHsiaW5kZXhlZCI6ZmFsc2UsImludGVybmFsVHlwZSI6InN0cmluZyIsIm5hbWUiOiJ3YWxsZXQiLCJ0eXBlIjoic3RyaW5nIn0seyJpbmRleGVkIjpmYWxzZSwiaW50ZXJuYWxUeXBlIjoidWludDI1NiIsIm5hbWUiOiJ0aW1lc3RhbXAiLCJ0eXBlIjoidWludDI1NiJ9XSwibmFtZSI6IlJlY29yZFNhdmVkIiwidHlwZSI6ImV2ZW50In0seyJpbnB1dHMiOlt7ImludGVybmFsVHlwZSI6ImFkZHJlc3MiLCJuYW1lIjoiX2FkZHIiLCJ0eXBlIjoiYWRkcmVzcyJ9XSwibmFtZSI6ImdldFJlY29yZCIsIm91dHB1dHMiOlt7ImludGVybmFsVHlwZSI6InN0cmluZyIsIm5hbWUiOiIiLCJ0eXBlIjoic3RyaW5nIn0seyJpbnRlcm5hbFR5cGUiOiJzdHJpbmciLCJuYW1lIjoiIiwidHlwZSI6InN0cmluZyJ9LHsiaW50ZXJuYWxUeXBlIjoic3RyaW5nIiwibmFtZSI6IiIsInR5cGUiOiJzdHJpbmcifSx7ImludGVybmFsVHlwZSI6InVpbnQyNTYiLCJuYW1lIjoiIiwidHlwZSI6InVpbnQyNTYifV0sInN0YXRlTXV0YWJpbGl0eSI6InZpZXciLCJ0eXBlIjoiZnVuY3Rpb24ifSx7ImlucHV0cyI6W3siaW50ZXJuYWxUeXBlIjoiYWRkcmVzcyIsIm5hbWUiOiIiLCJ0eXBlIjoiYWRkcmVzcyJ9XSwibmFtZSI6InJlY29yZHMiLCJvdXRwdXRzIjpbeyJpbnRlcm5hbFR5cGUiOiJzdHJpbmciLCJuYW1lIjoibmFtZSIsInR5cGUiOiJzdHJpbmcifSx7ImludGVybmFsVHlwZSI6InN0cmluZyIsIm5hbWUiOiJ0ZWxlZ3JhbUlkIiwidHlwZSI6InN0cmluZyJ9LHsiaW50ZXJuYWxUeXBlIjoic3RyaW5nIiwibmFtZSI6IndhbGxldCIsInR5cGUiOiJzdHJpbmcifSx7ImludGVybmFsVHlwZSI6InVpbnQyNTYiLCJuYW1lIjoidGltZXN0YW1wIiwidHlwZSI6InVpbnQyNTYifV0sInN0YXRlTXV0YWJpbGl0eSI6InZpZXciLCJ0eXBlIjoiZnVuY3Rpb24ifSx7ImlucHV0cyI6W3siaW50ZXJuYWxUeXBlIjoic3RyaW5nIiwibmFtZSI6Il9uYW1lIiwidHlwZSI6InN0cmluZyJ9LHsiaW50ZXJuYWxUeXBlIjoic3RyaW5nIiwibmFtZSI6Il90ZWxlZ3JhbUlkIiwidHlwZSI6InN0cmluZyJ9LHsiaW50ZXJuYWxUeXBlIjoic3RyaW5nIiwibmFtZSI6Il93YWxsZXQiLCJ0eXBlIjoic3RyaW5nIn1dLCJuYW1lIjoic2F2ZVJlY29yZCIsIm91dHB1dHMiOltdLCJzdGF0ZU11dGFiaWxpdHkiOiJub25wYXlhYmxlIiwidHlwZSI6ImZ1bmN0aW9uIn1d
@@ -471,7 +466,7 @@ Execution:
     View events processed, API calls, payloads, and retry counts in the Kwala Dashboard → Workflow Logs
   </Card>
   <Card title="Contract Explorer" icon="magnifying-glass">
-    Verify `RecordSaved` events and transaction receipts on Amoy Polygonscan
+    Verify `RecordSaved` events and transaction receipts on Polygonscan
   </Card>
 </CardGroup>
 

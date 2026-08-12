@@ -2,11 +2,6 @@
 title: 'Triggers'
 description: 'Learn about workflow triggers in Kwala'
 ---
-
-<Warning>
-  **Deprecated networks.** Kwala no longer supports the following chains: Avalanche Fuji Testnet, Polygon Testnet, Ethereum Testnet and Mainnet, OP Sepolia Testnet, Base Sepolia Testnet, BNB Testnet, and Celo Sepolia Testnet.
-</Warning>
-
 Triggers define when and how your Kwala workflows are activated. They are the "listening" mechanism that watches for specific events, conditions, or time intervals to automatically execute your workflows. Triggers eliminate the need for manual intervention or constant polling.
 
 ## Type of triggers in Kwala workflows
@@ -23,11 +18,11 @@ Event-based triggers listen for specific blockchain events and execute workflows
 
 ### Basic event trigger
 
-The following example demonstrates a basic event-based trigger that monitors a smart contract on Ethereum mainnet for `Transfer` events. Whenever tokens are transferred from the specified contract, this trigger will activate the workflow.
+The following example demonstrates a basic event-based trigger that monitors a smart contract on Optimism mainnet for `Transfer` events. Whenever tokens are transferred from the specified contract, this trigger will activate the workflow.
 
 ```yaml
 trigger:
-  triggerChainID: 1
+  triggerChainID: 10
   triggerSourceContract: "0x742d35Cc6e9A5f1e7A0e6FD4C8b2Bc3F5d9E1234"
   triggerSourceContractABI: '[{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Transfer","type":"event"}]'
   triggerEventName: "Transfer"
@@ -41,7 +36,7 @@ The following example shows how to add filters to narrow down which events trigg
 
 ```yaml
 trigger:
-  triggerChainID: 1
+  triggerChainID: 10
   triggerSourceContract: "0x742d35Cc6e9A5f1e7A0e6FD4C8b2Bc3F5d9E1234"
   triggerSourceContractABI: '[...]'
   triggerEventName: "Transfer"
@@ -68,7 +63,7 @@ The following example configures a time-based trigger that executes the workflow
 ```yaml
 trigger:
   repeatEvery: "3600"  # Every hour (in seconds)
-  triggerChainID: 1
+  triggerChainID: 10
 ```
 
 **Common Intervals:**
@@ -84,7 +79,7 @@ The following example uses cron notation to schedule workflow execution at midni
 ```yaml
 trigger:
   repeatEvery: "0 0 * * *"  # Every day at midnight
-  triggerChainID: 1
+  triggerChainID: 10
 ```
 
 **Common Cron Patterns:**
@@ -100,7 +95,7 @@ The following example delays workflow execution until a specific Unix timestamp 
 ```yaml
 trigger:
   executeAfter: 1735689600  # Unix timestamp
-  triggerChainID: 1
+  triggerChainID: 10
 ```
 
 The following example delays execution until a specific block number is reached on the blockchain. This ensures precise timing based on block production rather than real-world time.
@@ -108,7 +103,7 @@ The following example delays execution until a specific block number is reached 
 ```yaml
 trigger:
   executeAfter: "block:18000000"  # After specific block
-  triggerChainID: 1
+  triggerChainID: 10
 ```
 
 ## Recurring triggers
@@ -141,7 +136,7 @@ The following example configures a trigger that runs every hour but automaticall
 
 ```yaml
 trigger:
-  triggerChainID: 1
+  triggerChainID: 10
   repeatEvery: "3600"
   expiresIn: 1735689600  # Unix timestamp when trigger stops
 ```
@@ -150,7 +145,7 @@ The following example shows how to set expiration as a duration in seconds (30 d
 
 ```yaml
 trigger:
-  triggerChainID: 1
+  triggerChainID: 10
   repeatEvery: "3600"
   expiresIn: "2592000"  # Expires after 30 days
 ```
@@ -170,7 +165,7 @@ You can use triggers to monitor events on multiple blockchains. The following ex
 ```yaml
 trigger:
   # Event-based trigger
-  triggerChainID: 1
+  triggerChainID: 10
   triggerSourceContract: "0xContract..."
   triggerEventName: "LargeTransfer"
   
@@ -184,12 +179,12 @@ trigger:
 
 ### Multi-chain monitoring
 
-The following example demonstrates cross-chain monitoring by tracking related events on both Ethereum and Polygon. This is useful for bridge monitoring, cross-chain messaging, or coordinating actions across multiple networks.
+The following example demonstrates cross-chain monitoring by tracking related events on both Optimism and Polygon. This is useful for bridge monitoring, cross-chain messaging, or coordinating actions across multiple networks.
 
 ```yaml
 trigger:
-  # Primary trigger on Ethereum
-  triggerChainID: 1
+  # Primary trigger on Optimism
+  triggerChainID: 10
   triggerSourceContract: "0xEthContract..."
   triggerEventName: "Bridged"
   
@@ -229,7 +224,7 @@ The following example configures webhook notifications to receive real-time upda
 
 ```yaml
 trigger:
-  triggerChainID: 1
+  triggerChainID: 10
   triggerSourceContract: "0x..."
   triggerEventName: "Transfer"
   
@@ -255,7 +250,7 @@ When your workflow executes, Kwala will send a POST request to your configured w
     }
   ],
   "metadata": {
-    "chainId": 1,
+    "chainId": 10,
     "triggerEvent": "Transfer"
   }
 }

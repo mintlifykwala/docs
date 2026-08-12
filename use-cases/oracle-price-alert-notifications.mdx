@@ -2,11 +2,6 @@
 title: 'Real-time oracle price alerts'
 description: 'Build an automated workflow that monitors on-chain oracle prices and sends Telegram alerts when thresholds are met'
 ---
-
-<Warning>
-  **Deprecated networks.** Kwala no longer supports the following chains: Avalanche Fuji Testnet, Polygon Testnet, Ethereum Testnet and Mainnet, OP Sepolia Testnet, Base Sepolia Testnet, BNB Testnet, and Celo Sepolia Testnet.
-</Warning>
-
 Tracking live on-chain asset prices such as SOL or ETH often means setting up backend services, cron jobs, or external price feeds. These systems require constant maintenance and integration, which can slow developers down when all they want is a simple, reliable automation.
 
 Kwala removes this complexity by letting you automate price-based triggers directly on-chain: no servers, no cron jobs, and no middleware.
@@ -74,7 +69,7 @@ This is the smart contract address for the SOL price oracle, which Kwala automat
 - **Recurring Source Configuration:**
     - Target price: `$195`
     - Target token: `Solana (SOL)`
-- **Trigger Chain ID:** `1` (Ethereum Mainnet)
+- **Trigger Chain ID:** `137` (Polygon Mainnet)
 - **Trigger Price:** `$195`
 - **Action Status Notification POST URL:** Add the workflow's URL (already available in the placeholder)
 
@@ -113,13 +108,13 @@ After setting up the trigger and action, define your workflow using the YAML bel
 Name: sol_pricedrop1
 Trigger:
   TriggerSourceContract: 0xD31a59c85aE9D8edEFeC411D448f90841571b89c
-  TriggerChainID: 1
+  TriggerChainID: 137
   TriggerEventName: NA
   TriggerEventFilter: NA
   TriggerSourceContractABI: NA
   TriggerPrice: 195.0
   RecurringSourceContract: 0xD31a59c85aE9D8edEFeC411D448f90841571b89c
-  RecurringChainID: 1
+  RecurringChainID: 137
   RecurringEventName: NA
   RecurringEventFilter: NA
   RecurringSourceContractABI: NA

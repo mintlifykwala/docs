@@ -2,11 +2,6 @@
 title: 'Kwalang language'
 description: 'Learn the fundamentals of YAML, the workflow definition language'
 ---
-
-<Warning>
-  **Deprecated networks.** Kwala no longer supports the following chains: Avalanche Fuji Testnet, Polygon Testnet, Ethereum Testnet and Mainnet, OP Sepolia Testnet, Base Sepolia Testnet, BNB Testnet, and Celo Sepolia Testnet.
-</Warning>
-
 Kwala workflows are defined using YAML, a human-readable data serialization language. Kwala uses YAML for several reasons:
 
 - **Human-readable**: YAML's clean, indentation-based syntax makes workflows easy to read and understand without deep technical expertise.
@@ -33,10 +28,10 @@ The **key** is the label that describes what information you are providing. The 
 
 ```yaml
 Name: my_token_monitor
-ChainID: 1
+ChainID: 137
 ```
 
-Here, `Name` and `ChainID` are keys, and `my_token_monitor` and `1` are their corresponding values.
+Here, `Name` and `ChainID` are keys, and `my_token_monitor` and `137` are their corresponding values.
 
 ### Organize information with sections
 
@@ -60,11 +55,11 @@ This gives your workflow a name so you can identify it later.
 ```yaml
 Trigger:
   TriggerSourceContract: 0x49e833337ece7afe375e44f4e3e8481029218e5c
-  TriggerChainID: 1
+  TriggerChainID: 137
   TriggerEventName: Transfer(address,address,uint256)
 ```
 
-Here, we tell Kwala what to watch for. In plain English: "Monitor contract 0x49e8...18e5c on Ethereum (chain 1) for Transfer events."
+Here, we tell Kwala what to watch for. In plain English: "Monitor contract 0x49e8...18e5c on Polygon (chain 137) for Transfer events."
 
 ```yaml
 Actions:
@@ -75,7 +70,7 @@ Actions:
     TargetParams:
       - 0x49e833337ece7afe375e44f4e3e8481029218e5c
       - 100
-    ChainID: 1
+    ChainID: 137
 ```
 
 Here, we tell Kwala what to do when triggered. In plain English: "Call the transfer function on contract 0x0f51...09ad and send 100 tokens to address 0x49e8...18e5c."

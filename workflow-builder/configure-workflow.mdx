@@ -2,11 +2,6 @@
 title: 'Configure workflow'
 description: 'Configure triggers, actions, and settings for your workflow'
 ---
-
-<Warning>
-  **Deprecated networks.** Kwala no longer supports the following chains: Avalanche Fuji Testnet, Polygon Testnet, Ethereum Testnet and Mainnet, OP Sepolia Testnet, Base Sepolia Testnet, BNB Testnet, and Celo Sepolia Testnet.
-</Warning>
-
 After creating a workflow, you need to configure its triggers, actions, and execution settings. This guide walks you through each configuration step in the Workflow Builder.
 
 ## Prerequisites
@@ -69,7 +64,7 @@ For example, if you select **Event** as the **Repeat every** trigger, the builde
 </Frame>
 
 - **Recurring Contract**: The smart contract address to monitor for recurring events. For example, `0x49e833337ece7afe375e44f4e3e8481029218e5c`.
-- **Recurring Chain ID**: The blockchain network where the contract is deployed, such as `1` for Ethereum mainnet.
+- **Recurring Chain ID**: The blockchain network where the contract is deployed, such as `137` for Polygon mainnet.
 - **Smart Contract (Optional)**: Paste Solidity contract code or upload a `.sol` file to automatically extract the ABI
 - **Recurring Source Contract ABI**: The contract's ABI for parsing events. This is auto-populated if the contract is verified on the blockchain or if you upload a contract file.
 - **Recurring Event Name**: Select the event to listen for from the dropdown. For example, `Transfer(address,address,uint256)`.
@@ -177,7 +172,7 @@ Required fields for Web3 Call actions:
     TargetParameters:
       - re.event(0)    # dynamic - recipient address from triggering event
       - 100            # fixed  - transfer amount
-    ChainID: 1
+    ChainID: 137
     RetriesUntilSuccess: 5
 ```
 

@@ -2,20 +2,15 @@
 title: 'Event listeners'
 description: 'Continuously run blockchain event listeners on every supported chain'
 ---
-
-<Warning>
-  **Mainnet only.** Event listeners are supported on Mainnet only and have been discontinued on Testnet.
-</Warning>
-
 Kwala runs event listeners continuously on all supported chains. It monitors smart contract events and triggers your workflows the moment a matching event is emitted.
 
 ## Basic event trigger
 
-The following example demonstrates a basic event-based trigger that monitors a smart contract on Ethereum mainnet for `Transfer` events. Whenever tokens are transferred from the specified contract, this trigger will activate the workflow.
+The following example demonstrates a basic event-based trigger that monitors a smart contract on Polygon mainnet for `Transfer` events. Whenever tokens are transferred from the specified contract, this trigger will activate the workflow.
 
 ```yaml
 trigger:
-  triggerChainID: 1
+  triggerChainID: 137
   triggerSourceContract: "0x742d35Cc6e9A5f1e7A0e6FD4C8b2Bc3F5d9E1234"
   triggerSourceContractABI: '[{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Transfer","type":"event"}]'
   triggerEventName: "Transfer"
@@ -27,7 +22,7 @@ You can add filters to specify which events trigger your workflow. For example, 
 
 ```yaml
 trigger:
-  triggerChainID: 1
+  triggerChainID: 137
   triggerSourceContract: "0x742d35Cc6e9A5f1e7A0e6FD4C8b2Bc3F5d9E1234"
   triggerSourceContractABI: '[...]'
   triggerEventName: "Transfer"
