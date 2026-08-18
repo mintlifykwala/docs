@@ -54,6 +54,112 @@ In parallel mode, all actions execute simultaneously. This mode is useful when:
 
 **Example use case:** Send notifications to multiple channels (email, Discord, Telegram) when a governance proposal is created.
 
+## Triggering and testing API workflows
+
+Workflows with an API trigger are started by an HTTP request. Kwala generates ready-to-use cURL commands for both the one-time and recurring flows, each with a **Test** and a **Live** variant, so you can trigger without writing any client code.
+
+- **Test cURL** — a dry-run against your deployed workflow. It validates the request and returns the response schema but does **not** execute the workflow's actions. Use it to confirm the endpoint, authentication, and schema.
+- **Live cURL** — actually triggers the workflow and executes its actions on-chain.
+
+<Note>
+cURL testing only works **after the workflow is deployed** — the commands are generated against the deployed endpoint, so triggering fails on an undeployed workflow.
+</Note>
+
+The commands differ by two query parameters:
+
+- `production=false` (Test / dry-run) vs `production=true` (Live)
+- `recurring=false` (one-time flow) vs `recurring=true` (recurring flow)
+
+The workflow key in the URL (`<name>_<wallet>`) is your workflow name joined to your wallet address. It is generated at deploy — copy it from the panel, do not construct it by hand.
+
+### Test the one-time flow
+
+The following example runs the one-time flow as a dry-run. A successful test returns the configured response schema and a `200 OK`.
+
+```bash
+curl --location --request POST 'https://kalp-service.kwala.network/trigger/workflow/Testing-web2-trigger_0x2FeB539298CccD21eBA4Ff962Db2Ff0c4EfB33a8?recurring=false&production=false' \
+  --header 'Authorization: Bearer kjfkdckjfvclkmkljnjfklcsjhk' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "FirstName": "Jhon",
+  "LastName": "Doe"
+}'
+```
+
+<Frame>
+  <img src="/images/concepts/web2-trigger/web2-trigger-test-curl-hit-with-200-ok.png" alt="Web2 Test Trigger" />
+</Frame>
+
+### Test the recurring flow
+
+The recurring flow is tested from the **Recurring cURL** tab. Note the `recurring=true` parameter and the Basic-auth `--user` flag matching the recurring authentication.
+
+```bash
+curl --location --request PATCH 'https://kalp-service.kwala.network/trigger/workflow/Testing-web2-trigger_0x2FeB539298CccD21eBA4Ff962Db2Ff0c4EfB33a8?recurring=true&production=false' \
+  --user 'username:password' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "FirstName": "Jhon",
+  "LastName": "Doe",
+  "Age": "49",
+  "Country": "USA"
+}'
+```
+
+<Frame>
+  <img src="/images/concepts/web2-trigger/web2-repeat-every-test-curl-trigger.png" alt="Web2 Recurring Test Trigger" />
+</Frame>
+
+### Trigger the live workflow
+
+The **Live** cURL cannot be triggered from the Kwala UI, because a live call executes real on-chain actions. Copy the Live command and run it from your own environment — a terminal, Postman, a backend service, a webhook, or any system that can send an HTTP request. The only difference from the Test command is `production=true`.
+
+The following example is the one-time Live command sent from Postman. Because the workflow's action is an HTTP POST action, running this live command executes that action.
+
+```bash
+curl --location --request POST 'https://kalp-service.kwala.network/trigger/workflow/Testing-web2-trigger_0x2FeB539298CccD21eBA4Ff962Db2Ff0c4EfB33a8?recurring=false&production=false' \
+  --header 'Authorization: Bearer kjfkdckjfvclkmkljnjfklcsjhk' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "FirstName": "Jhon",
+  "LastName": "Doe"
+}'
+```
+
+<Frame>
+  <img src="/images/concepts/web2-trigger/One-time-production-trigger-usin-postman.png" alt="Only Once production trigger using postman" />
+</Frame>
+
+Once the live call succeeds, the workflow runs and its actions execute. You can confirm the run in the **Workflow Runs** panel.
+
+<Frame>
+  <img src="/images/concepts/web2-trigger/live-one-time-trigger-log.png" alt="Log for only once trigger" />
+</Frame>
+
+The recurring flow works the same way with `recurring=true&production=true`.
+
+<Frame>
+  <img src="/images/concepts/web2-trigger/Repeat-every-production-trigger-using-postman.png" alt="Repeat Every Prodiuction Trigger using postman" />
+</Frame>
+
+### API logs
+
+For transparency, every trigger — Test and Live, one-time and recurring — is recorded in the **API Logs** tab. Each record shows the timestamp, status, HTTP code, trigger type, and duration. Dry-run (Test) calls are labeled so you can distinguish them from live executions.
+
+Expand any record to inspect the full details of that call: request ID, trigger type, environment (Live or dry-run), HTTP status, duration, request payload, delivery payload, and response body.
+
+<Frame>
+  <img src="/images/concepts/web2-trigger/logs containing both once-and-recurring-trigger.png" alt="Log showing bith recurring and only once trigger" />
+</Frame>
+
+<Frame>
+  <img src="/images/concepts/web2-trigger/detailed-log-for-api-trigger.png" alt="Detailed log" />
+</Frame>
+
+### Deploy before you trigger
+
+An API trigger workflow must be deployed before its endpoint accepts calls. Deploy follows the enforced order: **Save** stores the definition, **Compile** validates it as a dry run (nothing goes on-chain, and any edit resets the compile), and **Deploy** goes live and costs `0.001 KWALA`. API trigger workflows are set to expire **1 day** after deployment — redeploy to keep a long-running endpoint active.
+
 ## Workflow execution lifecycle
 
 Understanding the workflow lifecycle helps you monitor and debug executions. Every Kwala workflow follows a four-step execution process:

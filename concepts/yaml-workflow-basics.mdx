@@ -14,7 +14,7 @@ Kwala workflows are defined using YAML, a human-readable data serialization lang
 
 Kwalang eliminates the complexity of blockchain automation by providing a declarative language where you simply define what should happen and when. In Kwalang, you write workflows in YAML that specify:
 
-- **When** your workflow should activate (triggers)
+- **When** your workflow should activate (on-chain events, price levels, schedules, or an incoming API call)
 - **What** conditions must be met (optional conditional logic)
 - **How** actions should execute (sequential or parallel)
 - **Where** actions should run (which blockchain networks or APIs)
@@ -101,7 +101,7 @@ Here, we specify the execution mode, telling Kwala to run each action one after 
 
 - **Values can be text, numbers, or addresses**: Kwala accepts different types of information depending on what the key needs.
 
-- **NA means not applicable**: If a field does not apply to your workflow, you can use `NA` to indicate it is intentionally left empty.
+- **NA means not applicable**: If a field does not apply to your workflow, you can use `NA` to indicate it is intentionally left empty. Every workflow definition has the same fixed shape, so fields for trigger types you aren't using are set to `NA` — this is expected, not an error.
 
 <Card title="Next Steps" icon="arrow-right" href="/workflow-builder/create-workflow">
   Learn how to create your first workflow
