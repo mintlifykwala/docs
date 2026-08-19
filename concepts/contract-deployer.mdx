@@ -2,12 +2,11 @@
 title: 'Contract deployer'
 description: 'Deploy smart contracts across multiple chains from a single automated workflow'
 ---
-
 Kwala lets you deploy smart contracts to any supported chain from a single workflow. You only provide the target chain ID and upload the smart contract '.sol` file or paste your Solidity contract code, which can be used to extract the complied bytecode and contract ABI. Kwala will then handle the deployment for you. 
 
 You use the **deploy** action type to deploy a new smart contract to a blockchain network. You can also use deploy actions to deploy [Kwala Functions](/concepts/functions), which enable custom on-chain decision logic.
 
-The following example deploys an NFT contract to Ethereum mainnet with constructor parameters for name, symbol, and initial supply:
+The following example deploys an NFT contract to Polygon mainnet with constructor parameters for name, symbol, and initial supply:
 
 ```yaml
 actions:
@@ -19,8 +18,8 @@ actions:
       - "MyNFT"
       - "NFT"
       - "1000"
-    chainID: 1
-    metadata: "NFT deployment on Ethereum mainnet"
+    chainID: 137
+    metadata: "NFT deployment on Polygon mainnet"
     retriesUntilSuccess: 3
 ```
 

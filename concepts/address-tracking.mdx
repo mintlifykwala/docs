@@ -2,7 +2,6 @@
 title: 'Address tracking'
 description: 'Learn how to monitor on-chain addresses and trigger workflows when activity is detected'
 ---
-
 Address tracking is a trigger mechanism that monitors a specific on-chain address, such as a smart contract or wallet address, and activates your workflow whenever activity involving that address is detected. Unlike event-based triggers that require you to specify exact event names, address tracking acts as a broad listener that fires on any on-chain interaction with the tracked address.
 
 When you enable address tracking, the Kwala engine monitors activity based on two key configuration fields:
@@ -309,7 +308,7 @@ Many RPCs return `contractAddress` as `null`, `""`, or `0x000...000` for non-dep
 
 ## Example workflows
 
-The following example shows a complete address tracking workflow that demonstrates both static and dynamic notification patterns. This workflow monitors an address on Polygon Amoy (chain ID `80002`) and fires two actions whenever activity is detected:
+The following example shows a complete address tracking workflow that demonstrates both static and dynamic notification patterns. This workflow monitors an address on Polygon (chain ID `137`) and fires two actions whenever activity is detected:
 
 - **NotifyStatic**: Sends the same fixed message every time, useful for simple alerts
 - **NotifyDynamic**: Sends transaction details extracted from the runtime payload using `re.event(index)`, where the index maps to specific fields from the activity event
@@ -320,14 +319,14 @@ Name: address_tracking_flow
 Trigger:
   # One-time address tracking source
   TriggerSourceContract: 0x18fcd17b107348bd54c05da39cf53621b892bcac
-  TriggerChainID: 80002
+  TriggerChainID: 137
   TriggerEventName: NA
   TriggerEventFilter: NA
   TriggerSourceContractABI: NA
 
   # Recurring address tracking source
   RecurringSourceContract: 0x18fcd17b107348bd54c05da39cf53621b892bcac
-  RecurringChainID: 80002
+  RecurringChainID: 137
   RecurringEventName: NA
   RecurringEventFilter: NA
   RecurringSourceContractABI: NA
@@ -368,7 +367,7 @@ To test your address tracking workflow:
 
 <Steps>
   <Step title="Deploy or pick a contract address">
-    Use an existing contract address on chain `80002` (Polygon Amoy) or deploy a new one. The example workflow uses `0x18fcd17b107348bd54c05da39cf53621b892bcac`.
+    Use an existing contract address on chain `137` (Polygon) or deploy a new one. The example workflow uses `0x18fcd17b107348bd54c05da39cf53621b892bcac`.
   </Step>
   <Step title="Trigger on-chain activity">
     Initiate any call or transaction involving that address. This could be a token transfer, a contract function call, or any other on-chain interaction.
@@ -379,7 +378,7 @@ To test your address tracking workflow:
     - **NotifyDynamic**: Transaction details like `txHash` and `blockNumber` populated from `re.event(index)`, where the index corresponds to the position of the value in the activity event data
   </Step>
   <Step title="Verify against a block explorer">
-    Cross-reference the `txHash` and `blockNumber` values from the dynamic payload against [PolygonScan Amoy](https://amoy.polygonscan.com/) or your target chain's explorer to confirm accuracy.
+    Cross-reference the `txHash` and `blockNumber` values from the dynamic payload against [PolygonScan](https://www.polygonscan.com/) or your target chain's explorer to confirm accuracy.
   </Step>
 </Steps>
 

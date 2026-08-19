@@ -2,7 +2,6 @@
 title: 'Kwala functions'
 description: 'Learn how to define custom on-chain logic that transforms blockchain data into decisions and actions'
 ---
-
 Kwala functions provide an on-chain decision layer for blockchains. They enable users to define and execute custom logic that processes blockchain data and produces meaningful outcomes. Kwala functions allow you to write logic that reads structured input, applies conditions and rules, transforms data, and emits new blockchain events that drive further automation.
 
 Blockchains natively provide transactions, raw events, and low-level protocol data, but they lack business rules, conditional evaluation, and workflow coordination. Kwala functions bridge this gap by allowing your decision logic to run on-chain, transforming raw blockchain data into meaningful events that trigger notifications, API calls, or downstream workflows. 
@@ -375,9 +374,9 @@ This workflow listens to blockchain activity via address tracking, invokes the d
 Name: smart_contract_address_tracking_01
 Trigger:
   TriggerSourceContract: 0x28453afef69583602e03b0017f4f8a5fc64dd9c0
-  TriggerChainID: 80002
+  TriggerChainID: 137
   RecurringSourceContract: 0x28453afef69583602e03b0017f4f8a5fc64dd9c0
-  RecurringChainID: 80002
+  RecurringChainID: 137
   RepeatEvery: address_tracking
   ExecuteAfter: address_tracking
   ExpiresIn: 1765561920
@@ -438,7 +437,7 @@ Execution:
     Workflow 1 deploys the Go contract containing your business logic to Kwala's decentralized ledger.
   </Step>
   <Step title="Detect blockchain activity">
-    Workflow 2 monitors the source contract (on Polygon Amoy) for address tracking events.
+    Workflow 2 monitors the source contract (on Polygon) for address tracking events.
   </Step>
   <Step title="Invoke ComputeEngine">
     When activity is detected, Workflow 2 calls the deployed Kwala function with the transaction data.

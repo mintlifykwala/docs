@@ -2,7 +2,6 @@
 title: 'Low wallet balance notifier'
 description: 'Build an automated workflow that sends Telegram alerts when a wallet balance falls below a specified threshold using Kwala'
 ---
-
 Manually tracking wallet balances in decentralized apps can mean missed alerts and failed transactions. In this guide, we'll build a low-balance notifier that automatically sends a Telegram alert when a wallet's native token balance falls below a chosen threshold using Kwala's low-code automation platform.
 
 With Kwala, you can create event-driven workflows using simple YAML scripts, no backend servers required.
@@ -11,7 +10,7 @@ With Kwala, you can create event-driven workflows using simple YAML scripts, no 
 
 This guide helps you set up an automation that:
 
-- Monitors a wallet balance on the Polygon Amoy testnet.
+- Monitors a wallet balance on the Polygon mainnet.
 - Emits an event when the balance is below **0.1 POL**.
 - Sends an instant Telegram alert to the user.
 
@@ -28,7 +27,7 @@ This guide helps you set up an automation that:
 
 Make sure you have:
 
-- A MetaMask wallet connected to the Polygon Amoy Testnet and Kwala network.
+- A MetaMask wallet connected to the Polygon mainnet and Kwala network.
 - Remix IDE to deploy the Solidity smart contract.
 - A Telegram bot created via [@BotFather](https://t.me/BotFather).
 - Access to the [Kwala Dashboard](https://kwala.network/dashboard) to set up the workflow.
@@ -77,10 +76,10 @@ contract PolNativeBalanceChecker {
 The contract compares a user's balance with the defined threshold. If the balance is below the threshold, it emits a `LowPolBalance` event: this event becomes the **trigger** for your Kwala workflow.
 
 <Note>
-Deploy the contract using Remix and connect your MetaMask wallet to Polygon Amoy Testnet. You must have POL Faucet to deploy the smart contract.
+Deploy the contract using Remix and connect your MetaMask wallet to Polygon Mainnet. You must have POL Faucet to deploy the smart contract.
 </Note>
 
-After deployment, copy your deployed smart contract address from the Amoy Polygon explorer (`https://amoy.polygonscan.com/`) to inspect the contract and its transactions.
+After deployment, copy your deployed smart contract address from the Polygon explorer (`https://polygonscan.com/`) to inspect the contract and its transactions.
 
 ## Step 2: Configure the Telegram bot
 
@@ -116,8 +115,8 @@ This is the event that activates your workflow.
 - **Execute After:** Set to event: executes the action after the event is emitted.
 - **Repeat Every:** `event` triggered by the event.
 - **Expires:** Add an expiration timestamp. For example, `17-09-2025 16:00` in IST.
-- **ParameterValue: RecurringSource Contract:** `0x1C5a23Fd1F7fEd9A5d020858BD4b93e5c93C92a8` the deployed smart contract address, available on Amoy Polygonscan.
-- **Trigger Chain ID:** `80002` Polygon Amoy Testnet
+- **ParameterValue: RecurringSource Contract:** `0x1C5a23Fd1F7fEd9A5d020858BD4b93e5c93C92a8` the deployed smart contract address, available on Polygonscan.
+- **Trigger Chain ID:** `137` Polygon Mainnet
 - **Recurring Event Name:** `LowPolBalance(address, uint256)`
 - **Event Filter:** `NA`
 - **Smart contract (optional):** You can paste the Solidity code or upload the `.sol` file.
@@ -152,13 +151,13 @@ Below is the YAML script to use for your Kwala workflow. Save and compile this c
 Name: LowBalanceNotification15
 Trigger:
   TriggerSourceContract: 0x1C5a23Fd1F7fEd9A5d020858BD4b93e5c93C92a8
-  TriggerChainID: 80002
+  TriggerChainID: 137
   TriggerEventName: LowPolBalance(address,uint256)
   TriggerEventFilter: NA
   TriggerSourceContractABI: WwogIHsKICAgICJhbm9ueW1vdXMiOiBmYWxzZSwKICAgICJpbnB1dHMiOiBbCiAgICAgIHsKICAgICAgICAiaW5kZXhlZCI6IHRydWUsCiAgICAgICAgImludGVybmFsVHlwZSI6ICJhZGRyZXNzIiwKICAgICAgICAibmFtZSI6ICJ1c2VyIiwKICAgICAgICAidHlwZSI6ICJhZGRyZXNzIgogICAgICB9LAogICAgICB7CiAgICAgICAgImluZGV4ZWQiOiBmYWxzZSwKICAgICAgICAiaW50ZXJuYWxUeXBlIjogInVpbnQyNTYiLAogICAgICAgICJuYW1lIjogImJhbGFuY2VXZWkiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0KICAgIF0sCiAgICAibmFtZSI6ICJMb3dQb2xCYWxhbmNlIiwKICAgICJ0eXBlIjogImV2ZW50IgogIH0sCiAgewogICAgImlucHV0cyI6IFtdLAogICAgIm5hbWUiOiAiVEhSRVNIT0xEIiwKICAgICJvdXRwdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJ1aW50MjU2IiwKICAgICAgICAibmFtZSI6ICIiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0KICAgIF0sCiAgICAic3RhdGVNdXRhYmlsaXR5IjogInZpZXciLAogICAgInR5cGUiOiAiZnVuY3Rpb24iCiAgfSwKICB7CiAgICAiaW5wdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJhZGRyZXNzIiwKICAgICAgICAibmFtZSI6ICJ1c2VyIiwKICAgICAgICAidHlwZSI6ICJhZGRyZXNzIgogICAgICB9CiAgICBdLAogICAgIm5hbWUiOiAiY2hlY2tBbmRXYXJuIiwKICAgICJvdXRwdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJ1aW50MjU2IiwKICAgICAgICAibmFtZSI6ICJiYWxhbmNlV2VpIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJub25wYXlhYmxlIiwKICAgICJ0eXBlIjogImZ1bmN0aW9uIgogIH0sCiAgewogICAgImlucHV0cyI6IFtdLAogICAgIm5hbWUiOiAiY2hlY2tNZSIsCiAgICAib3V0cHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAidWludDI1NiIsCiAgICAgICAgIm5hbWUiOiAiIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJub25wYXlhYmxlIiwKICAgICJ0eXBlIjogImZ1bmN0aW9uIgogIH0sCiAgewogICAgImlucHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAiYWRkcmVzcyIsCiAgICAgICAgIm5hbWUiOiAidXNlciIsCiAgICAgICAgInR5cGUiOiAiYWRkcmVzcyIKICAgICAgfQogICAgXSwKICAgICJuYW1lIjogInBvbEJhbGFuY2VPZiIsCiAgICAib3V0cHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAidWludDI1NiIsCiAgICAgICAgIm5hbWUiOiAiIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJ2aWV3IiwKICAgICJ0eXBlIjogImZ1bmN0aW9uIgogIH0KXQ==
   TriggerPrice: NA
   RecurringSourceContract: 0x1C5a23Fd1F7fEd9A5d020858BD4b93e5c93C92a8
-  RecurringChainID: 80002
+  RecurringChainID: 137
   RecurringEventName: LowPolBalance(address,uint256)
   RecurringEventFilter: NA
   RecurringSourceContractABI: WwogIHsKICAgICJhbm9ueW1vdXMiOiBmYWxzZSwKICAgICJpbnB1dHMiOiBbCiAgICAgIHsKICAgICAgICAiaW5kZXhlZCI6IHRydWUsCiAgICAgICAgImludGVybmFsVHlwZSI6ICJhZGRyZXNzIiwKICAgICAgICAibmFtZSI6ICJ1c2VyIiwKICAgICAgICAidHlwZSI6ICJhZGRyZXNzIgogICAgICB9LAogICAgICB7CiAgICAgICAgImluZGV4ZWQiOiBmYWxzZSwKICAgICAgICAiaW50ZXJuYWxUeXBlIjogInVpbnQyNTYiLAogICAgICAgICJuYW1lIjogImJhbGFuY2VXZWkiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0KICAgIF0sCiAgICAibmFtZSI6ICJMb3dQb2xCYWxhbmNlIiwKICAgICJ0eXBlIjogImV2ZW50IgogIH0sCiAgewogICAgImlucHV0cyI6IFtdLAogICAgIm5hbWUiOiAiVEhSRVNIT0xEIiwKICAgICJvdXRwdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJ1aW50MjU2IiwKICAgICAgICAibmFtZSI6ICIiLAogICAgICAgICJ0eXBlIjogInVpbnQyNTYiCiAgICAgIH0KICAgIF0sCiAgICAic3RhdGVNdXRhYmlsaXR5IjogInZpZXciLAogICAgInR5cGUiOiAiZnVuY3Rpb24iCiAgfSwKICB7CiAgICAiaW5wdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJhZGRyZXNzIiwKICAgICAgICAibmFtZSI6ICJ1c2VyIiwKICAgICAgICAidHlwZSI6ICJhZGRyZXNzIgogICAgICB9CiAgICBdLAogICAgIm5hbWUiOiAiY2hlY2tBbmRXYXJuIiwKICAgICJvdXRwdXRzIjogWwogICAgICB7CiAgICAgICAgImludGVybmFsVHlwZSI6ICJ1aW50MjU2IiwKICAgICAgICAibmFtZSI6ICJiYWxhbmNlV2VpIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJub25wYXlhYmxlIiwKICAgICJ0eXBlIjogImZ1bmN0aW9uIgogIH0sCiAgewogICAgImlucHV0cyI6IFtdLAogICAgIm5hbWUiOiAiY2hlY2tNZSIsCiAgICAib3V0cHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAidWludDI1NiIsCiAgICAgICAgIm5hbWUiOiAiIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJub25wYXlhYmxlIiwKICAgICJ0eXBlIjogImZ1bmN0aW9uIgogIH0sCiAgewogICAgImlucHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAiYWRkcmVzcyIsCiAgICAgICAgIm5hbWUiOiAidXNlciIsCiAgICAgICAgInR5cGUiOiAiYWRkcmVzcyIKICAgICAgfQogICAgXSwKICAgICJuYW1lIjogInBvbEJhbGFuY2VPZiIsCiAgICAib3V0cHV0cyI6IFsKICAgICAgewogICAgICAgICJpbnRlcm5hbFR5cGUiOiAidWludDI1NiIsCiAgICAgICAgIm5hbWUiOiAiIiwKICAgICAgICAidHlwZSI6ICJ1aW50MjU2IgogICAgICB9CiAgICBdLAogICAgInN0YXRlTXV0YWJpbGl0eSI6ICJ2aWV3IiwKICAgICJ0eXBlIjogImZ1bmN0aW9uIgogIH0KXQ==
@@ -192,7 +191,7 @@ Execution:
 After successful compilation, deploy the workflow. Activate it in Kwala and wait for the workflow status to show **claimed**.
 
 <Warning>
-Make sure you are in the Kwala network (not Polygon Amoy testnet) in MetaMask when creating/deploying this workflow.
+Make sure you are in the Kwala network (not Polygon mainnet) in MetaMask when creating/deploying this workflow.
 </Warning>
 
 ## Step 5: Create a polling workflow (Optional)
@@ -217,7 +216,7 @@ Add the action, a smart contract call.
 - **Action Type:** `CALL (Smart Contract)`
 - **Target Function:** `function checkAndWarn(address user)`
 - **Target Smart contract:** `0x1C5a23Fd1F7fEd9A5d020858BD4b93e5c93C92a8` (deployed contract address)
-- **Trigger Chain ID:** `80002` (Polygon Amoy Testnet)
+- **Trigger Chain ID:** `137` (Polygon Mainnet)
 
 Request body example:
 
@@ -228,7 +227,7 @@ Request body example:
 }
 ```
 
-Provide the wallet address that has Polygon Amoy testnet faucet tokens when calling the function.
+Provide the wallet address that has Polygon mainnet faucet tokens when calling the function.
 
 ### Add the YAML configuration for polling
 
@@ -263,7 +262,7 @@ Actions:
     TargetFunction: function checkAndWarn(address user)
     TargetParams:
       - 0x0F0C0b9683180DF0a13Fc176aFFd92E1F7f380f0
-    ChainID: 80002
+    ChainID: 137
     EncodedABI: NA
     Bytecode: NA
     EncodedGoContract: NA

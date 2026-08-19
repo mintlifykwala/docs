@@ -2,7 +2,6 @@
 title: 'Blockchain game reward payouts using Telegram'
 description: 'Build a Slide-to-Earn bounty automation that connects on-chain events to automated reward payouts and Telegram notifications'
 ---
-
 In this guide, we'll build a Slide-to-Earn bounty automation using Kwala Workflows, a YAML-driven, serverless Web3 automation platform.
 
 With Kwala, you can seamlessly connect on-chain events to on-chain or off-chain actions such as contract calls, Telegram notifications, or API integrations, without deploying your own backend or cron jobs.
@@ -13,7 +12,7 @@ Here you'll learn how to automate reward/bounty payouts for users who perform a 
 
 Build a workflow that:
 
-- **TRIGGER:** Detects a `SlidePerformed(address)` event emitted by the `SlideBounty` smart contract on Polygon Amoy testnet.
+- **TRIGGER:** Detects a `SlidePerformed(address)` event emitted by the `SlideBounty` smart contract on Polygon mainnet.
 - **ACTION 1:** Automatically calls `payoutLast()` to pay out the reward/bounty to the last participant.
 - **ACTION 2:** Sends a Telegram message confirming the reward distribution.
 
@@ -87,10 +86,10 @@ contract SlideBounty {
 
 Deployed contract address: `0x5EE16Ac7BEBde8F38C99DbEFBBEA4fC5653fC34C`
 
-Network: Polygon Amoy Testnet (Chain ID: `80002`)
+Network: Polygon Mainnet (Chain ID: `137`)
 
 <Warning>
-After deployment, fund the contract with test POL so it can pay bounties. You can view it on Amoy Polygonscan.
+After deployment, fund the contract with test POL so it can pay bounties. You can view it on Polygonscan.
 </Warning>
 
 ## Step 2: Setting up the Telegram bot
@@ -222,7 +221,7 @@ const SlideTrigger = () => {
         <p className="mt-4 text-sm font-medium">{status}</p>
         {address && (
           <p className="mt-2 text-xs text-gray-500">
-            Make sure you're on Polygon Amoy testnet
+            Make sure you're on Polygon mainnet
           </p>
         )}
       </div>
@@ -297,7 +296,7 @@ Now configure the Kwala workflow to react to `SlidePerformed` events and run the
 - **Execute After:** `event`
 - **Repeat Every:** `event`
 - **Trigger Source Contract:** `0x5EE16Ac7BEBde8F38C99DbEFBBEA4fC5653fC34C`
-- **Trigger Chain ID:** `80002`
+- **Trigger Chain ID:** `137`
 - **Trigger Event Name:** `SlidePerformed(address)`
 - **Expires In:** An expiration date such as, `24-10-2025 16:00` IST
 - **Action Status Notification URL:** `http://localhost:3000/`
@@ -309,7 +308,7 @@ Now configure the Kwala workflow to react to `SlidePerformed` events and run the
 - **Action Type:** `CALL (smartcontract)`
 - **Target Contract:** `0x5EE16Ac7BEBde8F38C99DbEFBBEA4fC5653fC34C`
 - **Target Function:** `function payoutLast()`
-- **Chain ID:** `80002`
+- **Chain ID:** `137`
 - **Retries Until Success:** `2`
 
 **Action 2 — Telegramreceipt**
@@ -337,13 +336,13 @@ Paste this YAML into Kwala (keeps the same structure and values used above):
 Name: BountyPayouts_f089
 Trigger:
   TriggerSourceContract: 0x5EE16Ac7BEBde8F38C99DbEFBBEA4fC5653fC34C
-  TriggerChainID: 80002
+  TriggerChainID: 137
   TriggerEventName: SlidePerformed(address)
   TriggerEventFilter: NA
   TriggerSourceContractABI: W3siaW5wdXRzIjpbXSwic3RhdGVNdXRhYmlsaXR5Ijoibm9ucGF5YWJsZSIsInR5cGUiOiJjb25zdHJ1Y3RvciJ9LHsiYW5vbnltb3VzIjpmYWxzZSwiaW5wdXRzIjpbeyJpbmRleGVkIjp0cnVlLCJpbnRlcm5hbFR5cGUiOiJhZGRyZXNzIiwibmFtZSI6InVzZXIiLCJ0eXBlIjoiYWRkcmVzcyJ9LHsiaW5kZXhlZCI6ZmFsc2UsImludGVybmFsVHlwZSI6InVpbnQyNTYiLCJuYW1lIjoiYW1vdW50IiwidHlwZSI6InVpbnQyNTYifV0sIm5hbWUiOiJCb3VudHlQYWlkIiwidHlwZSI6ImV2ZW50In0seyJhbm9ueW1vdXMiOmZhbHNlLCJpbnB1dHMiOlt7ImluZGV4ZWQiOnRydWUsImludGVybmFsVHlwZSI6ImFkZHJlc3MiLCJuYW1lIjoidXNlciIsInR5cGUiOiJhZGRyZXNzIn1dLCJuYW1lIjoiU2xpZGVQZXJmb3JtZWQiLCJ0eXBlIjoiZXZlbnQifSx7ImlucHV0cyI6W10sIm5hbWUiOiJib3VudHlBbW91bnQiLCJvdXRwdXRzIjpbeyJpbnRlcm5hbFR5cGUiOiJ1aW50MjU2IiwibmFtZSI6IiIsInR5cGUiOiJ1aW50MjU2In1dLCJzdGF0ZU11dGFiaWxpdHkiOiJ2aWV3IiwidHlwZSI6ImZ1bmN0aW9uIn0seyJpbnB1dHMiOltdLCJuYW1lIjoiZ2V0QmFsYW5jZSIsIm91dHB1dHMiOlt7ImludGVybmFsVHlwZSI6InVpbnQyNTYiLCJuYW1lIjoiIiwidHlwZSI6InVpbnQyNTYifV0sInN0YXRlTXV0YWJpbGl0eSI6InZpZXciLCJ0eXBlIjoiZnVuY3Rpb24ifSx7ImlucHV0cyI6W10sIm5hbWUiOiJsYXN0UGF5b3V0VGltZSIsIm91dHB1dHMiOlt7ImludGVybmFsVHlwZSI6InVpbnQyNTYiLCJuYW1lIjoiIiwidHlwZSI6InVpbnQyNTYifV0sInN0YXRlTXV0YWJpbGl0eSI6InZpZXciLCJ0eXBlIjoiZnVuY3Rpb24ifSx7ImlucHV0cyI6W10sIm5hbWUiOiJsYXN0VXNlciIsIm91dHB1dHMiOlt7ImludGVybmFsVHlwZSI6ImFkZHJlc3MiLCJuYW1lIjoiIiwidHlwZSI6ImFkZHJlc3MifV0sInN0YXRlTXV0YWJpbGl0eSI6InZpZXciLCJ0eXBlIjoiZnVuY3Rpb24ifSx7ImlucHV0cyI6W10sIm5hbWUiOiJvd25lciIsIm91dHB1dHMiOlt7ImludGVybmFsVHlwZSI6ImFkZHJlc3MiLCJuYW1lIjoiIiwidHlwZSI6ImFkZHJlc3MifV0sInN0YXRlTXV0YWJpbGl0eSI6InZpZXciLCJ0eXBlIjoiZnVuY3Rpb24ifSx7ImlucHV0cyI6W10sIm5hbWUiOiJwYXlvdXRDb29sZG93biIsIm91dHB1dHMiOlt7ImludGVybmFsVHlwZSI6InVpbnQyNTYiLCJuYW1lIjoiIiwidHlwZSI6InVpbnQyNTYifV0sInN0YXRlTXV0YWJpbGl0eSI6InZpZXciLCJ0eXBlIjoiZnVuY3Rpb24ifSx7ImlucHV0cyI6W10sIm5hbWUiOiJwYXlvdXRMYXN0Iiwib3V0cHV0cyI6W10sInN0YXRlTXV0YWJpbGl0eSI6Im5vbnBheWFibGUiLCJ0eXBlIjoiZnVuY3Rpb24ifSx7ImlucHV0cyI6W10sIm5hbWUiOiJwZXJmb3JtU2xpZGUiLCJvdXRwdXRzIjpbXSwic3RhdGVNdXRhYmlsaXR5Ijoibm9ucGF5YWJsZSIsInR5cGUiOiJmdW5jdGlvbiJ9LHsiaW5wdXRzIjpbeyJpbnRlcm5hbFR5cGUiOiJ1aW50MjU2IiwibmFtZSI6ImFtb3VudCIsInR5cGUiOiJ1aW50MjU2In1dLCJuYW1lIjoic2V0Qm91bnR5Iiwib3V0cHV0cyI6W10sInN0YXRlTXV0YWJpbGl0eSI6Im5vbnBheWFibGUiLCJ0eXBlIjoiZnVuY3Rpb24ifSx7InN0YXRlTXV0YWJpbGl0eSI6InBheWFibGUiLCJ0eXBlIjoicmVjZWl2ZSJ9XQ==
   TriggerPrice: NA
   RecurringSourceContract: 0x5EE16Ac7BEBde8F38C99DbEFBBEA4fC5653fC34C
-  RecurringChainID: 80002
+  RecurringChainID: 137
   RecurringEventName: SlidePerformed(address)
   RecurringEventFilter: NA
   RecurringSourceContractABI: W3siaW5wdXRzIjpbXSwic3RhdGVNdXRhYmlsaXR5Ijoibm9ucGF5YWJsZSIsInR5cGUiOiJjb25zdHJ1Y3RvciJ9LHsiYW5vbnltb3VzIjpmYWxzZSwiaW5wdXRzIjpbeyJpbmRleGVkIjp0cnVlLCJpbnRlcm5hbFR5cGUiOiJhZGRyZXNzIiwibmFtZSI6InVzZXIiLCJ0eXBlIjoiYWRkcmVzcyJ9LHsiaW5kZXhlZCI6ZmFsc2UsImludGVybmFsVHlwZSI6InVpbnQyNTYiLCJuYW1lIjoiYW1vdW50IiwidHlwZSI6InVpbnQyNTYifV0sIm5hbWUiOiJCb3VudHlQYWlkIiwidHlwZSI6ImV2ZW50In0seyJhbm9ueW1vdXMiOmZhbHNlLCJpbnB1dHMiOlt7ImluZGV4ZWQiOnRydWUsImludGVybmFsVHlwZSI6ImFkZHJlc3MiLCJuYW1lIjoidXNlciIsInR5cGUiOiJhZGRyZXNzIn1dLCJuYW1lIjoiU2xpZGVQZXJmb3JtZWQiLCJ0eXBlIjoiZXZlbnQifSx7ImlucHV0cyI6W10sIm5hbWUiOiJib3VudHlBbW91bnQiLCJvdXRwdXRzIjpbeyJpbnRlcm5hbFR5cGUiOiJ1aW50MjU2IiwibmFtZSI6IiIsInR5cGUiOiJ1aW50MjU2In1dLCJzdGF0ZU11dGFiaWxpdHkiOiJ2aWV3IiwidHlwZSI6ImZ1bmN0aW9uIn0seyJpbnB1dHMiOltdLCJuYW1lIjoiZ2V0QmFsYW5jZSIsIm91dHB1dHMiOlt7ImludGVybmFsVHlwZSI6InVpbnQyNTYiLCJuYW1lIjoiIiwidHlwZSI6InVpbnQyNTYifV0sInN0YXRlTXV0YWJpbGl0eSI6InZpZXciLCJ0eXBlIjoiZnVuY3Rpb24ifSx7ImlucHV0cyI6W10sIm5hbWUiOiJsYXN0UGF5b3V0VGltZSIsIm91dHB1dHMiOlt7ImludGVybmFsVHlwZSI6InVpbnQyNTYiLCJuYW1lIjoiIiwidHlwZSI6InVpbnQyNTYifV0sInN0YXRlTXV0YWJpbGl0eSI6InZpZXciLCJ0eXBlIjoiZnVuY3Rpb24ifSx7ImlucHV0cyI6W10sIm5hbWUiOiJsYXN0VXNlciIsIm91dHB1dHMiOlt7ImludGVybmFsVHlwZSI6ImFkZHJlc3MiLCJuYW1lIjoiIiwidHlwZSI6ImFkZHJlc3MifV0sInN0YXRlTXV0YWJpbGl0eSI6InZpZXciLCJ0eXBlIjoiZnVuY3Rpb24ifSx7ImlucHV0cyI6W10sIm5hbWUiOiJvd25lciIsIm91dHB1dHMiOlt7ImludGVybmFsVHlwZSI6ImFkZHJlc3MiLCJuYW1lIjoiIiwidHlwZSI6ImFkZHJlc3MifV0sInN0YXRlTXV0YWJpbGl0eSI6InZpZXciLCJ0eXBlIjoiZnVuY3Rpb24ifSx7ImlucHV0cyI6W10sIm5hbWUiOiJwYXlvdXRDb29sZG93biIsIm91dHB1dHMiOlt7ImludGVybmFsVHlwZSI6InVpbnQyNTYiLCJuYW1lIjoiIiwidHlwZSI6InVpbnQyNTYifV0sInN0YXRlTXV0YWJpbGl0eSI6InZpZXciLCJ0eXBlIjoiZnVuY3Rpb24ifSx7ImlucHV0cyI6W10sIm5hbWUiOiJwYXlvdXRMYXN0Iiwib3V0cHV0cyI6W10sInN0YXRlTXV0YWJpbGl0eSI6Im5vbnBheWFibGUiLCJ0eXBlIjoiZnVuY3Rpb24ifSx7ImlucHV0cyI6W10sIm5hbWUiOiJwZXJmb3JtU2xpZGUiLCJvdXRwdXRzIjpbXSwic3RhdGVNdXRhYmlsaXR5Ijoibm9ucGF5YWJsZSIsInR5cGUiOiJmdW5jdGlvbiJ9LHsiaW5wdXRzIjpbeyJpbnRlcm5hbFR5cGUiOiJ1aW50MjU2IiwibmFtZSI6ImFtb3VudCIsInR5cGUiOiJ1aW50MjU2In1dLCJuYW1lIjoic2V0Qm91bnR5Iiwib3V0cHV0cyI6W10sInN0YXRlTXV0YWJpbGl0eSI6Im5vbnBheWFibGUiLCJ0eXBlIjoiZnVuY3Rpb24ifSx7InN0YXRlTXV0YWJpbGl0eSI6InBheWFibGUiLCJ0eXBlIjoicmVjZWl2ZSJ9XQ==
@@ -363,7 +362,7 @@ Actions:
     TargetContract: 0x5EE16Ac7BEBde8F38C99DbEFBBEA4fC5653fC34C
     TargetFunction: function payoutLast()
     TargetParams:
-    ChainID: 80002
+    ChainID: 137
     EncodedABI: NA
     Bytecode: NA
     Metadata: NA
@@ -392,7 +391,7 @@ Execution:
 2. Wait for the workflow status to show **Claimed** or **Active**.
 3. Run your React app and perform a slide (`performSlide()`).
 4. Kwala should detect the event, call `payoutLast()`, and then send the Telegram message.
-5. Verify `BountyPaid` events on Amoy Polygonscan and check Telegram for the success message:
+5. Verify `BountyPaid` events on Polygonscan and check Telegram for the success message:
     
     > "Congratulats, You got 0.01 POL Bounty from Slide to Earn Reward"
 
