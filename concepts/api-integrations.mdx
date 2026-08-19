@@ -82,7 +82,7 @@ The index maps to the position of values in the event data. For address tracking
 
 ### Using API trigger data in a payload
 
-When the workflow is started by an API trigger, use `re.object("<field>")` instead of `re.event()` to pull values from the request body:
+When the workflow is started by an API trigger, use `re.object(\"<field>\")` instead of `re.event()` to pull values from the request body:
 
 ```yaml
 APIPayload:
