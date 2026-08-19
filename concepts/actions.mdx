@@ -105,7 +105,7 @@ The following example action sends a Discord notification using a webhook to ann
 ```yaml
 actions:
   - name: "Send Discord Notification"
-    type: "api"
+    type: "post"
     APIEndpoint: "https://discord.com/api/webhooks/your-webhook"
     APIPayload:
       content: "New NFT minted!"
@@ -122,7 +122,7 @@ actions:
 | Field | Description |
 |-------|-------------|
 | **name** | Unique identifier for this action |
-| **type** | Must be `"api"` |
+| **type** | Must be `"post"` |
 | **APIEndpoint** | Full URL of the API endpoint |
 | **APIPayload** | Request body/parameters for the API call |
 
@@ -208,7 +208,7 @@ actions:
 
   # Web2 Action
   - name: "Send Email Notification"
-    type: "api"
+    type: "post"
     APIEndpoint: "https://api.sendgrid.com/v3/mail/send"
     APIPayload:
       personalizations:
@@ -221,7 +221,7 @@ actions:
 
   # Another Web2 Action
   - name: "Log to Database"
-    type: "api"
+    type: "post"
     APIEndpoint: "https://api.example.com/logs"
     APIPayload:
       action: "nft_minted"
