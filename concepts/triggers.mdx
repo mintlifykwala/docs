@@ -184,12 +184,12 @@ Configure an API trigger from the **Trigger** panel in the Workflow Builder. Sel
 | ------------ | -------------------------------------------------- |
 | None         | No auth. Anyone with the URL can trigger.          |
 | Basic        | HTTP Basic auth (username + password).             |
-| Bearer Token | Bearer token in the `Authorization` header.        |
-| API_KEY      | A key supplied in a request header.                |
+| Bearer       | Bearer token in the `Authorization` header.        |
+| APIKey       | A key supplied in a request header.                |
 | JWT          | A signed JSON Web Token validated on each request. |
 
 <Note>
-Use `None` only for testing or public-safe endpoints. For any production endpoint that performs on-chain actions, always use `Basic`, `Bearer Token`, `API_KEY`, or `JWT`.
+Use `None` only for testing or public-safe endpoints. For any production endpoint that performs on-chain actions, always use `Basic`, `Bearer`, `APIKey`, or `JWT`.
 </Note>
 
 **Response code** — the HTTP status Kwala returns to the caller when the request is accepted. All standard codes are supported (`2xx` success, `3xx` redirection, `4xx` client errors, `5xx` server errors); most workflows use `200 — OK`.
@@ -246,14 +246,14 @@ TriggerAPIResponseSchema:
 ExecuteAfter: api
 ```
 
-**3. PUT with Bearer Token authentication** — carries a full-resource payload, requires a bearer token in the `Authorization` header, returns `200 — OK`.
+**3. PUT with Bearer authentication** — carries a full-resource payload, requires a bearer token in the `Authorization` header, returns `200 — OK`.
 
 ```yaml
 Trigger:
 TriggerAPIType: PUT
-TriggerAPIAuthType: Bearer Token
+TriggerAPIAuthType: Bearer
 TriggerAPIAuthConfig:
-  token: "your-bearer-token"
+  token: your-bearer-token
 TriggerAPIResponseCode: 200
 TriggerAPIRequestSchema:
   orderId: "string"
@@ -263,15 +263,16 @@ TriggerAPIResponseSchema:
 ExecuteAfter: api
 ```
 
-**4. PATCH with API_KEY authentication** — carries a partial-update payload, requires an API key in a request header, returns `202 — Accepted`.
+**4. PATCH with APIKey authentication** — carries a partial-update payload, requires an API key in a request header, returns `202 — Accepted`.
 
 ```yaml
 Trigger:
 TriggerAPIType: PATCH
-TriggerAPIAuthType: API_KEY
+TriggerAPIAuthType: APIKey
 TriggerAPIAuthConfig:
-  header: "x-api-key"
-  key: "your-api-key"
+  keyName: X-Api-Key
+  keyValue: devtr-your-api-key
+  location: header
 TriggerAPIResponseCode: 202
 TriggerAPIRequestSchema:
   amount: "number"
@@ -287,7 +288,7 @@ Trigger:
 TriggerAPIType: DELETE
 TriggerAPIAuthType: JWT
 TriggerAPIAuthConfig:
-  secret: "your-jwt-secret"
+  token: your-jwt-token
 TriggerAPIResponseCode: 200
 TriggerAPIRequestSchema:
   subscriptionId: "string"
@@ -337,7 +338,7 @@ RepeatEvery: api
 
 ### Using trigger data in actions
 
-A workflow started by an API trigger can read values from the incoming request body and pass them into its actions using `re.object("<field>")`, written wherever an action expects a value. Kwala substitutes the matching field at run time.
+A workflow started by an API trigger can read values from the incoming request body and pass them into its actions using `re.object(\"<field>\")`, written wherever an action expects a value. Kwala substitutes the matching field at run time.
 
 Forward fields into an outbound API action:
 
@@ -385,7 +386,7 @@ API trigger workflows are automatically set to expire **1 day** after deployment
 | Field                          | Required | Flow      | Description                                             |
 | ------------------------------ | -------- | --------- | ------------------------------------------------------- |
 | **TriggerAPIType**             | Required | One-time  | HTTP method: `GET`, `POST`, `PUT`, `PATCH`, or `DELETE` |
-| **TriggerAPIAuthType**         | Required | One-time  | `NONE`, `Basic`, `Bearer Token`, `API_KEY`, or `JWT`    |
+| **TriggerAPIAuthType**         | Required | One-time  | `NONE`, `Basic`, `Bearer`, `APIKey`, or `JWT`           |
 | **TriggerAPIAuthConfig**       | Optional | One-time  | Credentials for the chosen auth type (`NA` when `NONE`) |
 | **TriggerAPIResponseCode**     | Required | One-time  | HTTP status code returned to the caller                 |
 | **TriggerAPIRequestSchema**    | Optional | One-time  | JSON shape expected in the request body                 |
