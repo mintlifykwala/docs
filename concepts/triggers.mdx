@@ -12,6 +12,7 @@ Kwala supports multiple trigger types that can be used individually or combined:
 - **Event-based** - React to on-chain events in real-time
 - **Time-based** - Execute workflows on a schedule
 - **Recurring** - Continuously monitor and respond to events
+- **API-based** - Start a workflow from an inbound HTTP request
 
 ## Event-based triggers
 
@@ -128,6 +129,275 @@ This creates a persistent listener that:
 1. Checks for new events every 60 seconds
 2. Executes the workflow when matching events are found
 3. Continues monitoring indefinitely
+
+You can also drive the recurring flow over HTTP by setting `RepeatEvery: api`. This exposes a second HTTP endpoint, with its own method, authentication, and schema, that re-runs the workflow each time it is called. See [API triggers](#api-triggers-web2-triggers) below.
+
+## API triggers (Web2 triggers)
+
+API triggers start a workflow from outside the blockchain. Instead of waiting for an on-chain event, price movement, or time interval, the workflow exposes an HTTP endpoint that any Web2 app, backend, webhook, or manual request can call. When a valid request arrives, Kwala runs the workflow's actions on-chain.
+
+Use an API trigger to:
+
+- Start a workflow from a web/mobile app, a backend, or a cron job
+- Turn a third-party webhook into an on-chain action
+- Manually trigger a workflow for testing or ops
+- Bridge any external system that can send an HTTP request into your Web3 automation
+
+<Note>
+An API trigger swaps on-chain listening for an HTTP endpoint. Everything downstream — actions, execution mode, on-chain settlement — works like any other Kwala workflow.
+</Note>
+
+<Frame>
+  <img src="/images/concepts/web2-trigger/web2-trigger-empty-canvas.png" alt="Web2 Trigger Canvas" />
+</Frame>
+
+### The two flows
+
+Every API trigger exposes two independent endpoints, configured separately:
+
+- **One-time flow** (`ExecuteAfter: api`) — the primary trigger; its endpoint starts the workflow when called.
+- **Recurring flow** (`RepeatEvery: api`) — an optional secondary trigger; its endpoint can be called repeatedly to re-run the workflow.
+
+They don't have to match — for example, `POST` with no auth for the one-time flow, `PATCH` with Basic auth for the recurring flow.
+
+<Note>
+`RepeatEvery` need not be `api`; it supports any trigger type (event, price condition, or time interval). Setting `RepeatEvery: api` simply means the recurring flow is also driven by an HTTP call.
+</Note>
+
+### Configuration fields
+
+Configure an API trigger from the **Trigger** panel in the Workflow Builder. Select **API** as the trigger type, then set the following.
+
+**API method** — the HTTP method the endpoint accepts:
+
+| Method | Typical use                               |
+| ------ | ----------------------------------------- |
+| GET    | Trigger with no request body              |
+| POST   | Trigger with a request body (most common) |
+| PUT    | Full-resource update payload              |
+| PATCH  | Partial-update payload                    |
+| DELETE | Removal or teardown action                |
+
+**Authentication type** — how Kwala verifies a request is allowed to trigger the workflow:
+
+| Type         | Description                                        |
+| ------------ | -------------------------------------------------- |
+| None         | No auth. Anyone with the URL can trigger.          |
+| Basic        | HTTP Basic auth (username + password).             |
+| Bearer       | Bearer token in the `Authorization` header.        |
+| APIKey       | A key supplied in a request header.                |
+| JWT          | A signed JSON Web Token validated on each request. |
+
+<Note>
+Use `None` only for testing or public-safe endpoints. For any production endpoint that performs on-chain actions, always use `Basic`, `Bearer`, `APIKey`, or `JWT`.
+</Note>
+
+**Response code** — the HTTP status Kwala returns to the caller when the request is accepted. All standard codes are supported (`2xx` success, `3xx` redirection, `4xx` client errors, `5xx` server errors); most workflows use `200 — OK`.
+
+**API request schema** — the JSON shape Kwala expects in the request body. Write `"string"`, `"number"`, or `"boolean"` for a blank placeholder, or a real value to send it as-is.
+
+**API response schema** — the JSON body Kwala returns to the caller after accepting the request.
+
+<Note>
+**Schema value rules.** Inside a schema, strings are quoted and everything else is not (`age: 27`, `active: true`, `middleName: null`). The words `string`, `number`, and `boolean` are type placeholders — they generate blank fields and cannot be sent as literal values. Anything else is passed through exactly as written.
+</Note>
+
+<Frame>
+  <img src="/images/concepts/web2-trigger/web2-trigger-execute-after-filled-values.png" alt="Web2 Execute After configuration" />
+</Frame>
+
+<Frame>
+  <img src="/images/concepts/web2-trigger/web-trigger-repear-every-filled-values.png" alt="Web2 Repeat Every configuration" />
+</Frame>
+
+### Method examples
+
+Each example configures the one-time flow with a different HTTP method, paired with a different authentication type and response code, so you can see the full range.
+
+**1. GET with no authentication** — takes no request body, open to any caller. Suitable for a public, read-safe trigger or for testing.
+
+```yaml
+Trigger:
+TriggerAPIType: GET
+TriggerAPIAuthType: NONE
+TriggerAPIAuthConfig: NA
+TriggerAPIResponseCode: 200
+TriggerAPIResponseSchema:
+  status: "accepted"
+ExecuteAfter: api
+```
+
+**2. POST with Basic authentication** — accepts a request body, protected by HTTP Basic authentication, returns `201 — Created`.
+
+```yaml
+Trigger:
+TriggerAPIType: POST
+TriggerAPIAuthType: Basic
+TriggerAPIAuthConfig:
+  username: user
+  password: pass
+TriggerAPIResponseCode: 201
+TriggerAPIRequestSchema:
+  name: "string"
+  email: "string"
+TriggerAPIResponseSchema:
+  status: "accepted"
+  userId: "number"
+ExecuteAfter: api
+```
+
+**3. PUT with Bearer authentication** — carries a full-resource payload, requires a bearer token in the `Authorization` header, returns `200 — OK`.
+
+```yaml
+Trigger:
+TriggerAPIType: PUT
+TriggerAPIAuthType: Bearer
+TriggerAPIAuthConfig:
+  token: your-bearer-token
+TriggerAPIResponseCode: 200
+TriggerAPIRequestSchema:
+  orderId: "string"
+  status: "string"
+TriggerAPIResponseSchema:
+  status: "updated"
+ExecuteAfter: api
+```
+
+**4. PATCH with APIKey authentication** — carries a partial-update payload, requires an API key in a request header, returns `202 — Accepted`.
+
+```yaml
+Trigger:
+TriggerAPIType: PATCH
+TriggerAPIAuthType: APIKey
+TriggerAPIAuthConfig:
+  keyName: X-Api-Key
+  keyValue: devtr-your-api-key
+  location: header
+TriggerAPIResponseCode: 202
+TriggerAPIRequestSchema:
+  amount: "number"
+TriggerAPIResponseSchema:
+  status: "queued"
+ExecuteAfter: api
+```
+
+**5. DELETE with JWT authentication** — initiates a teardown or removal action, validates a signed JSON Web Token on each request, returns `200 — OK`.
+
+```yaml
+Trigger:
+TriggerAPIType: DELETE
+TriggerAPIAuthType: JWT
+TriggerAPIAuthConfig:
+  token: your-jwt-token
+TriggerAPIResponseCode: 200
+TriggerAPIRequestSchema:
+  subscriptionId: "string"
+TriggerAPIResponseSchema:
+  status: "removed"
+ExecuteAfter: api
+```
+
+### Generated YAML
+
+After you configure the trigger in the builder, switch to the **YAML** toggle at the top of the editor to review the generated workflow definition. The following example shows a workflow with a `POST` one-time flow and a `PATCH` recurring flow.
+
+```yaml
+Name: Testing_API_Trigger
+
+Trigger:
+
+# One-time (ExecuteAfter) flow
+TriggerAPIType: POST
+TriggerAPIAuthType: NONE
+TriggerAPIAuthConfig: NA
+TriggerAPIResponseCode: 200
+TriggerAPIRequestSchema:
+  name: "string"
+  amount: "number"
+TriggerAPIResponseSchema:
+  status: "accepted"
+
+# Recurring (RepeatEvery) flow
+RecurringAPIType: PATCH
+RecurringAPIAuthType: Basic
+RecurringAPIAuthConfig:
+  username: user
+  password: pass
+RecurringAPIResponseCode: 200
+RecurringAPIRequestSchema:
+  amount: "number"
+RecurringAPIResponseSchema:
+  status: "queued"
+
+RepeatEvery: api
+```
+
+<Frame>
+  <img src="/images/concepts/web2-trigger/web2-trigger-yaml-view-with-deployment-success.png" alt="Deployed workflow with yaml view" />
+</Frame>
+
+### Using trigger data in actions
+
+A workflow started by an API trigger can read values from the incoming request body and pass them into its actions using `re.object(\"<field>\")`, written wherever an action expects a value. Kwala substitutes the matching field at run time.
+
+Forward fields into an outbound API action:
+
+```yaml
+APIPayload:
+  customer: "re.object(\"name\")"
+  age: "re.object(\"age\")"
+  source: "kwala-workflow"   # fixed values pass through as written
+```
+
+Pass fields as contract-call arguments, in the order the function expects:
+
+```yaml
+TargetFunction: function registerUser(string name, uint256 age)
+TargetParams:
+  - "re.object(\"name\")"
+  - "re.object(\"age\")"
+  - "10000"                  # references and constants can mix
+```
+
+Good to know:
+
+- Types survive — a number arrives as a number, a boolean as a boolean.
+- Nested objects and arrays come through whole; reference them once.
+- The left-hand key is yours to rename; the argument inside `re.object()` is the field in the incoming body.
+- References are **not** validated before deploy — a misspelled field compiles cleanly, then resolves empty or fails at run time. Check the Console Logs after your first test run.
+- `GET` and `DELETE` carry no request body, so there is nothing for `re.object()` to read.
+
+<Note>
+`re.object()` reads a named field from a JSON body (what an API trigger provides). Event triggers use `re.event()` for positional event data — different helpers for different input shapes.
+</Note>
+
+### Lifecycle and expiry
+
+Saving, compiling, and deploying an API trigger follows the same order as any workflow: **Save** stores the definition; **Compile** validates it as a dry run (nothing goes on-chain, and the button resets on any edit); **Deploy** puts it live, costs `0.001 KWALA`, and stays disabled until a clean compile. A duplicate workflow name blocks all three.
+
+The workflow key in the trigger URL is your workflow name joined to your wallet address (`<name>_<wallet>`). It is generated at compile/deploy — do not construct it by hand.
+
+<Note>
+API trigger workflows are automatically set to expire **1 day** after deployment. Redeploy to keep a long-running endpoint active.
+</Note>
+
+### API trigger field reference
+
+| Field                          | Required | Flow      | Description                                             |
+| ------------------------------ | -------- | --------- | ------------------------------------------------------- |
+| **TriggerAPIType**             | Required | One-time  | HTTP method: `GET`, `POST`, `PUT`, `PATCH`, or `DELETE` |
+| **TriggerAPIAuthType**         | Required | One-time  | `NONE`, `Basic`, `Bearer`, `APIKey`, or `JWT`           |
+| **TriggerAPIAuthConfig**       | Optional | One-time  | Credentials for the chosen auth type (`NA` when `NONE`) |
+| **TriggerAPIResponseCode**     | Required | One-time  | HTTP status code returned to the caller                 |
+| **TriggerAPIRequestSchema**    | Optional | One-time  | JSON shape expected in the request body                 |
+| **TriggerAPIResponseSchema**   | Optional | One-time  | JSON body returned to the caller                        |
+| **RecurringAPIType**           | Optional | Recurring | HTTP method for the recurring endpoint                  |
+| **RecurringAPIAuthType**       | Optional | Recurring | Authentication type for the recurring endpoint          |
+| **RecurringAPIAuthConfig**     | Optional | Recurring | Credentials for the recurring endpoint                  |
+| **RecurringAPIResponseCode**   | Optional | Recurring | HTTP status code returned by the recurring endpoint     |
+| **RecurringAPIRequestSchema**  | Optional | Recurring | JSON shape expected by the recurring endpoint           |
+| **RecurringAPIResponseSchema** | Optional | Recurring | JSON body returned by the recurring endpoint            |
+| **RepeatEvery**                | Optional | Recurring | Set to `api` to drive the recurring flow via HTTP       |
 
 ## Trigger expiration
 
@@ -263,6 +533,7 @@ When your workflow executes, Kwala will send a POST request to your configured w
   - Use **event-based** triggers for real-time reactions to on-chain events
   - Use **time-based** triggers for scheduled maintenance or batch processing
   - Use **recurring** triggers for continuous monitoring
+  - Use **API-based** triggers to start workflows from external Web2 systems
 - **Optimize check intervals** - Balance responsiveness with cost:
   - Critical monitoring: 30-60 seconds
   - Regular monitoring: 5-15 minutes

@@ -13,6 +13,10 @@ Kwala supports three primary action types:
 - **Call**: Interact with existing smart contracts
 - **API**: Invoke external Web2 APIs
 
+<Note>
+Action types apply to every workflow regardless of trigger. A workflow started by an API trigger runs the same actions — up to 10 per workflow, sequential or parallel.
+</Note>
+
 ### Deploy actions
 
 Deploy actions are used to deploy new smart contracts to a blockchain network. You can also use deploy actions to deploy [Kwala Functions](/concepts/functions), which enable custom on-chain decision logic.
@@ -101,7 +105,7 @@ The following example action sends a Discord notification using a webhook to ann
 ```yaml
 actions:
   - name: "Send Discord Notification"
-    type: "api"
+    type: "post"
     APIEndpoint: "https://discord.com/api/webhooks/your-webhook"
     APIPayload:
       content: "New NFT minted!"
@@ -118,7 +122,7 @@ actions:
 | Field | Description |
 |-------|-------------|
 | **name** | Unique identifier for this action |
-| **type** | Must be `"api"` |
+| **type** | Must be `"post"` |
 | **APIEndpoint** | Full URL of the API endpoint |
 | **APIPayload** | Request body/parameters for the API call |
 
@@ -204,7 +208,7 @@ actions:
 
   # Web2 Action
   - name: "Send Email Notification"
-    type: "api"
+    type: "post"
     APIEndpoint: "https://api.sendgrid.com/v3/mail/send"
     APIPayload:
       personalizations:
@@ -217,13 +221,48 @@ actions:
 
   # Another Web2 Action
   - name: "Log to Database"
-    type: "api"
+    type: "post"
     APIEndpoint: "https://api.example.com/logs"
     APIPayload:
       action: "nft_minted"
       user: "0xUserAddress..."
       timestamp: "{{now}}"
 ```
+
+## Using trigger data in actions
+
+When a workflow is started by an API trigger, its actions can read values from the incoming request body using `re.object(\"<field>\")`, written wherever an action expects a value. Kwala substitutes the matching field at run time.
+
+Forward fields into an outbound API action:
+
+```yaml
+APIPayload:
+  customer: "re.object(\"name\")"
+  age: "re.object(\"age\")"
+  source: "kwala-workflow"   # fixed values pass through as written
+```
+
+Pass fields as contract-call arguments, in the order the function expects:
+
+```yaml
+TargetFunction: function registerUser(string name, uint256 age)
+TargetParams:
+  - "re.object(\"name\")"
+  - "re.object(\"age\")"
+  - "10000"                  # references and constants can mix
+```
+
+Good to know:
+
+- Types survive — a number arrives as a number, a boolean as a boolean.
+- Nested objects and arrays come through whole; reference them once.
+- The left-hand key is yours to rename; the argument inside `re.object()` is the field in the incoming body.
+- References are **not** validated before deploy — a misspelled field resolves empty or fails at run time. Check the Console Logs after your first test run.
+- `GET` and `DELETE` carry no body, so there is nothing for `re.object()` to read.
+
+<Note>
+`re.object()` reads a named field from a JSON body (API trigger); event triggers use `re.event()` for positional event data — different helpers for different input shapes.
+</Note>
 
 ## Next steps
 

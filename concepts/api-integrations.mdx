@@ -2,19 +2,19 @@
 title: 'API integrations'
 description: 'Call any Web2 API directly from your blockchain workflows'
 ---
-
 Kwala lets you call REST APIs, trigger webhooks, and invoke cloud functions directly from your workflows. You can also combine on-chain triggers with off-chain actions to connect blockchain events to external services though:
-
 - **REST APIs**: Call any HTTP endpoint with custom payloads
 - **Webhooks**: Trigger external services when blockchain events occur
 - **Database queries**: Connect to external data sources
 - **Cloud functions**: Invoke serverless functions on AWS, GCP, or Azure
 - **External services**: Integrate with any service exposing an API
 
+<Note>
+**API triggers vs API actions.** This page covers API **actions** — outbound HTTP calls your workflow makes (`Type: post`) after it runs. If instead you want to **start** a workflow with an inbound HTTP request from a Web2 system, you want an API **trigger**. See [API triggers](/concepts/triggers#api-triggers-web2-triggers).
+</Note>
+
 ## Configuration
-
 API actions use `Type: post` to make HTTP requests:
-
 ```yaml
 Actions:
   - Name: Send_notification
@@ -24,9 +24,7 @@ Actions:
       message: "Workflow executed successfully"
     RetriesUntilSuccess: 5
 ```
-
 ## Configuration fields
-
 | Field | Required | Description |
 |-------|----------|-------------|
 | **Name** | Required | Unique identifier for this action |
@@ -35,13 +33,9 @@ Actions:
 | **APIPayload** | Optional | JSON payload for the request body |
 | **Metadata** | Optional | Description of the API call |
 | **RetriesUntilSuccess** | Optional | Retry attempts on failure |
-
 ## Common integrations
-
 ### Telegram notifications
-
 You can use Kwala to send messages to Telegram chats or channels. The [Telegram notification automation](/use-cases/telegram-notification-automation) use case shows this integration in detail:
-
 ```yaml
 Actions:
   - Name: Telegram_notification
@@ -52,11 +46,8 @@ Actions:
       text: "Hi! You have a new notification."
     RetriesUntilSuccess: 5
 ```
-
 ### Discord webhooks
-
 Kwala supports Discord webhooks that enable sending messages to Discord channels. The following example from the [Cryptocurrency deposit alerts](/use-cases/cryptocurrency-deposit-alerts) use case demonstrates it:
-
 ```yaml
 Actions:
   - Name: discord_call
@@ -66,11 +57,8 @@ Actions:
       content: "USDC Received on USDC Treasury Vault Smart Contract"
     RetriesUntilSuccess: 5
 ```
-
 ### Custom webhooks
-
 The following example shows how you can trigger any webhook endpoint with dynamic event data:
-
 ```yaml
 Actions:
   - Name: Trigger_webhook
@@ -84,20 +72,29 @@ Actions:
     RetriesUntilSuccess: 5
 ```
 To include blockchain data in your API payloads, use the `re.event()` syntax:
-
 ```yaml
 APIPayload:
   sender: "re.event(0)"    # First event parameter
   receiver: "re.event(1)"  # Second event parameter
   amount: "re.event(2)"    # Third event parameter
 ```
-
 The index maps to the position of values in the event data. For address tracking workflows, `re.event(0)` returns the full transaction receipt which you can parse in your backend. For more details on dynamic data extraction, see [Functions](/concepts/functions).
 
+### Using API trigger data in a payload
+
+When the workflow is started by an API trigger, use `re.object(\"<field>\")` instead of `re.event()` to pull values from the request body:
+
+```yaml
+APIPayload:
+  customer: "re.object(\"name\")"
+  amount: "re.object(\"amount\")"
+  source: "kwala-workflow"   # fixed values pass through as written
+```
+
+`re.event()` reads positional on-chain event values; `re.object()` reads named fields from an API trigger body. Use whichever matches what started the run.
+
 ## Use cases
-
 The following use case demonstrate API integrations in action:
-
 <CardGroup cols={2}>
   <Card title="Telegram notification automation" icon="paper-plane" href="/use-cases/telegram-notification-automation">
     Send automated Telegram alerts
@@ -106,9 +103,7 @@ The following use case demonstrate API integrations in action:
     Post Discord notifications on deposits
   </Card>
 </CardGroup>
-
 ## Next steps
-
 <CardGroup cols={2}>
   <Card title="API actions" icon="code" href="/concepts/actions#api-actions">
     Full API action reference
