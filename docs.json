@@ -30,6 +30,7 @@
           {
             "group": "Getting started",
             "pages": [
+              "getting-started/privy-login",
               "getting-started/quickstart",
               "getting-started/get-kwala-tokens"
             ]
