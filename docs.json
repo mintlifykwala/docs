@@ -38,7 +38,6 @@
           {
             "group": "Use the Workflow Builder",
             "pages": [
-              "workflow-builder/explore-the-playground",
               "workflow-builder/create-workflow",
               "workflow-builder/configure-workflow",
               "workflow-builder/deploy-workflow",
@@ -82,7 +81,6 @@
             "group": "Reference",
             "pages": [
               "concepts/supported-chains",
-              "concepts/regex-usage",
               "concepts/limits-and-quotas"
             ]
           },
@@ -119,11 +117,6 @@
           "anchor": "Kwala Website",
           "href": "https://Kwala.network",
           "icon": "globe"
-        },
-        {
-          "anchor": "Playground",
-          "href": "https://Kwala.network/dashboard",
-          "icon": "code"
         },
         {
           "anchor": "Community",
